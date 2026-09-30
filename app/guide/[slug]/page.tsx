@@ -11,7 +11,7 @@ import { articleJsonLd, breadcrumbJsonLd, pageMetadata } from "@/lib/seo";
 
 type Props = { params: Promise<{ slug: string }> };
 
-export const dynamicParams = false;
+// 없는 글 주소는 notFound() 로 404 (dynamicParams = false 는 서버 로그에 NoFallbackError 를 남긴다)
 
 export function generateStaticParams() {
   return getAllGuides().map((g) => ({ slug: g.slug }));
@@ -82,7 +82,7 @@ export default async function GuidePage({ params }: Props) {
       </nav>
       <h1 className="text-[1.75rem] font-bold leading-tight sm:text-4xl">{guide.title}</h1>
       <p className="mt-3 text-sm text-ink-faint">읽는 데 약 {readingMinutes(guide)}분</p>
-      <p className="night-panel mt-6 rounded-2xl p-5 font-medium leading-8">{guide.description}</p>
+      <p className="night-panel mt-6 rounded-2xl p-5 leading-8">{guide.description}</p>
 
       <div className="prose-dream mt-2 text-[17px] text-ink">{renderSections(guide.sections.slice(0, middle))}</div>
       <AdSlot name="guide-middle" />

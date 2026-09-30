@@ -26,6 +26,8 @@ npm run dev        # 개발 서버 실행 → http://localhost:3000
 | `npm start` | 빌드한 결과 실행 |
 | `npm run typecheck` | 타입 검사만 |
 | `npm run keywords` | 꿈 관련 검색 키워드 수집 (네이버 검색광고 API 키 필요, 12장) |
+| `npm run test:e2e` | 자동 화면 테스트 (휴대폰·PC 크기, Playwright, 13장) |
+| `npm run review:screenshots` | 검토용 화면 캡처 → `review/screenshots/` (13장) |
 
 ### 확인해 볼 화면
 
@@ -53,7 +55,6 @@ app/                        화면(페이지)과 API
   r/[payload]/page.tsx      공유 링크 결과 페이지 (+ 공유 미리보기 이미지)
   guide/, guide/[slug]/     꿈 가이드 목록과 칼럼 (SSG + 공유 이미지)
   about, privacy, terms, contact/
-  fonts/pretendard/         사이트 글꼴 (Pretendard 가변 글꼴, 글자 범위별 woff2)
   opengraph-image.tsx       기본 공유 미리보기 이미지 (사전 상세는 dream/[slug]/opengraph-image.tsx)
   sitemap.ts, robots.ts, icon.svg, not-found.tsx
 assets/fonts/               공유 이미지용 한글 글꼴 (Pretendard 서브셋, SIL OFL 1.1)
@@ -69,14 +70,18 @@ lib/                        핵심 로직 — 화면과 분리되어 있어 테�
   symbolNumbers.ts          상징 → 행운 숫자 후보 규칙
   interpret/                해몽 생성기 (Provider)
   service.ts                전체 흐름 조립
-scripts/collect-keywords.ts 네이버 검색광고 키워드 수집 (npm run keywords)
   symbols.ts, actions.ts    사전 데이터 불러오기 + 유효성 검사
   seo.ts                    페이지 메타데이터 + 구조화 데이터(JSON-LD)
   og.tsx                    공유 미리보기 이미지(1200×630) 공통 틀
   share.ts                  공유 링크 값 인코딩/디코딩/검사
   suggest.ts                입력 도우미 (추천 단어)
   date.ts, site.ts, types.ts
-tests/                      Vitest 테스트
+public/fonts/pretendard/    사이트 글꼴 (Pretendard 한글 2,350자 서브셋, 굵기 400·600·700)
+scripts/collect-keywords.ts 네이버 검색광고 키워드 수집 (npm run keywords)
+tests/                      Vitest 테스트 (로직 단위)
+e2e/                        Playwright 화면 테스트 + 검토용 화면 캡처
+playwright.config.ts        화면 테스트 설정 (휴대폰·PC)
+review/                     검토 자료: screenshots/(화면 캡처 24장), lighthouse.md(점수)
 ```
 
 ---
@@ -235,7 +240,11 @@ tests/                      Vitest 테스트
 - **색은 모두 토큰으로**: `app/globals.css`의 `--page`, `--surface`, `--ink` 등. Tailwind에서는 `bg-surface`, `text-ink-soft`, `border-line`처럼 씁니다. 색을 바꿀 땐 이 파일만 고치면 돼요.
 - **라이트/다크**: 기본은 기기 설정을 따릅니다. 헤더의 달/해 버튼으로 바꾸면 그 선택을 기억합니다(`<html data-theme>` + localStorage).
 - **명도 대비 (WCAG AA 4.5:1 이상)**: 글자-배경 조합을 모두 계산해 확인했습니다. 가장 낮은 값은 라이트 4.94(달빛색 강조 글자), 다크 5.78(흐린 글자 on 카드)입니다.
-- **글꼴**: Pretendard(SIL OFL 1.1)를 사이트 안에 포함했습니다(`app/fonts/pretendard`). 글자 범위별로 쪼갠 woff2 92개 중 **페이지에 실제로 나온 글자 조각만** 내려받아 가볍습니다.
+- **글꼴**: Pretendard(SIL OFL 1.1)를 사이트 안에 포함했습니다(`public/fonts/pretendard`). 제작자가 배포하는 **KS X 1001 한글 2,350자 서브셋**을 굵기 400·600·700 세 파일(합계 약 790KB)만 씁니다.
+  - 첫 화면은 기기 글꼴로 바로 보여 주고, 페이지를 다 불러온 뒤 글꼴 세 개를 받아 **한 번에** 바꿉니다(`app/layout.tsx`). 글꼴을 기다리느라 화면이 늦게 뜨지 않아요.
+  - 글자 범위별로 잘게 쪼갠 파일(92개 중 페이지마다 15개 안팎)을 쓰던 방식은 휴대폰에서 글꼴을 처음 적용할 때 화면이 멈칫해서 바꿨습니다. 자세한 측정은 `review/lighthouse.md`.
+  - 글꼴 파일은 1년 동안 브라우저에 저장(캐시)되어 두 번째 페이지부터는 다시 받지 않습니다. 그래서 **글꼴 파일을 바꿀 땐 파일 이름도 바꿔 주세요.**
+  - 서브셋에 없는 드문 한글(예: 똠, 햏)과 한자는 기기 글꼴로 보입니다. 사전·가이드 글이 서브셋 안에 있는지는 테스트가 확인합니다.
 - **로또 공 색**: 1~10 노랑, 11~20 파랑, 21~30 빨강, 31~40 회색, 41~45 초록 (`lib/ballColors.ts`, 화면과 공유 이미지가 같이 씀). 꿈에서 나온 번호는 달빛색 테두리로 구분합니다.
 - **공식 사이트처럼 보이지 않게**: 실제 복권 사업자의 이름·로고·디자인은 쓰지 않고, 로고는 자체 초승달 그림입니다. 푸터에 "비공식 재미 서비스" 문구가 있습니다.
 - **결과 연출**: 공이 하나씩 굴러 나옵니다. i번째 공은 i×0.2초 뒤에 0.55초 동안 움직여 **게임 하나가 약 1.55초**(5게임 전부 약 1.9초)에 끝나요. CSS 애니메이션만 써서 공유 페이지에서도 똑같이 동작하고, 기기에서 **움직임 줄이기**(`prefers-reduced-motion`)를 켜면 애니메이션 없이 바로 보여 줍니다.
@@ -289,7 +298,34 @@ npm run keywords -- 고양이꿈 시험꿈   # 씨앗 단어를 직접 지정
 - 띄어쓰기만 다른 키워드("돼지꿈", "돼지 꿈")는 하나로 합칩니다.
 - 실제 API 없이 가짜 응답으로 동작을 검사하는 테스트가 `tests/collect-keywords.test.ts`에 있습니다.
 
-## 13. Vercel 배포 (참고)
+## 13. 화면 테스트와 품질 점검
+
+### 자동 화면 테스트 (Playwright)
+
+```bash
+npx playwright install chromium   # 처음 한 번: 테스트용 브라우저 설치
+npm run test:e2e                  # 휴대폰(Pixel 7)·PC(1280×800) 크기에서 사용자 흐름 검사
+npm run review:screenshots        # 검토용 화면 캡처 → review/screenshots/
+```
+
+- `e2e/flow.spec.ts`: 입력 → 결과 → 다시 뽑기 → 링크 복사 → 공유 페이지에서 같은 결과 → "나도 해몽 받기", 잘못된 공유 링크, 빈 입력, 입력 도우미, 움직임 줄이기, 테마 기억, 사전·가이드·404를 검사합니다.
+- 테스트가 알아서 `npm run build` 후 3100번 포트로 서버를 켭니다. 이미 켜 둔 서버가 있으면 그대로 씁니다. 포트를 바꾸려면 `E2E_PORT=3200 npm run test:e2e`.
+- 화면 캡처는 6개 화면 × 휴대폰/PC × 라이트/다크 = 24장(JPEG)입니다. 공 애니메이션이 끝난 모습을 찍으려고 '움직임 줄이기' 설정으로, Pretendard가 적용된 뒤에 찍습니다.
+- 실패하면 `test-results/`에 기록이 남습니다(git에는 올라가지 않음).
+
+### Lighthouse (성능·접근성·SEO 점수)
+
+점수와 개선 내역은 `review/lighthouse.md`에 있습니다. 직접 재 보려면 크롬이 설치된 컴퓨터에서:
+
+```bash
+npm run build && npm start                                             # 터미널 1
+npx lighthouse http://localhost:3000/dream/pig --view                  # 터미널 2: 휴대폰 기준
+npx lighthouse http://localhost:3000/dream/pig --preset=desktop --view # PC 기준
+```
+
+점수는 잴 때마다 조금씩 달라지니 3번쯤 재서 가운데 값을 보세요.
+
+## 14. Vercel 배포 (참고)
 
 1. GitHub 저장소를 Vercel에서 Import합니다. Framework는 Next.js로 자동 인식됩니다.
 2. Environment Variables에 `NEXT_PUBLIC_SITE_URL=https://내도메인`을 추가합니다.
@@ -298,7 +334,7 @@ npm run keywords -- 고양이꿈 시험꿈   # 씨앗 단어를 직접 지정
 
 ---
 
-## 14. 2단계에서 손댈 파일
+## 15. 2단계에서 손댈 파일
 
 | 기능 | 손댈 파일 |
 | --- | --- |

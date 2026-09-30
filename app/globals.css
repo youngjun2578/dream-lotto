@@ -108,8 +108,6 @@
 
 /* Tailwind 클래스로 쓰는 이름: bg-page, bg-surface, text-ink, text-ink-soft, border-line … */
 @theme inline {
-  --font-sans: "Pretendard Variable", Pretendard, system-ui, -apple-system, "Apple SD Gothic Neo", "Malgun Gothic",
-    "Noto Sans KR", sans-serif;
   --color-page: var(--page);
   --color-surface: var(--surface);
   --color-surface-2: var(--surface-2);
@@ -129,11 +127,23 @@
   --color-moon: var(--moon);
 }
 
+/* 처음에는 기기의 한글 글꼴로 바로 보여 주고, Pretendard 파일(굵기 400·600·700)이 모두 도착하면
+   <html class="fonts-ready"> 로 한 번에 바꾼다. (app/layout.tsx 의 글꼴 불러오기 참고)
+   Pretendard 에 없는 굵기(500 등)는 가까운 굵기로, 없는 글자는 기기 글꼴로 보인다. */
+:root {
+  --system-font: system-ui, -apple-system, "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif;
+  --app-font: var(--system-font);
+}
+:root.fonts-ready {
+  --app-font: Pretendard, var(--system-font);
+}
+
 html {
   -webkit-text-size-adjust: 100%;
 }
 
 body {
+  font-family: var(--app-font);
   background-color: var(--page);
   color: var(--ink);
   /* 한글이 단어 중간에서 줄바꿈되지 않도록 */

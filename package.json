@@ -11,7 +11,9 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
-    "keywords": "tsx scripts/collect-keywords.ts"
+    "keywords": "tsx scripts/collect-keywords.ts",
+    "test:e2e": "playwright test --project=mobile --project=desktop",
+    "review:screenshots": "playwright test --project=review"
   },
   "dependencies": {
     "next": "^16.3.7",
@@ -19,6 +21,7 @@
     "react-dom": "^19.3.0"
   },
   "devDependencies": {
+    "@playwright/test": "1.56.1",
     "@tailwindcss/postcss": "^4.3.3",
     "@types/node": "^26.6.3",
     "@types/react": "^19.3.0",

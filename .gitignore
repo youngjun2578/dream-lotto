@@ -15,3 +15,8 @@ next-env.d.ts
 .DS_Store
 npm-debug.log*
 .vercel
+
+# Playwright 실행 결과
+/test-results/
+/playwright-report/
+/blob-report/

@@ -15,8 +15,8 @@ import type { DreamSymbol } from "@/lib/types";
 
 type Props = { params: Promise<{ slug: string }> };
 
-// 사전에 없는 주소는 404
-export const dynamicParams = false;
+// 사전에 없는 주소는 아래 notFound() 로 404 를 보여 준다.
+// (dynamicParams = false 로 막으면 404 는 같지만 서버 로그에 NoFallbackError 가 찍혀 헷갈린다)
 
 export function generateStaticParams() {
   return getAllSymbols().map((s) => ({ slug: s.slug }));
@@ -96,7 +96,7 @@ export default async function DreamSymbolPage({ params }: Props) {
         </span>
       </div>
 
-      <p className="night-panel mt-6 rounded-2xl p-5 font-medium leading-8">{symbol.meaning}</p>
+      <p className="night-panel mt-6 rounded-2xl p-5 leading-8">{symbol.meaning}</p>
 
       <div className="prose-dream mt-4 text-[17px]">
         {paragraphs.slice(0, middle).map((p, i) => (

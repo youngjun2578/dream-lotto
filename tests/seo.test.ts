@@ -137,3 +137,22 @@ describe("공유 이미지(OG) 글꼴", () => {
     expect(missing).toEqual([]);
   });
 });
+
+describe("사이트 글꼴", () => {
+  it("사전과 가이드 글자는 모두 사이트 글꼴(Pretendard KS X 1001 서브셋)에 있다", () => {
+    // 웹 글꼴도 공유 이미지와 같은 글자 목록(한글 2,350자 + 영문·기호)의 서브셋이다.
+    const glyphs = new Set(readFileSync("assets/fonts/pretendard-subset-glyphs.txt", "utf8"));
+    const texts = [
+      ...SYMBOLS.flatMap((s) => [s.keyword, ...s.synonyms, s.meaning, s.body]),
+      ...getAllGuides().flatMap((g) => [
+        g.title,
+        g.description,
+        ...g.sections.flatMap((s) => [s.heading, ...s.blocks.flat()]),
+      ]),
+    ];
+    // 한자(예: 돈(豚))는 서브셋에 없어 기기 글꼴로 보이는 게 정상이라 검사에서 뺀다.
+    const plain = texts.join("").replace(/\]\([^)]*\)/g, "").replace(/\s|\p{Script=Han}/gu, "");
+    const missing = [...new Set(plain)].filter((c) => !glyphs.has(c));
+    expect(missing).toEqual([]);
+  });
+});
