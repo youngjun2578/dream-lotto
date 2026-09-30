@@ -1,12 +1,32 @@
 // 꿈 상징 사전 데이터 불러오기 + 유효성 검사
+// 데이터는 카테고리별 파일(data/symbols/*.json)에 나눠 저장한다.
 // 2단계에서 Supabase 로 옮길 때는 이 파일의 함수 내용만 바꾸면 된다.
 
-import raw from "@/data/symbols.json";
-import { CATEGORIES, FORTUNE_TYPES, type Category, type DreamSymbol } from "./types";
+import animal from "@/data/symbols/animal.json";
+import behavior from "@/data/symbols/behavior.json";
+import nature from "@/data/symbols/nature.json";
+import object from "@/data/symbols/object.json";
+import person from "@/data/symbols/person.json";
+import { getAllActions } from "./actions";
+import { CATEGORIES, FORTUNE_TYPES, type Category, type DreamAction, type DreamSymbol } from "./types";
 
-const SYMBOLS = raw as DreamSymbol[];
+/** 카테고리 ↔ 파일 이름 (이 순서대로 합쳐서 사용) */
+export const SYMBOL_FILES: { category: Category; file: string; items: unknown[] }[] = [
+  { category: "동물", file: "animal.json", items: animal },
+  { category: "사람", file: "person.json", items: person },
+  { category: "자연", file: "nature.json", items: nature },
+  { category: "행동", file: "behavior.json", items: behavior },
+  { category: "물건", file: "object.json", items: object },
+];
+
+/** 검사 전의 원본 데이터 (모든 파일을 합친 것, 테스트용) */
+export const rawSymbolData: unknown[] = SYMBOL_FILES.flatMap((f) => f.items);
+
+const SYMBOLS = rawSymbolData as DreamSymbol[];
 
 export const MIN_BODY_LENGTH = 300;
+export const MIN_SITUATIONS = 3;
+export const MAX_SITUATIONS = 5;
 
 export function getAllSymbols(): DreamSymbol[] {
   return SYMBOLS;
@@ -26,13 +46,26 @@ export function getPopularSymbols(): DreamSymbol[] {
   return SYMBOLS.filter((s) => s.weight === 3 || extra.includes(s.slug));
 }
 
+function sentenceCount(text: string): number {
+  return text.split(/(?<=[.!?])\s+/).filter(Boolean).length;
+}
+
+export interface ValidateOptions {
+  /** situations 가 비어 있어도 되는지 (작성 중인 상징을 허용할 때만 true) */
+  allowEmptySituations?: boolean;
+  /** 상황 풀이의 action 이 들어 있어야 하는 행동 사전 */
+  actions?: DreamAction[];
+}
+
 /**
  * 사전 데이터 검사. 문제가 있으면 사람이 읽을 수 있는 오류 문장 목록을 돌려준다.
  * (빈 배열이면 통과)
  */
-export function validateSymbols(data: unknown): string[] {
+export function validateSymbols(data: unknown, options: ValidateOptions = {}): string[] {
+  const { allowEmptySituations = true, actions = getAllActions() } = options;
+  const actionSlugs = new Set(actions.map((a) => a.slug));
   const errors: string[] = [];
-  if (!Array.isArray(data)) return ["symbols.json 은 배열이어야 합니다."];
+  if (!Array.isArray(data)) return ["상징 데이터는 배열이어야 합니다."];
 
   const slugs = new Set<string>();
   data.forEach((item, i) => {
@@ -71,12 +104,57 @@ export function validateSymbols(data: unknown): string[] {
       if (new Set(nums).size !== nums.length) errors.push(`${where}: numbers 에 중복이 있습니다.`);
     }
     if (typeof s.meaning === "string") {
-      const sentences = s.meaning.split(/(?<=[.!?])\s+/).filter(Boolean).length;
+      const sentences = sentenceCount(s.meaning);
       if (sentences < 2 || sentences > 3) errors.push(`${where}: meaning 은 2~3문장이어야 합니다. (현재 ${sentences}문장)`);
     }
     if (typeof s.body === "string" && s.body.length < MIN_BODY_LENGTH) {
       errors.push(`${where}: body 는 ${MIN_BODY_LENGTH}자 이상이어야 합니다. (현재 ${s.body.length}자)`);
     }
+    errors.push(...validateSituations(s.situations, where, actionSlugs, allowEmptySituations));
   });
+  return errors;
+}
+
+function validateSituations(value: unknown, where: string, actionSlugs: Set<string>, allowEmpty: boolean): string[] {
+  const errors: string[] = [];
+  if (!Array.isArray(value)) return [`${where}: situations 는 배열이어야 합니다.`];
+  if (value.length === 0 && allowEmpty) return [];
+  if (value.length < MIN_SITUATIONS || value.length > MAX_SITUATIONS) {
+    errors.push(`${where}: situations 는 ${MIN_SITUATIONS}~${MAX_SITUATIONS}개여야 합니다. (현재 ${value.length}개)`);
+  }
+  const used = new Set<string>();
+  value.forEach((item, j) => {
+    const sit = item as Partial<{ action: string; title: string; meaning: string }>;
+    const at = `${where} situations[${j}]`;
+    if (typeof sit.action !== "string" || !actionSlugs.has(sit.action)) {
+      errors.push(`${at}: action "${sit.action}" 이 data/actions.json 에 없습니다.`);
+    } else {
+      if (used.has(sit.action)) errors.push(`${at}: 같은 action 이 두 번 쓰였습니다.`);
+      used.add(sit.action);
+    }
+    if (typeof sit.title !== "string" || !sit.title.trim().endsWith("꿈")) {
+      errors.push(`${at}: title 은 "~꿈"으로 끝나야 합니다.`);
+    }
+    if (typeof sit.meaning !== "string") {
+      errors.push(`${at}: meaning 이 비어 있습니다.`);
+    } else {
+      const sentences = sentenceCount(sit.meaning);
+      if (sentences < 2 || sentences > 3) errors.push(`${at}: meaning 은 2~3문장이어야 합니다. (현재 ${sentences}문장)`);
+    }
+  });
+  return errors;
+}
+
+/** 각 파일에 그 파일의 카테고리 상징만 들어 있는지 검사 */
+export function validateSymbolFiles(files = SYMBOL_FILES): string[] {
+  const errors: string[] = [];
+  for (const { category, file, items } of files) {
+    items.forEach((item, i) => {
+      const s = item as Partial<DreamSymbol>;
+      if (s?.category !== category) {
+        errors.push(`${file} #${i} (${s?.slug}): category 가 "${category}" 이어야 합니다. (현재 "${s?.category}")`);
+      }
+    });
+  }
   return errors;
 }

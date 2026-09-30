@@ -51,15 +51,18 @@ app/                        화면(페이지)과 API
   about, privacy, terms, contact/
   sitemap.ts, robots.ts, icon.svg, not-found.tsx
 components/                 화면 조각 (DreamForm, AdSlot, Disclaimer, LottoBall …)
-data/symbols.json           꿈 상징 사전 (30개)
+data/
+  symbols/*.json            꿈 상징 사전 30개 (카테고리별 파일: animal·person·nature·behavior·object)
+  actions.json              꿈속 행동 사전 (들어오다, 쫓기다, 먹다 … 63개, 활용형 포함)
 lib/                        핵심 로직 — 화면과 분리되어 있어 테스트하기 쉬움
   normalize.ts              전처리 (정규화, 500자 제한, 빈 입력 거부)
-  matcher.ts                꿈 문장에서 상징 찾기
+  matcher.ts                꿈 문장에서 상징 + 행동 찾기 → 상황 풀이 선택
   lotto.ts                  번호 생성 (순수 함수)
   symbolNumbers.ts          상징 → 행운 숫자 후보 규칙
   interpret/                해몽 생성기 (Provider)
   service.ts                전체 흐름 조립
-  symbols.ts, date.ts, site.ts, types.ts
+  symbols.ts, actions.ts    사전 데이터 불러오기 + 유효성 검사
+  date.ts, site.ts, types.ts
 tests/                      Vitest 테스트
 ```
 
@@ -70,11 +73,16 @@ tests/                      Vitest 테스트
 요청: `{ "dream": "꿈 내용", "counter": 0 }` (`counter`는 다시 뽑기 횟수, 생략하면 0)
 
 1. **전처리** `lib/normalize.ts`: 특수문자·이모지 제거, 공백 정리, 영문 소문자화. 빈 입력과 500자 초과는 **400 오류**로 거부합니다(잘라내지 않음).
-2. **상징 매칭** `lib/matcher.ts`: keyword와 synonyms로 찾습니다. 가중치가 높은 순, 같으면 먼저 나온 순으로 **최대 4개**까지 고릅니다.
-   - 겹치면 긴 표현이 우선입니다: "물고기"는 `물고기`로만 잡히고 `물`로는 잡히지 않습니다. "산불"은 `불`로 잡힙니다.
-   - **한 글자 상징**(소·용·물·불·돈·금·집·산·달·뱀·똥)은 앞이 띄어쓰기이고 뒤가 조사나 '꿈'일 때만 인정합니다. 예) "용이", "돈을", "용꿈"은 매칭되고, "내용", "돈가스", "불안"은 매칭되지 않습니다.
+2. **상징 + 행동 매칭** `lib/matcher.ts`
+   - 먼저 문장 부호(. ! ? 줄바꿈)로 문장을 나눕니다.
+   - **상징**: keyword와 synonyms로 찾습니다. 가중치가 높은 순, 같으면 먼저 나온 순으로 **최대 4개**까지 고릅니다.
+     - 겹치면 긴 표현이 우선입니다: "물고기"는 `물고기`로만 잡히고 `물`로는 잡히지 않습니다. "산불"은 `불`로 잡힙니다.
+     - **한 글자 상징**(소·용·물·불·돈·금·집·산·달·뱀·똥)은 앞이 띄어쓰기이고 뒤가 조사나 '꿈'일 때만 인정합니다. 예) "용이", "돈을", "용꿈"은 매칭되고, "내용", "돈가스", "불안"은 매칭되지 않습니다.
+   - **행동**: `data/actions.json`의 활용형(예: 들어오·들어와·들어왔)으로 찾습니다. 2글자 활용형("먹는", "타는")은 단어 첫머리에서만 인정해서 "도와**주는**", "불**타는**" 같은 오인식을 막습니다.
+   - **상황 풀이 고르기**: 상징마다 **같은 문장 안**에서, 그 상징의 `situations`에 있는 행동 중 가장 가까운 것을 고릅니다. 상징 **뒤** 30자 이내를 우선하고("돼지가 집으로 들어왔다"), 없으면 **앞** 12자 이내("들어온 돼지")를 봅니다.
+   - 상황 풀이를 찾으면 그 풀이가 일반 풀이(meaning)보다 **우선** 쓰입니다. 행동·상황 풀이는 **번호에는 영향을 주지 않습니다.**
 3. **해몽 생성** `lib/interpret/`: `InterpretationProvider` 인터페이스를 쓰고, 지금은 `RuleBasedProvider`로 구현돼 있습니다.
-   - 요약은 첫 상징 meaning의 첫 문장 + "함께 나온 상징 + 전체 운세 흐름" 문장, 이렇게 2문장입니다.
+   - 요약은 첫 상징 풀이(상황 풀이가 있으면 그것)의 첫 문장 + "함께 나온 상징 + 전체 운세 흐름" 문장, 이렇게 2문장입니다.
    - 상징이 0개면 기본 템플릿(무난한 길몽)을 씁니다.
 4. **번호 생성** `lib/lotto.ts`: 아래 규칙대로 만듭니다. **Provider(AI)는 번호에 관여하지 않습니다.**
 5. **응답**
@@ -82,12 +90,14 @@ tests/                      Vitest 테스트
    {
      "summary": "…",
      "symbols": [{ "slug": "pig", "keyword": "돼지", "meaning": "…", "fortune_type": "재물" }],
+     "situations": [{ "slug": "pig", "action": "enter", "title": "돼지가 집으로 들어오는 꿈" }],
      "games": [{ "numbers": [3, 9, 17, 20, 33, 41], "reasons": ["행운 보충", "돼지 꿈 → 재물", "…"] }],
      "date": "2026-09-30",
      "counter": 0
    }
    ```
    `reasons[i]`는 `numbers[i]`를 뽑은 이유입니다. `slug`(사전 링크용)와 `date`, `counter`는 화면 표시용으로 추가한 필드입니다.
+   `situations`에는 상황 풀이가 적용된 상징만 들어 있고, 그 상징의 `symbols[].meaning`은 상황 풀이 문장입니다.
 
 ---
 
@@ -107,7 +117,7 @@ tests/                      Vitest 테스트
 
 ---
 
-## 5. 숫자 후보 규칙 (`data/symbols.json`의 `numbers`)
+## 5. 숫자 후보 규칙 (`data/symbols/*.json`의 `numbers`)
 
 모든 상징의 `numbers`는 아래 규칙 하나로 계산합니다. 코드는 `lib/symbolNumbers.ts`에 있습니다.
 
@@ -128,11 +138,38 @@ tests/                      Vitest 테스트
 
 ### 상징을 새로 추가하려면
 
-1. `data/symbols.json`에 항목을 추가합니다. `numbers`는 일단 `[]`로 둡니다.
+1. 카테고리에 맞는 파일(`data/symbols/animal.json` 등)에 항목을 추가합니다. `numbers`는 일단 `[]`로 둡니다.
 2. `npm test`를 실행하면 실패 메시지에 `○○ 의 numbers 는 [..] 이어야 합니다`라고 정답 숫자가 나옵니다. 그 숫자를 그대로 복사해 넣으세요.
 3. 다시 `npm test` → 통과하면 끝입니다. `npm run build` 때 사전 페이지가 자동으로 생깁니다.
 
-필드 규칙: `slug`(영문 소문자·숫자·-, 중복 불가), `keyword`, `synonyms[]`, `category`(동물/사람/자연/행동/물건), `meaning`(2~3문장), `fortune_type`(재물/연애/건강/직장/주의), `numbers[]`(3~5개, 1~45), `weight`(1~3), `body`(300자 이상, 문단은 빈 줄로 구분).
+필드 규칙: `slug`(영문 소문자·숫자·-, 중복 불가), `keyword`, `synonyms[]`, `category`(동물/사람/자연/행동/물건, 파일과 일치), `meaning`(2~3문장), `fortune_type`(재물/연애/건강/직장/주의), `numbers[]`(3~5개, 1~45), `weight`(1~3), `body`(300자 이상, 문단은 빈 줄로 구분), `situations[]`(3~5개).
+
+| 파일 | 카테고리 |
+| --- | --- |
+| `animal.json` | 동물 |
+| `person.json` | 사람 |
+| `nature.json` | 자연 |
+| `behavior.json` | 행동 |
+| `object.json` | 물건 |
+
+### 상황별 풀이 (`situations`)
+
+```json
+{ "action": "enter", "title": "돼지가 집으로 들어오는 꿈", "meaning": "2~3문장 풀이" }
+```
+
+- `action`은 `data/actions.json`의 `slug`여야 합니다. 한 상징 안에서 같은 행동은 한 번만 씁니다.
+- `title`은 "~꿈"으로 끝나야 합니다. 사전 페이지의 소제목과 결과 화면 라벨로 쓰입니다.
+- 사전 페이지에서는 `#situation-행동slug` 주소로 바로 이동할 수 있습니다. 예) `/dream/pig#situation-enter`
+
+### 행동을 새로 추가하려면 (`data/actions.json`)
+
+```json
+{ "slug": "enter", "verb": "들어오다", "synonyms": ["들어오", "들어와", "들어왔", "들어온"] }
+```
+
+- `synonyms`에는 문장에 실제로 나오는 **활용형 앞부분**을 넣습니다. 들어오**는**, 들어오**고**는 "들어오" 하나로 잡히고, "들어왔다"는 모양이 달라서 "들어왔"을 따로 넣어야 해요.
+- 1글자 활용형은 넣을 수 없어요. 2글자는 단어 첫머리에서만 인정됩니다.
 
 ---
 

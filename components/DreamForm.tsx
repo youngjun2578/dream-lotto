@@ -97,18 +97,27 @@ export function DreamForm() {
             <div>
               <h3 className="mb-3 font-bold">꿈속 상징 풀이</h3>
               <ul className="space-y-3">
-                {result.symbols.map((s) => (
-                  <li key={s.slug} className="rounded-xl bg-white p-4 ring-1 ring-slate-200">
-                    <div className="mb-1 flex items-center gap-2">
-                      <strong>{s.keyword}</strong>
-                      <FortuneBadge type={s.fortune_type} />
-                    </div>
-                    <p className="text-sm leading-6 text-slate-600">{s.meaning}</p>
-                    <Link href={`/dream/${s.slug}`} className="mt-1 inline-block text-sm text-violet-700 hover:underline">
-                      {s.keyword} 꿈 자세히 보기 →
-                    </Link>
-                  </li>
-                ))}
+                {result.symbols.map((s) => {
+                  const situation = result.situations.find((x) => x.slug === s.slug);
+                  return (
+                    <li key={s.slug} className="rounded-xl bg-white p-4 ring-1 ring-slate-200">
+                      <div className="mb-1 flex items-center gap-2">
+                        <strong>{s.keyword}</strong>
+                        <FortuneBadge type={s.fortune_type} />
+                      </div>
+                      {situation && (
+                        <p className="mb-1 text-sm font-semibold text-violet-700">상황 풀이 · {situation.title}</p>
+                      )}
+                      <p className="text-sm leading-6 text-slate-600">{s.meaning}</p>
+                      <Link
+                        href={situation ? `/dream/${s.slug}#situation-${situation.action}` : `/dream/${s.slug}`}
+                        className="mt-1 inline-block text-sm text-violet-700 hover:underline"
+                      >
+                        {s.keyword} 꿈 자세히 보기 →
+                      </Link>
+                    </li>
+                  );
+                })}
               </ul>
             </div>
           )}

@@ -70,6 +70,26 @@ export default async function DreamSymbolPage({ params }: Props) {
         ))}
       </div>
 
+      {symbol.situations.length > 0 && (
+        <section className="mt-10" aria-labelledby="situations-heading">
+          <h2 id="situations-heading" className="mb-4 text-xl font-bold">
+            상황별 {symbol.keyword} 꿈 풀이
+          </h2>
+          <div className="space-y-4">
+            {symbol.situations.map((sit) => (
+              <section
+                key={sit.action}
+                id={`situation-${sit.action}`}
+                className="scroll-mt-20 rounded-xl bg-white p-4 ring-1 ring-slate-200"
+              >
+                <h3 className="font-bold">{sit.title}</h3>
+                <p className="mt-1 leading-7 text-slate-700">{sit.meaning}</p>
+              </section>
+            ))}
+          </div>
+        </section>
+      )}
+
       <section className="mt-8">
         <h2 className="mb-2 font-bold">비슷한 꿈 표현</h2>
         <p className="text-sm text-slate-600">{symbol.synonyms.join(", ")}</p>
