@@ -62,7 +62,7 @@ export interface ValidateOptions {
  * (빈 배열이면 통과)
  */
 export function validateSymbols(data: unknown, options: ValidateOptions = {}): string[] {
-  const { allowEmptySituations = true, actions = getAllActions() } = options;
+  const { allowEmptySituations = false, actions = getAllActions() } = options;
   const actionSlugs = new Set(actions.map((a) => a.slug));
   const errors: string[] = [];
   if (!Array.isArray(data)) return ["상징 데이터는 배열이어야 합니다."];

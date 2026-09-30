@@ -35,8 +35,39 @@ describe("matchDream (상징 + 행동 → 상황 풀이)", () => {
     expect(pairs("구렁이가 몸을 칭칭 감았다")).toEqual(["snake+wrap"]);
   });
 
-  it("상징마다 가장 가까운 행동을 고른다", () => {
+  it("상징마다 뒤에 이어지는 자기 행동을 고른다", () => {
     expect(pairs("돼지가 들어오고 뱀에게 물렸다")).toEqual(["pig+enter", "snake+bite"]);
+  });
+
+  it("행동이 여럿 이어지면 마지막(결말) 행동을 고른다", () => {
+    expect(pairs("도둑이 들어와서 지갑을 훔쳐 갔어요")).toEqual(["thief+steal"]);
+    expect(pairs("물고기를 잡았다가 놓쳤어요")).toEqual(["fish+lose"]);
+    expect(pairs("불이 났는데 제가 껐어요")).toEqual(["fire+extinguish"]);
+  });
+
+  it("그 상징에 풀이가 없는 행동이 먼저 나오면 거기서 멈춘다", () => {
+    // 금에는 '잃어버리다' 상황이 없으므로, 뒤의 '찾았다(줍다)'로 넘어가지 않는다.
+    expect(pairs("금반지를 잃어버려서 한참 찾았어요")).toEqual(["gold"]);
+  });
+
+  it("상징 글자 안에 든 행동도 풀이가 있으면 쓴다 (불타는, 장례식)", () => {
+    expect(pairs("집이 불타는 꿈")).toEqual(["fire+burn", "house+burn"]);
+    expect(pairs("할머니 장례식에 갔어요")).toEqual(["death+funeral"]);
+  });
+
+  it("부정된 행동(안 다쳤다, 잡지 못했다)은 없는 것으로 본다", () => {
+    expect(pairs("집에 불이 났는데 아무도 안 다쳤어요")).toEqual(["fire+burn", "house+burn"]);
+    expect(pairs("도둑을 잡지 못했어요")).toEqual(["thief"]);
+    expect(pairs("돼지가 들어오지는 않았어요")).toEqual(["pig"]);
+  });
+
+  it("같은 상징이 다시 나오면 앞 상징의 행동은 거기까지만 본다", () => {
+    expect(pairs("아기를 낳았는데 아기가 방긋 웃었어요")).toEqual(["baby+birth"]);
+  });
+
+  it("존댓말 '주셨다'는 받는 쪽으로 본다", () => {
+    expect(pairs("돌아가신 할머니가 돈을 주셨어요")).toEqual(["ancestor+receive", "money+receive"]);
+    expect(pairs("남에게 돈을 줬어요")).toEqual(["money+give"]);
   });
 
   it("'돼지가 도망쳤다'는 돼지+달아나다 이고, 쫓기는 꿈으로 보지 않는다", () => {

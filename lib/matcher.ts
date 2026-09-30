@@ -46,6 +46,8 @@ interface SymbolHit<T> extends Span {
 
 interface ActionHit extends Span {
   action: DreamAction;
+  /** "안 다쳤다", "다치지 않았다"처럼 부정된 행동 */
+  negated: boolean;
 }
 
 /** 문장 부호와 줄바꿈으로 문장을 나눈 뒤 각각 정규화한다. */
@@ -76,6 +78,12 @@ function isStandalone(text: string, start: number, end: number): boolean {
 /** 단어의 첫머리인지 (앞이 문장 시작이거나 띄어쓰기) */
 function isWordStart(text: string, start: number): boolean {
   return start === 0 || text[start - 1] === " ";
+}
+
+/** "안 다쳤다", "못 잡았다", "다치지 않았다", "잡지 못했다" 처럼 부정된 행동인지 */
+function isNegated(text: string, start: number, end: number): boolean {
+  if (/(^| )(안|못) $/.test(text.slice(Math.max(0, start - 3), start))) return true;
+  return /^[^ ]*지(는|도)? ?(않|못|마)/.test(text.slice(end, end + 8));
 }
 
 /**
@@ -134,7 +142,14 @@ function findActionHits(sentences: string[], actions: DreamAction[]): ActionHit[
       for (const term of new Set(action.synonyms.map(normalizeDream).filter(Boolean))) {
         for (const start of findAll(text, term)) {
           if (term.length <= 2 && !isWordStart(text, start)) continue;
-          hits.push({ action, start: offset + start, end: offset + start + term.length, sentence });
+          const end = start + term.length;
+          hits.push({
+            action,
+            start: offset + start,
+            end: offset + end,
+            sentence,
+            negated: isNegated(text, start, end),
+          });
         }
       }
     }
@@ -143,37 +158,61 @@ function findActionHits(sentences: string[], actions: DreamAction[]): ActionHit[
   return hits;
 }
 
+/** 같은 위치에서 시작하는 행동끼리 묶는다. (예: "타는"은 타다/불타다 둘 다) */
+function groupByStart(hits: ActionHit[]): ActionHit[][] {
+  const groups: ActionHit[][] = [];
+  for (const hit of hits) {
+    const last = groups[groups.length - 1];
+    if (last && last[0].start === hit.start) last.push(hit);
+    else groups.push([hit]);
+  }
+  return groups;
+}
+
 /**
- * 상징과 같은 문장에 있는 행동 중, 그 상징의 상황 풀이가 있는 가장 가까운 행동을 고른다.
- * 상징 뒤에 나온 행동을 우선하고, 없으면 바로 앞에 나온 행동을 본다.
+ * 상징과 같은 문장에 있는 행동으로 상황 풀이를 고른다.
+ * 1) 상징 뒤(30자 이내)의 행동을 순서대로 보면서 상황 풀이가 있는 행동 중 "마지막" 것을 고른다.
+ *    이야기의 결말이 더 중요해서다. (예: 잡았다가 → 놓쳤다, 불이 났는데 → 껐다)
+ *    상황 풀이가 없는 행동을 만나면 거기서 멈춘다. 그 뒤는 다른 이야기일 가능성이 크다.
+ *    상징 글자 안에 든 행동(예: '장례식', '불타')도 여기서 함께 본다. 풀이가 없으면 건너뛴다.
+ *    같은 상징이 다시 나오면 거기까지만 본다. (예: "아기를 낳았는데 아기가 웃었다")
+ * 2) 뒤에서 못 찾으면 상징 바로 앞(12자 이내)의 가장 가까운 행동 하나만 본다. (예: "들어온 돼지")
+ * "안 다쳤다", "잡지 못했다"처럼 부정된 행동은 없는 것으로 친다.
  */
 function pickSituation<T extends MatchableSymbol>(
   symbolHits: SymbolHit<T>[],
   actionHits: ActionHit[],
   situations: Situation[],
 ): Situation | undefined {
-  let best: { score: number; situation: Situation } | undefined;
-  for (const hit of symbolHits) {
-    for (const act of actionHits) {
-      if (act.sentence !== hit.sentence) continue;
-      const situation = situations.find((s) => s.action === act.action.slug);
-      if (!situation) continue;
+  const situationOf = (a: ActionHit) => situations.find((s) => s.action === a.action.slug);
+  const hits = [...symbolHits].sort((a, b) => a.start - b.start);
+  let best: { rank: number; situation: Situation } | undefined;
 
-      let score: number;
-      if (act.start >= hit.end) {
-        const distance = act.start - hit.end;
-        if (distance > ACTION_AFTER_LIMIT) continue;
-        score = distance;
-      } else if (act.end <= hit.start) {
-        const distance = hit.start - act.end;
-        if (distance > ACTION_BEFORE_LIMIT) continue;
-        score = 1000 + distance;
-      } else {
-        score = 0; // 글자가 겹침 (예: "불타는" 안의 '불타'는 상징이자 행동)
-      }
-      if (!best || score < best.score) best = { score, situation };
+  hits.forEach((hit, i) => {
+    const inSentence = actionHits.filter((a) => a.sentence === hit.sentence && !a.negated);
+    const next = hits[i + 1];
+    const scanEnd = next && next.sentence === hit.sentence ? next.start : Infinity;
+
+    let chosen: Situation | undefined;
+    let rank = 1;
+    const after = inSentence
+      .filter((a) => a.start >= hit.start && a.start < scanEnd && a.start - hit.end <= ACTION_AFTER_LIMIT)
+      .sort((x, y) => x.start - y.start);
+    for (const group of groupByStart(after)) {
+      const found = group.map(situationOf).find(Boolean);
+      if (found) chosen = found;
+      else if (!group.every((a) => a.end <= hit.end)) break; // 상징 글자 밖의, 풀이 없는 행동에서 멈춤
     }
-  }
+
+    if (!chosen) {
+      const before = inSentence.filter((a) => a.end <= hit.start && hit.start - a.end <= ACTION_BEFORE_LIMIT);
+      const nearestEnd = Math.max(...before.map((a) => a.end));
+      chosen = before.filter((a) => a.end === nearestEnd).map(situationOf).find(Boolean);
+      rank = 2;
+    }
+
+    if (chosen && (!best || rank < best.rank)) best = { rank, situation: chosen };
+  });
   return best?.situation;
 }
 
