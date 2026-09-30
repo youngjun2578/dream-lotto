@@ -2,14 +2,20 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { DreamForm } from "@/components/DreamForm";
 import { JsonLd } from "@/components/JsonLd";
+import { getAllActions } from "@/lib/actions";
 import { websiteJsonLd } from "@/lib/seo";
-import { getPopularSymbols } from "@/lib/symbols";
+import { buildVocabulary } from "@/lib/suggest";
+import { getAllSymbols, getPopularSymbols } from "@/lib/symbols";
 
 // 제목·설명·공유 설정은 app/layout.tsx 의 기본값을 쓰고, 대표 주소만 지정한다.
 export const metadata: Metadata = { alternates: { canonical: "/" } };
 
 export default function HomePage() {
   const popular = getPopularSymbols();
+  const symbols = getAllSymbols();
+  // 입력 도우미에 필요한 만큼만 화면으로 넘긴다. (본문 같은 긴 글은 빼고)
+  const dictionary = symbols.map(({ slug, keyword, synonyms, weight }) => ({ slug, keyword, synonyms, weight }));
+  const vocabulary = buildVocabulary(symbols, getAllActions());
 
   return (
     <>
@@ -22,7 +28,7 @@ export default function HomePage() {
         </p>
       </section>
 
-      <DreamForm />
+      <DreamForm dictionary={dictionary} vocabulary={vocabulary} hintKeywords={popular.map((s) => s.keyword)} />
 
       <section className="mt-12" aria-labelledby="popular-heading">
         <h2 id="popular-heading" className="mb-3 text-lg font-bold">
