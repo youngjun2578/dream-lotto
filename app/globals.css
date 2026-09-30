@@ -1,13 +1,207 @@
 @import "tailwindcss";
 
-@theme {
-  --font-sans: system-ui, -apple-system, "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif;
+/*
+ * 해몽 로또 디자인 토큰
+ * - 밤하늘/꿈 분위기: 짙은 남색 + 달빛(금색) 포인트
+ * - 라이트/다크 모두 글자-배경 명도 대비 WCAG AA(4.5:1) 이상 (확인한 값은 README 참고)
+ * - 테마: 시스템 설정을 따르고, 헤더의 버튼으로 바꾸면 <html data-theme="light|dark"> 로 고정
+ */
+
+:root {
+  color-scheme: light;
+  --page: #f4f5fb;
+  --surface: #ffffff;
+  --surface-2: #eceefa;
+  --line: #d9ddef;
+  --ink: #171c3a;
+  --ink-soft: #434b73;
+  --ink-faint: #5a6390;
+  --link: #4636b8;
+  --accent: #8a6400;
+  --btn: #1f2a60;
+  --btn-hover: #2b387a;
+  --btn-ink: #ffffff;
+  --focus: #4636b8;
+  --highlight-ring: #c79a1c;
+
+  --f-money-bg: #fbefc9;
+  --f-money-fg: #6e4500;
+  --f-love-bg: #fce1eb;
+  --f-love-fg: #8a1747;
+  --f-health-bg: #d8f2e8;
+  --f-health-fg: #0c5840;
+  --f-work-bg: #dde7fb;
+  --f-work-fg: #1b418a;
+  --f-warn-bg: #fcdfe2;
+  --f-warn-fg: #951a2a;
+
+  /* 밤하늘 띠(헤더·첫 화면)는 두 테마 모두 남색 */
+  --night: #10173a;
+  --night-2: #1c2458;
+  --night-ink: #eef0fb;
+  --night-soft: #c3c9ea;
+  --moon: #f5d67b;
+}
+
+/* 다크 테마 값 (시스템 다크 + 직접 고른 다크 두 곳에서 같은 값을 쓴다) */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --page: #0b1026;
+  --surface: #151c3f;
+  --surface-2: #1e2653;
+  --line: #2c3668;
+  --ink: #eceffb;
+  --ink-soft: #b9c0e3;
+  --ink-faint: #99a2cf;
+  --link: #c4bdff;
+  --accent: #f5d67b;
+  --btn: #f5d67b;
+  --btn-hover: #f8e29d;
+  --btn-ink: #1a1640;
+  --focus: #f5d67b;
+  --highlight-ring: #f5d67b;
+  --f-money-bg: #3a321a;
+  --f-money-fg: #f7dc8f;
+  --f-love-bg: #3d2138;
+  --f-love-fg: #ffb8d2;
+  --f-health-bg: #16382f;
+  --f-health-fg: #94e6c6;
+  --f-work-bg: #1b2d55;
+  --f-work-fg: #a8c8ff;
+  --f-warn-bg: #3f1d25;
+  --f-warn-fg: #ffb3bb;
+  --night: #0b1026;
+  --night-2: #151c46;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --page: #0b1026;
+    --surface: #151c3f;
+    --surface-2: #1e2653;
+    --line: #2c3668;
+    --ink: #eceffb;
+    --ink-soft: #b9c0e3;
+    --ink-faint: #99a2cf;
+    --link: #c4bdff;
+    --accent: #f5d67b;
+    --btn: #f5d67b;
+    --btn-hover: #f8e29d;
+    --btn-ink: #1a1640;
+    --focus: #f5d67b;
+    --highlight-ring: #f5d67b;
+    --f-money-bg: #3a321a;
+    --f-money-fg: #f7dc8f;
+    --f-love-bg: #3d2138;
+    --f-love-fg: #ffb8d2;
+    --f-health-bg: #16382f;
+    --f-health-fg: #94e6c6;
+    --f-work-bg: #1b2d55;
+    --f-work-fg: #a8c8ff;
+    --f-warn-bg: #3f1d25;
+    --f-warn-fg: #ffb3bb;
+    --night: #0b1026;
+    --night-2: #151c46;
+  }
+}
+
+/* Tailwind 클래스로 쓰는 이름: bg-page, bg-surface, text-ink, text-ink-soft, border-line … */
+@theme inline {
+  --font-sans: "Pretendard Variable", Pretendard, system-ui, -apple-system, "Apple SD Gothic Neo", "Malgun Gothic",
+    "Noto Sans KR", sans-serif;
+  --color-page: var(--page);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-line: var(--line);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-ink-faint: var(--ink-faint);
+  --color-link: var(--link);
+  --color-accent: var(--accent);
+  --color-btn: var(--btn);
+  --color-btn-hover: var(--btn-hover);
+  --color-btn-ink: var(--btn-ink);
+  --color-night: var(--night);
+  --color-night-2: var(--night-2);
+  --color-night-ink: var(--night-ink);
+  --color-night-soft: var(--night-soft);
+  --color-moon: var(--moon);
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
-  background-color: var(--color-slate-50);
-  color: var(--color-slate-800);
+  background-color: var(--page);
+  color: var(--ink);
   /* 한글이 단어 중간에서 줄바꿈되지 않도록 */
   word-break: keep-all;
   overflow-wrap: break-word;
+}
+
+:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--moon) 45%, transparent);
+}
+
+/* 밤하늘 배경: 남색 그라데이션 + 작은 별 (그림 파일 없이 CSS 로만)
+   별이 글자와 겹치면 문장 부호처럼 보여서, 별은 가장자리에만 둔다. */
+.night-sky {
+  background-color: var(--night);
+  background-image:
+    radial-gradient(1.5px 1.5px at 4% 22%, rgb(255 246 216 / 0.85) 50%, transparent 51%),
+    radial-gradient(1px 1px at 7% 76%, rgb(255 246 216 / 0.7) 50%, transparent 51%),
+    radial-gradient(1px 1px at 2% 52%, rgb(255 246 216 / 0.6) 50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 95% 18%, rgb(255 246 216 / 0.8) 50%, transparent 51%),
+    radial-gradient(2px 2px at 97% 62%, rgb(255 246 216 / 0.75) 50%, transparent 51%),
+    radial-gradient(1px 1px at 91% 90%, rgb(255 246 216 / 0.65) 50%, transparent 51%),
+    radial-gradient(1px 1px at 33% 5%, rgb(255 246 216 / 0.6) 50%, transparent 51%),
+    radial-gradient(1px 1px at 68% 96%, rgb(255 246 216 / 0.6) 50%, transparent 51%),
+    linear-gradient(160deg, var(--night) 0%, var(--night-2) 100%);
+  color: var(--night-ink);
+}
+
+/* 글이 많은 상자용: 별 없이 밤하늘 색만 */
+.night-panel {
+  background-color: var(--night);
+  background-image: linear-gradient(160deg, var(--night) 0%, var(--night-2) 100%);
+  color: var(--night-ink);
+}
+
+/* 긴 글 (사전 본문, 가이드, 약관) */
+.prose-dream p {
+  margin-top: 1rem;
+  line-height: 1.85;
+}
+.prose-dream h2 {
+  margin-top: 2.25rem;
+  margin-bottom: 0.5rem;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--ink);
+}
+.prose-dream h3 {
+  margin-top: 1.5rem;
+  font-weight: 700;
+}
+.prose-dream ul {
+  margin-top: 0.75rem;
+  padding-left: 1.25rem;
+  list-style: disc;
+}
+.prose-dream li {
+  margin-top: 0.35rem;
+  line-height: 1.75;
+}
+.prose-dream a {
+  color: var(--link);
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }

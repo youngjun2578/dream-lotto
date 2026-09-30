@@ -15,7 +15,7 @@ export default function ContactPage() {
     <StaticPage title="문의">
       <p>서비스 이용 중 궁금한 점, 오류 제보, 꿈해몽 사전에 추가했으면 하는 꿈이 있다면 아래 메일로 알려 주세요.</p>
       <p className="text-lg font-semibold">
-        📮 <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>
+        <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>
       </p>
       <h2>보내 주시면 좋은 내용</h2>
       <ul>

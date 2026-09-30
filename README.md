@@ -25,7 +25,7 @@ npm run dev        # 개발 서버 실행 → http://localhost:3000
 | `npm run build` | 배포용 빌드 (사전 페이지 30개를 미리 생성) |
 | `npm start` | 빌드한 결과 실행 |
 | `npm run typecheck` | 타입 검사만 |
-| `npm run keywords` | 꿈 관련 검색 키워드 수집 (네이버 검색광고 API 키 필요, 8장) |
+| `npm run keywords` | 꿈 관련 검색 키워드 수집 (네이버 검색광고 API 키 필요, 9장) |
 
 ### 확인해 볼 화면
 
@@ -50,10 +50,11 @@ app/                        화면(페이지)과 API
   dream/page.tsx            /dream  사전 목록
   dream/[slug]/page.tsx     /dream/돼지 등 사전 상세 (SSG + 메타 태그)
   about, privacy, terms, contact/
+  fonts/pretendard/         사이트 글꼴 (Pretendard 가변 글꼴, 글자 범위별 woff2)
   opengraph-image.tsx       기본 공유 미리보기 이미지 (사전 상세는 dream/[slug]/opengraph-image.tsx)
   sitemap.ts, robots.ts, icon.svg, not-found.tsx
 assets/fonts/               공유 이미지용 한글 글꼴 (Pretendard 서브셋, SIL OFL 1.1)
-components/                 화면 조각 (DreamForm, AdSlot, Disclaimer, LottoBall …)
+components/                 화면 조각 (DreamForm, ResultView, AdSlot, LottoBall, ThemeToggle …)
 data/
   symbols/*.json            꿈 상징 사전 30개 (카테고리별 파일: animal·person·nature·behavior·object)
   actions.json              꿈속 행동 사전 (들어오다, 쫓기다, 먹다 … 63개, 활용형 포함)
@@ -194,15 +195,26 @@ tests/                      Vitest 테스트
 - **비슷한 꿈 링크**: 사전 상세 아래에 "같은 카테고리 꿈"과 "같은 운세(다른 카테고리) 꿈"을 보여 줘 사이트 안에서 이어 읽게 합니다.
 - **sitemap.xml**: 홈·사전 목록·사전 상세·기본 페이지를 `lastmod`(= `lib/site.ts`의 `CONTENT_UPDATED_AT`)와 함께 알립니다. 사전 내용을 크게 고치면 이 날짜를 바꿔 주세요.
 
-## 7. 환경변수
+## 7. 디자인
+
+- **분위기**: 밤하늘(짙은 남색) + 달빛(금색) 포인트. 헤더와 첫 화면은 두 테마 모두 남색 띠이고, 본문은 글 읽기 편한 밝은/어두운 면을 씁니다.
+- **색은 모두 토큰으로**: `app/globals.css`의 `--page`, `--surface`, `--ink` 등. Tailwind에서는 `bg-surface`, `text-ink-soft`, `border-line`처럼 씁니다. 색을 바꿀 땐 이 파일만 고치면 돼요.
+- **라이트/다크**: 기본은 기기 설정을 따릅니다. 헤더의 달/해 버튼으로 바꾸면 그 선택을 기억합니다(`<html data-theme>` + localStorage).
+- **명도 대비 (WCAG AA 4.5:1 이상)**: 글자-배경 조합을 모두 계산해 확인했습니다. 가장 낮은 값은 라이트 4.94(달빛색 강조 글자), 다크 5.78(흐린 글자 on 카드)입니다.
+- **글꼴**: Pretendard(SIL OFL 1.1)를 사이트 안에 포함했습니다(`app/fonts/pretendard`). 글자 범위별로 쪼갠 woff2 92개 중 **페이지에 실제로 나온 글자 조각만** 내려받아 가볍습니다.
+- **로또 공 색**: 1~10 노랑, 11~20 파랑, 21~30 빨강, 31~40 회색, 41~45 초록 (`lib/ballColors.ts`, 화면과 공유 이미지가 같이 씀). 꿈에서 나온 번호는 달빛색 테두리로 구분합니다.
+- **공식 사이트처럼 보이지 않게**: 실제 복권 사업자의 이름·로고·디자인은 쓰지 않고, 로고는 자체 초승달 그림입니다. 푸터에 "비공식 재미 서비스" 문구가 있습니다.
+- **광고 자리 규칙은 그대로**: 결과 번호 아래, 사전 본문 중간/끝 (입력창 옆 X).
+
+## 8. 환경변수
 
 `.env.example`을 복사해 `.env.local`을 만듭니다. 1단계에서는 **아무것도 넣지 않아도 동작**합니다.
 
 - `NEXT_PUBLIC_SITE_URL`: 배포 주소 (sitemap과 메타 태그용)
-- `NAVER_AD_*`: 키워드 수집 스크립트용 (아래 8장). 사이트 실행에는 필요 없습니다.
+- `NAVER_AD_*`: 키워드 수집 스크립트용 (아래 9장). 사이트 실행에는 필요 없습니다.
 - 나머지(`LLM_API_KEY`, Supabase, AdSense)는 2단계용 자리입니다. 실제 값은 `.env.local`이나 Vercel 환경변수에만 넣고, **git에는 절대 올리지 마세요.** (`.env.local`은 `.gitignore`에 들어 있어 git에 올라가지 않습니다.)
 
-## 8. 키워드 수집 스크립트 (`scripts/collect-keywords.ts`)
+## 9. 키워드 수집 스크립트 (`scripts/collect-keywords.ts`)
 
 네이버 검색광고 API의 **키워드 도구**로 "꿈" 관련 연관 키워드와 **월간 검색량(PC/모바일)**을 모읍니다. 어떤 꿈을 사전에 먼저 추가할지 고를 때 씁니다.
 
@@ -241,7 +253,7 @@ npm run keywords -- 고양이꿈 시험꿈   # 씨앗 단어를 직접 지정
 - 띄어쓰기만 다른 키워드("돼지꿈", "돼지 꿈")는 하나로 합칩니다.
 - 실제 API 없이 가짜 응답으로 동작을 검사하는 테스트가 `tests/collect-keywords.test.ts`에 있습니다.
 
-## 9. Vercel 배포 (참고)
+## 10. Vercel 배포 (참고)
 
 1. GitHub 저장소를 Vercel에서 Import합니다. Framework는 Next.js로 자동 인식됩니다.
 2. Environment Variables에 `NEXT_PUBLIC_SITE_URL=https://내도메인`을 추가합니다.
@@ -250,7 +262,7 @@ npm run keywords -- 고양이꿈 시험꿈   # 씨앗 단어를 직접 지정
 
 ---
 
-## 10. 2단계에서 손댈 파일
+## 11. 2단계에서 손댈 파일
 
 | 기능 | 손댈 파일 |
 | --- | --- |

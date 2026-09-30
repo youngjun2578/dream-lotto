@@ -10,18 +10,19 @@ const LINKS = [
 
 export function SiteFooter() {
   return (
-    <footer className="mt-16 border-t border-slate-200 bg-white">
-      <div className="mx-auto max-w-3xl space-y-3 px-4 py-8 text-sm text-slate-500">
-        <nav className="flex flex-wrap gap-x-4 gap-y-1">
+    <footer className="mt-16 border-t border-line bg-surface">
+      <div className="mx-auto max-w-3xl space-y-3 px-4 py-8 text-sm text-ink-soft">
+        <nav aria-label="사이트 정보" className="flex flex-wrap gap-x-4 gap-y-2">
           {LINKS.map((l) => (
-            <Link key={l.href} href={l.href} className="hover:text-violet-700">
+            <Link key={l.href} href={l.href} className="hover:text-link hover:underline">
               {l.label}
             </Link>
           ))}
         </nav>
         <p>{DISCLAIMER}</p>
-        <p>
-          © {new Date().getFullYear()} {SITE_NAME}
+        <p>{SITE_NAME}는 복권 판매·발행 사업자와 관련 없는 비공식 재미 서비스입니다.</p>
+        <p className="text-ink-faint">
+          © {new Date().getFullYear()} {SITE_NAME} · 글꼴 Pretendard (SIL Open Font License 1.1)
         </p>
       </div>
     </footer>
