@@ -1,0 +1,161 @@
+# 해몽 로또번호 추첨기 (dream-lotto)
+
+꿈 내용을 입력하면 **꿈해몽**을 보여 주고, 꿈에 나온 상징을 바탕으로 **로또 번호(1~45 중 6개) 5게임**을 추천하는 재미용 웹사이트입니다.
+
+> 재미로 보는 서비스이며, 추천 번호는 당첨 확률과 무관합니다.
+
+- 기술: Next.js 16 (App Router) · TypeScript · Tailwind CSS 4 · Vitest
+- 1단계(MVP): AI API, 외부 DB, 광고 코드 없이 로컬에서 완전히 동작
+
+---
+
+## 1. 실행 방법
+
+Node.js 20 이상이 필요합니다.
+
+```bash
+npm install        # 처음 한 번: 필요한 패키지 설치
+npm run dev        # 개발 서버 실행 → http://localhost:3000
+```
+
+| 명령어 | 하는 일 |
+| --- | --- |
+| `npm run dev` | 개발 서버 (코드를 고치면 바로 반영) |
+| `npm test` | 테스트 실행 (Vitest) |
+| `npm run build` | 배포용 빌드 (사전 페이지 30개를 미리 생성) |
+| `npm start` | 빌드한 결과 실행 |
+| `npm run typecheck` | 타입 검사만 |
+
+### 확인해 볼 화면
+
+| 주소 | 내용 |
+| --- | --- |
+| http://localhost:3000/ | 꿈 입력 → 해몽 + 번호 5게임, 다시 뽑기, 인기 키워드 |
+| http://localhost:3000/dream | 카테고리별 꿈해몽 사전 목록 |
+| http://localhost:3000/dream/pig | 사전 상세 페이지 예시 (돼지 꿈) |
+| http://localhost:3000/about · /privacy · /terms · /contact | 애드센스 심사용 기본 페이지 (문구는 초안) |
+| http://localhost:3000/sitemap.xml · /robots.txt | 검색엔진용 파일 |
+
+개발 모드(`npm run dev`)에서는 광고가 들어갈 자리가 **점선 상자**로 보입니다. 빌드 결과에서는 빈 칸입니다.
+
+---
+
+## 2. 폴더 구조
+
+```
+app/                        화면(페이지)과 API
+  page.tsx                  /  홈
+  api/interpret/route.ts    POST /api/interpret
+  dream/page.tsx            /dream  사전 목록
+  dream/[slug]/page.tsx     /dream/돼지 등 사전 상세 (SSG + 메타 태그)
+  about, privacy, terms, contact/
+  sitemap.ts, robots.ts, icon.svg, not-found.tsx
+components/                 화면 조각 (DreamForm, AdSlot, Disclaimer, LottoBall …)
+data/symbols.json           꿈 상징 사전 (30개)
+lib/                        핵심 로직 — 화면과 분리되어 있어 테스트하기 쉬움
+  normalize.ts              전처리 (정규화, 500자 제한, 빈 입력 거부)
+  matcher.ts                꿈 문장에서 상징 찾기
+  lotto.ts                  번호 생성 (순수 함수)
+  symbolNumbers.ts          상징 → 행운 숫자 후보 규칙
+  interpret/                해몽 생성기 (Provider)
+  service.ts                전체 흐름 조립
+  symbols.ts, date.ts, site.ts, types.ts
+tests/                      Vitest 테스트
+```
+
+---
+
+## 3. 처리 흐름 (`POST /api/interpret`)
+
+요청: `{ "dream": "꿈 내용", "counter": 0 }` (`counter`는 다시 뽑기 횟수, 생략하면 0)
+
+1. **전처리** `lib/normalize.ts`: 특수문자·이모지 제거, 공백 정리, 영문 소문자화. 빈 입력과 500자 초과는 **400 오류**로 거부합니다(잘라내지 않음).
+2. **상징 매칭** `lib/matcher.ts`: keyword와 synonyms로 찾습니다. 가중치가 높은 순, 같으면 먼저 나온 순으로 **최대 4개**까지 고릅니다.
+   - 겹치면 긴 표현이 우선입니다: "물고기"는 `물고기`로만 잡히고 `물`로는 잡히지 않습니다. "산불"은 `불`로 잡힙니다.
+   - **한 글자 상징**(소·용·물·불·돈·금·집·산·달·뱀·똥)은 앞이 띄어쓰기이고 뒤가 조사나 '꿈'일 때만 인정합니다. 예) "용이", "돈을", "용꿈"은 매칭되고, "내용", "돈가스", "불안"은 매칭되지 않습니다.
+3. **해몽 생성** `lib/interpret/`: `InterpretationProvider` 인터페이스를 쓰고, 지금은 `RuleBasedProvider`로 구현돼 있습니다.
+   - 요약은 첫 상징 meaning의 첫 문장 + "함께 나온 상징 + 전체 운세 흐름" 문장, 이렇게 2문장입니다.
+   - 상징이 0개면 기본 템플릿(무난한 길몽)을 씁니다.
+4. **번호 생성** `lib/lotto.ts`: 아래 규칙대로 만듭니다. **Provider(AI)는 번호에 관여하지 않습니다.**
+5. **응답**
+   ```json
+   {
+     "summary": "…",
+     "symbols": [{ "slug": "pig", "keyword": "돼지", "meaning": "…", "fortune_type": "재물" }],
+     "games": [{ "numbers": [3, 9, 17, 20, 33, 41], "reasons": ["행운 보충", "돼지 꿈 → 재물", "…"] }],
+     "date": "2026-09-30",
+     "counter": 0
+   }
+   ```
+   `reasons[i]`는 `numbers[i]`를 뽑은 이유입니다. `slug`(사전 링크용)와 `date`, `counter`는 화면 표시용으로 추가한 필드입니다.
+
+---
+
+## 4. 번호 생성 규칙 (`lib/lotto.ts`)
+
+- **seed** = `SHA-256("정규화된 꿈|YYYY-MM-DD")`의 앞 4바이트 (날짜는 Asia/Seoul 기준)
+- **PRNG** = mulberry32 (`Math.random`은 쓰지 않음, 테스트로 확인)
+- **다시 뽑기**: seed에 counter를 더합니다 (`seed + counter`)
+- 한 번에 **5게임**을 만들고, 5게임 모두 같은 PRNG를 이어서 씁니다.
+- 게임 1개를 만드는 순서:
+  1. 매칭된 상징들의 `numbers`에 `weight`를 더해 점수표를 만듭니다. 여러 상징이 같은 숫자를 가지면 점수를 합칩니다.
+  2. 점수표에서 가중 랜덤으로 **2~3개**를 뽑아 "꿈 번호"로 정합니다. 개수도 PRNG로 정하고, 이유는 `돼지 꿈 → 재물`처럼 붙습니다.
+  3. 나머지는 아직 안 뽑힌 1~45에서 균등 랜덤으로 채우고, 이유는 `행운 보충`입니다.
+  4. 중복 없는 6개를 오름차순으로 정렬합니다.
+- 상징이 0개면 6개 모두 균등 랜덤입니다.
+- **같은 날 같은 꿈이면 항상 같은 결과**가 나옵니다. "돼지 꿈!!"과 "돼지   꿈"처럼 표기만 다른 입력도 같은 결과입니다.
+
+---
+
+## 5. 숫자 후보 규칙 (`data/symbols.json`의 `numbers`)
+
+모든 상징의 `numbers`는 아래 규칙 하나로 계산합니다. 코드는 `lib/symbolNumbers.ts`에 있습니다.
+
+1. 카테고리마다 숫자 구간이 정해져 있습니다.
+
+   | 동물 | 사람 | 자연 | 행동 | 물건 |
+   | --- | --- | --- | --- | --- |
+   | 1–9 | 10–18 | 19–27 | 28–36 | 37–45 |
+
+2. **대표 숫자** = 구간 시작 + (키워드 글자들의 유니코드 값 합 ÷ 9의 나머지). 띄어쓰기는 빼고 계산합니다.
+3. 대표 숫자에서 시작해 **17씩 더해** 가며 숫자를 만듭니다. 45를 넘으면 45를 빼서 1~45 안으로 돌립니다. 17은 45와 서로소라서 5개까지 절대 겹치지 않습니다.
+4. 개수 = **weight + 2** (weight 1 → 3개, 2 → 4개, 3 → 5개). 저장할 때는 오름차순으로 정렬합니다.
+
+**예) 돼지 (동물, weight 3)**
+'돼'(46076) + '지'(51648) = 97724이고, 97724 ÷ 9의 나머지는 2입니다. 대표 숫자는 1 + 2 = **3**이고, 17씩 더하면 3 → 20 → 37 → 54−45 = 9 → 26입니다. 정렬하면 **[3, 9, 20, 26, 37]**입니다.
+
+`tests/symbols.test.ts`가 모든 상징이 이 규칙을 지키는지 검사합니다.
+
+### 상징을 새로 추가하려면
+
+1. `data/symbols.json`에 항목을 추가합니다. `numbers`는 일단 `[]`로 둡니다.
+2. `npm test`를 실행하면 실패 메시지에 `○○ 의 numbers 는 [..] 이어야 합니다`라고 정답 숫자가 나옵니다. 그 숫자를 그대로 복사해 넣으세요.
+3. 다시 `npm test` → 통과하면 끝입니다. `npm run build` 때 사전 페이지가 자동으로 생깁니다.
+
+필드 규칙: `slug`(영문 소문자·숫자·-, 중복 불가), `keyword`, `synonyms[]`, `category`(동물/사람/자연/행동/물건), `meaning`(2~3문장), `fortune_type`(재물/연애/건강/직장/주의), `numbers[]`(3~5개, 1~45), `weight`(1~3), `body`(300자 이상, 문단은 빈 줄로 구분).
+
+---
+
+## 6. 환경변수
+
+`.env.example`을 복사해 `.env.local`을 만듭니다. 1단계에서는 **아무것도 넣지 않아도 동작**합니다.
+
+- `NEXT_PUBLIC_SITE_URL`: 배포 주소 (sitemap과 메타 태그용)
+- 나머지(`LLM_API_KEY`, Supabase, AdSense)는 2단계용 자리입니다. 실제 값은 `.env.local`이나 Vercel 환경변수에만 넣고, **git에는 절대 올리지 마세요.**
+
+## 7. Vercel 배포 (참고)
+
+1. GitHub 저장소를 Vercel에서 Import합니다. Framework는 Next.js로 자동 인식됩니다.
+2. Environment Variables에 `NEXT_PUBLIC_SITE_URL=https://내도메인`을 추가합니다.
+3. Deploy. 별도 설정 파일(`vercel.json`)은 필요 없습니다.
+
+---
+
+## 8. 2단계에서 손댈 파일
+
+| 기능 | 손댈 파일 |
+| --- | --- |
+| **AI 해몽** | `lib/interpret/llm.ts` 새로 만들기 (`InterpretationProvider` 구현), `lib/interpret/index.ts`에서 `LLM_API_KEY`가 있으면 LlmProvider를 돌려주도록 변경. 실패하면 RuleBasedProvider로 대체. **번호는 계속 `lib/lotto.ts`가 생성** |
+| **Supabase** | `lib/symbols.ts`의 함수 내용만 DB 조회로 교체 (함수 이름 유지). 저장이 생기면 `app/privacy/page.tsx` 수정 |
+| **공유 링크** | `app/r/[id]/page.tsx` 새 페이지, `app/api/interpret/route.ts`에 결과 저장, `components/DreamForm.tsx`에 공유 버튼 |
+| **애드센스** | `components/AdSlot.tsx`에만 광고 코드 넣기, `app/layout.tsx`에 AdSense 스크립트, `public/ads.txt` 추가, `lib/site.ts`의 `CONTACT_EMAIL` 실제 주소로 변경 |
