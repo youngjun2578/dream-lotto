@@ -205,3 +205,45 @@ body {
   text-decoration: underline;
   text-underline-offset: 3px;
 }
+
+/* ───────── 결과 연출 (작업 6) ─────────
+   공이 하나씩 굴러 나온다: i번째 공은 i × 0.2초 뒤에 0.55초 동안 → 게임 하나가 약 1.55초 (2초 이내)
+   게임끼리는 0.09초씩만 어긋나게 시작한다. (--g: 게임 순서, --i: 공 순서) */
+@keyframes ball-roll-in {
+  0% {
+    transform: translateX(-2.25rem) rotate(-320deg);
+    opacity: 0;
+  }
+  60% {
+    opacity: 1;
+  }
+  100% {
+    transform: none;
+    opacity: 1;
+  }
+}
+@keyframes tag-rise {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.ball-roll {
+  animation: ball-roll-in 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: calc(var(--g, 0) * 90ms + var(--i, 0) * 200ms);
+}
+.tag-rise {
+  animation: tag-rise 0.35s ease-out both;
+  animation-delay: calc(var(--g, 0) * 90ms + 1.15s);
+}
+/* 움직임 줄이기 설정을 켠 사용자에게는 애니메이션 없이 바로 보여 준다. */
+@media (prefers-reduced-motion: reduce) {
+  .ball-roll,
+  .tag-rise {
+    animation: none;
+  }
+}

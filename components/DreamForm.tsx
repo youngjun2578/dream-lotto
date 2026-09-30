@@ -83,6 +83,8 @@ export function DreamForm() {
       {result && (
         <section aria-live="polite" aria-label="해몽 결과" className="mt-10">
           <ResultView
+            // 다시 뽑기마다 새로 그려서 공 애니메이션이 처음부터 다시 나오게 한다.
+            key={`${result.date}-${result.counter}`}
             result={result}
             numberActions={
               <button

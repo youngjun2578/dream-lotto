@@ -2,11 +2,11 @@
 
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { FILL_REASON, type LottoGame, type SituationReading, type SymbolReading } from "@/lib/types";
+import type { LottoGame, SituationReading, SymbolReading } from "@/lib/types";
 import { AdSlot } from "./AdSlot";
 import { Disclaimer } from "./Disclaimer";
 import { FortuneBadge } from "./FortuneBadge";
-import { LottoBall } from "./LottoBall";
+import { GameList } from "./GameList";
 
 export interface ResultData {
   summary: string;
@@ -16,8 +16,6 @@ export interface ResultData {
   date: string;
   counter: number;
 }
-
-const GAME_LABELS = ["A", "B", "C", "D", "E"];
 
 export function ResultView({
   result,
@@ -80,33 +78,8 @@ export function ResultView({
           </div>
           {numberActions}
         </div>
-        <ol className="space-y-3">
-          {result.games.map((game, i) => {
-            const dreamPicks = game.numbers
-              .map((n, j) => ({ n, reason: game.reasons[j] }))
-              .filter((p) => p.reason !== FILL_REASON);
-            return (
-              <li key={i} className="rounded-2xl border border-line bg-surface p-4">
-                <div className="flex items-center gap-2 sm:gap-3">
-                  <span className="w-5 text-sm font-bold text-ink-faint" aria-label={`${GAME_LABELS[i]} 게임`}>
-                    {GAME_LABELS[i]}
-                  </span>
-                  <div className="flex flex-wrap gap-1.5 sm:gap-2">
-                    {game.numbers.map((n, j) => (
-                      <LottoBall key={n} n={n} size="sm" highlight={game.reasons[j] !== FILL_REASON} />
-                    ))}
-                  </div>
-                </div>
-                <p className="mt-2 pl-7 text-xs leading-5 text-ink-soft">
-                  {dreamPicks.length > 0
-                    ? dreamPicks.map((p) => `${p.n}: ${p.reason}`).join(" · ") + ` · 나머지: ${FILL_REASON}`
-                    : `모든 번호: ${FILL_REASON}`}
-                </p>
-              </li>
-            );
-          })}
-        </ol>
-        <p className="mt-2 text-xs text-ink-faint">달빛 테두리가 있는 공이 꿈 상징에서 나온 번호예요.</p>
+        <GameList games={result.games} />
+        <p className="mt-2 text-xs text-ink-faint">달빛 테두리가 있는 공이 꿈 상징에서 나온 번호이고, 태그는 그 이유예요.</p>
         {afterNumbers}
       </section>
 
