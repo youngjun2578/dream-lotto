@@ -2,6 +2,7 @@
 // 공유 결과 페이지(/r/…)는 사람마다 다른 결과라 넣지 않는다.
 
 import type { MetadataRoute } from "next";
+import { getAllGuides } from "@/lib/guides";
 import { absoluteUrl, CONTENT_UPDATED_AT } from "@/lib/site";
 import { getAllSymbols } from "@/lib/symbols";
 
@@ -15,6 +16,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified,
       changeFrequency: "monthly" as const,
       priority: 0.8,
+    })),
+    { url: absoluteUrl("/guide"), lastModified, changeFrequency: "monthly", priority: 0.7 },
+    ...getAllGuides().map((g) => ({
+      url: absoluteUrl(`/guide/${g.slug}`),
+      lastModified,
+      changeFrequency: "monthly" as const,
+      priority: 0.7,
     })),
     ...["/about", "/privacy", "/terms", "/contact"].map((path) => ({
       url: absoluteUrl(path),

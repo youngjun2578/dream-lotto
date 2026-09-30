@@ -8,6 +8,7 @@ import { Disclaimer } from "@/components/Disclaimer";
 import { FortuneBadge } from "@/components/FortuneBadge";
 import { JsonLd } from "@/components/JsonLd";
 import { LottoBall } from "@/components/LottoBall";
+import { getGuidesForSymbol } from "@/lib/guides";
 import { breadcrumbJsonLd, dreamArticleJsonLd, dreamPageTitle, pageMetadata } from "@/lib/seo";
 import { getAllSymbols, getRelatedSymbols, getSymbolBySlug } from "@/lib/symbols";
 import type { DreamSymbol } from "@/lib/types";
@@ -62,6 +63,7 @@ export default async function DreamSymbolPage({ params }: Props) {
   const paragraphs = symbol.body.split(/\n{2,}/);
   const middle = Math.ceil(paragraphs.length / 2);
   const related = getRelatedSymbols(symbol);
+  const guides = getGuidesForSymbol(symbol.slug);
 
   return (
     <article>
@@ -159,6 +161,23 @@ export default async function DreamSymbolPage({ params }: Props) {
         <RelatedList title={`같은 ${symbol.category} 꿈`} symbols={related.sameCategory} />
         <RelatedList title={`같은 ${symbol.fortune_type}운 꿈`} symbols={related.sameFortune} />
       </section>
+
+      {guides.length > 0 && (
+        <section className="mt-10" aria-labelledby="guides-heading">
+          <h2 id="guides-heading" className="mb-3 text-xl font-bold">
+            함께 읽으면 좋은 글
+          </h2>
+          <ul className="space-y-2">
+            {guides.map((g) => (
+              <li key={g.slug}>
+                <Link href={`/guide/${g.slug}`} className="font-semibold text-link hover:underline">
+                  {g.title}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       <AdSlot name="dictionary-bottom" />
       <Disclaimer />

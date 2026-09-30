@@ -25,7 +25,7 @@ npm run dev        # 개발 서버 실행 → http://localhost:3000
 | `npm run build` | 배포용 빌드 (사전 페이지 30개를 미리 생성) |
 | `npm start` | 빌드한 결과 실행 |
 | `npm run typecheck` | 타입 검사만 |
-| `npm run keywords` | 꿈 관련 검색 키워드 수집 (네이버 검색광고 API 키 필요, 11장) |
+| `npm run keywords` | 꿈 관련 검색 키워드 수집 (네이버 검색광고 API 키 필요, 12장) |
 
 ### 확인해 볼 화면
 
@@ -33,7 +33,8 @@ npm run dev        # 개발 서버 실행 → http://localhost:3000
 | --- | --- |
 | http://localhost:3000/ | 꿈 입력 → 해몽 + 번호 5게임, 다시 뽑기, 인기 키워드 |
 | http://localhost:3000/dream | 카테고리별 꿈해몽 사전 목록 |
-| http://localhost:3000/dream/pig | 사전 상세 페이지 예시 (돼지 꿈) |
+| http://localhost:3000/dream/pig | 사전 상세 페이지 예시 (돼지 꿈) + 상황별 풀이 |
+| http://localhost:3000/guide | 꿈 가이드 칼럼 5편 |
 | http://localhost:3000/about · /privacy · /terms · /contact | 애드센스 심사용 기본 페이지 (문구는 초안) |
 | http://localhost:3000/sitemap.xml · /robots.txt | 검색엔진용 파일 |
 
@@ -50,6 +51,7 @@ app/                        화면(페이지)과 API
   dream/page.tsx            /dream  사전 목록
   dream/[slug]/page.tsx     /dream/돼지 등 사전 상세 (SSG + 메타 태그)
   r/[payload]/page.tsx      공유 링크 결과 페이지 (+ 공유 미리보기 이미지)
+  guide/, guide/[slug]/     꿈 가이드 목록과 칼럼 (SSG + 공유 이미지)
   about, privacy, terms, contact/
   fonts/pretendard/         사이트 글꼴 (Pretendard 가변 글꼴, 글자 범위별 woff2)
   opengraph-image.tsx       기본 공유 미리보기 이미지 (사전 상세는 dream/[slug]/opengraph-image.tsx)
@@ -59,6 +61,7 @@ components/                 화면 조각 (DreamForm, ResultView, AdSlot, LottoB
 data/
   symbols/*.json            꿈 상징 사전 30개 (카테고리별 파일: animal·person·nature·behavior·object)
   actions.json              꿈속 행동 사전 (들어오다, 쫓기다, 먹다 … 63개, 활용형 포함)
+  guides.json               꿈 가이드 칼럼 5편
 lib/                        핵심 로직 — 화면과 분리되어 있어 테스트하기 쉬움
   normalize.ts              전처리 (정규화, 500자 제한, 빈 입력 거부)
   matcher.ts                꿈 문장에서 상징 + 행동 찾기 → 상황 풀이 선택
@@ -210,16 +213,23 @@ tests/                      Vitest 테스트
 - 공유 미리보기 이미지는 `next/og`로 요청이 올 때 만듭니다(해몽 요약 + A게임 번호).
 - 테스트: `tests/share.test.ts` (인코딩/디코딩, 잘못된 값 21가지, 원문 미포함, **공유 결과 = 원래 결과**)
 
-## 8. SEO (검색·공유)
+## 8. 꿈 가이드 칼럼 (`/guide`)
+
+- 5편: 길몽과 흉몽 구분법 · 태몽의 종류 · 반복되는 꿈 · 꿈을 잘 기억하는 법 · 재물운 꿈 모음 (`data/guides.json`)
+- 본문의 `[돼지 꿈](/dream/pig)` 표시는 사이트 안 링크로 바뀝니다(`components/RichText.tsx`). 사전 상세 페이지에는 그 상징을 다루는 가이드가 "함께 읽으면 좋은 글"로 자동으로 붙어요.
+- `tests/guides.test.ts`가 **본문 1,500자 이상**(소제목 제외, 띄어쓰기 포함), 사전 링크 3개 이상, **없는 페이지로 가는 링크 없음**을 검사합니다. 새 글을 추가할 때도 같은 기준이 적용돼요.
+- 광고 자리는 사전 본문과 같은 방식으로 본문 중간과 끝에 있습니다.
+
+## 9. SEO (검색·공유)
 
 - **페이지별 메타 태그**: `lib/seo.ts`의 `pageMetadata()`로 제목·설명·대표 주소(canonical)·공유 미리보기(OG, 트위터 카드)를 한 번에 채웁니다.
 - **공유 미리보기 이미지**: `next/og`로 **빌드할 때 PNG를 미리 만듭니다**. 사전 상세 30개는 제목·대표 풀이·행운 숫자가 들어간 각자의 이미지를, 나머지 페이지는 사이트 기본 이미지를 씁니다.
   - 한글이 나오도록 `assets/fonts`의 Pretendard 서브셋(자주 쓰는 한글 2,350자)을 씁니다. 새 글을 추가했을 때 서브셋에 없는 글자가 있으면 `tests/seo.test.ts`가 알려 줍니다.
-- **구조화 데이터(JSON-LD)**: 홈 `WebSite`, 사전 목록 `CollectionPage`+`ItemList`, 사전 상세 `Article`+`BreadcrumbList`. [리치 결과 테스트](https://search.google.com/test/rich-results)로 확인할 수 있어요.
+- **구조화 데이터(JSON-LD)**: 홈 `WebSite`, 사전 목록 `CollectionPage`+`ItemList`, 사전 상세·가이드 `Article`+`BreadcrumbList`. [리치 결과 테스트](https://search.google.com/test/rich-results)로 확인할 수 있어요.
 - **비슷한 꿈 링크**: 사전 상세 아래에 "같은 카테고리 꿈"과 "같은 운세(다른 카테고리) 꿈"을 보여 줘 사이트 안에서 이어 읽게 합니다.
-- **sitemap.xml**: 홈·사전 목록·사전 상세·기본 페이지를 `lastmod`(= `lib/site.ts`의 `CONTENT_UPDATED_AT`)와 함께 알립니다. 사전 내용을 크게 고치면 이 날짜를 바꿔 주세요.
+- **sitemap.xml**: 홈·사전 목록·사전 상세·가이드·기본 페이지를 `lastmod`(= `lib/site.ts`의 `CONTENT_UPDATED_AT`)와 함께 알립니다. 사전 내용을 크게 고치면 이 날짜를 바꿔 주세요.
 
-## 9. 디자인
+## 10. 디자인
 
 - **분위기**: 밤하늘(짙은 남색) + 달빛(금색) 포인트. 헤더와 첫 화면은 두 테마 모두 남색 띠이고, 본문은 글 읽기 편한 밝은/어두운 면을 씁니다.
 - **색은 모두 토큰으로**: `app/globals.css`의 `--page`, `--surface`, `--ink` 등. Tailwind에서는 `bg-surface`, `text-ink-soft`, `border-line`처럼 씁니다. 색을 바꿀 땐 이 파일만 고치면 돼요.
@@ -232,15 +242,15 @@ tests/                      Vitest 테스트
 - **이유 태그**: 꿈 번호에는 `돼지 → 재물`처럼 운세 색 태그가 붙습니다. (`lib/reasonTag.ts`가 `lotto.ts`의 이유 문장을 화면용으로만 다듬고, 번호 규칙은 건드리지 않아요)
 - **광고 자리 규칙은 그대로**: 결과 번호 아래, 사전 본문 중간/끝 (입력창 옆 X).
 
-## 10. 환경변수
+## 11. 환경변수
 
 `.env.example`을 복사해 `.env.local`을 만듭니다. 1단계에서는 **아무것도 넣지 않아도 동작**합니다.
 
 - `NEXT_PUBLIC_SITE_URL`: 배포 주소 (sitemap과 메타 태그용)
-- `NAVER_AD_*`: 키워드 수집 스크립트용 (아래 11장). 사이트 실행에는 필요 없습니다.
+- `NAVER_AD_*`: 키워드 수집 스크립트용 (아래 12장). 사이트 실행에는 필요 없습니다.
 - 나머지(`LLM_API_KEY`, Supabase, AdSense)는 2단계용 자리입니다. 실제 값은 `.env.local`이나 Vercel 환경변수에만 넣고, **git에는 절대 올리지 마세요.** (`.env.local`은 `.gitignore`에 들어 있어 git에 올라가지 않습니다.)
 
-## 11. 키워드 수집 스크립트 (`scripts/collect-keywords.ts`)
+## 12. 키워드 수집 스크립트 (`scripts/collect-keywords.ts`)
 
 네이버 검색광고 API의 **키워드 도구**로 "꿈" 관련 연관 키워드와 **월간 검색량(PC/모바일)**을 모읍니다. 어떤 꿈을 사전에 먼저 추가할지 고를 때 씁니다.
 
@@ -279,7 +289,7 @@ npm run keywords -- 고양이꿈 시험꿈   # 씨앗 단어를 직접 지정
 - 띄어쓰기만 다른 키워드("돼지꿈", "돼지 꿈")는 하나로 합칩니다.
 - 실제 API 없이 가짜 응답으로 동작을 검사하는 테스트가 `tests/collect-keywords.test.ts`에 있습니다.
 
-## 12. Vercel 배포 (참고)
+## 13. Vercel 배포 (참고)
 
 1. GitHub 저장소를 Vercel에서 Import합니다. Framework는 Next.js로 자동 인식됩니다.
 2. Environment Variables에 `NEXT_PUBLIC_SITE_URL=https://내도메인`을 추가합니다.
@@ -288,7 +298,7 @@ npm run keywords -- 고양이꿈 시험꿈   # 씨앗 단어를 직접 지정
 
 ---
 
-## 13. 2단계에서 손댈 파일
+## 14. 2단계에서 손댈 파일
 
 | 기능 | 손댈 파일 |
 | --- | --- |

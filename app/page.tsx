@@ -3,6 +3,7 @@ import Link from "next/link";
 import { DreamForm } from "@/components/DreamForm";
 import { JsonLd } from "@/components/JsonLd";
 import { getAllActions } from "@/lib/actions";
+import { getAllGuides } from "@/lib/guides";
 import { websiteJsonLd } from "@/lib/seo";
 import { buildVocabulary } from "@/lib/suggest";
 import { getAllSymbols, getPopularSymbols } from "@/lib/symbols";
@@ -49,6 +50,22 @@ export default function HomePage() {
         <Link href="/dream" className="mt-4 inline-block text-sm font-semibold text-link hover:underline">
           꿈해몽 사전 전체 보기 →
         </Link>
+      </section>
+
+      <section className="mt-12" aria-labelledby="guide-heading">
+        <h2 id="guide-heading" className="mb-3 text-lg font-bold">
+          꿈 가이드
+        </h2>
+        <ul className="grid gap-3 sm:grid-cols-2">
+          {getAllGuides().map((g) => (
+            <li key={g.slug}>
+              <Link href={`/guide/${g.slug}`} className="block h-full rounded-2xl border border-line bg-surface p-4 hover:border-link">
+                <strong className="text-ink">{g.title}</strong>
+                <p className="mt-1 line-clamp-2 text-sm leading-6 text-ink-soft">{g.description}</p>
+              </Link>
+            </li>
+          ))}
+        </ul>
       </section>
     </>
   );
