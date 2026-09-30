@@ -25,6 +25,7 @@ npm run dev        # 개발 서버 실행 → http://localhost:3000
 | `npm run build` | 배포용 빌드 (사전 페이지 30개를 미리 생성) |
 | `npm start` | 빌드한 결과 실행 |
 | `npm run typecheck` | 타입 검사만 |
+| `npm run keywords` | 꿈 관련 검색 키워드 수집 (네이버 검색광고 API 키 필요, 7장) |
 
 ### 확인해 볼 화면
 
@@ -61,6 +62,7 @@ lib/                        핵심 로직 — 화면과 분리되어 있어 테�
   symbolNumbers.ts          상징 → 행운 숫자 후보 규칙
   interpret/                해몽 생성기 (Provider)
   service.ts                전체 흐름 조립
+scripts/collect-keywords.ts 네이버 검색광고 키워드 수집 (npm run keywords)
   symbols.ts, actions.ts    사전 데이터 불러오기 + 유효성 검사
   date.ts, site.ts, types.ts
 tests/                      Vitest 테스트
@@ -184,9 +186,49 @@ tests/                      Vitest 테스트
 `.env.example`을 복사해 `.env.local`을 만듭니다. 1단계에서는 **아무것도 넣지 않아도 동작**합니다.
 
 - `NEXT_PUBLIC_SITE_URL`: 배포 주소 (sitemap과 메타 태그용)
-- 나머지(`LLM_API_KEY`, Supabase, AdSense)는 2단계용 자리입니다. 실제 값은 `.env.local`이나 Vercel 환경변수에만 넣고, **git에는 절대 올리지 마세요.**
+- `NAVER_AD_*`: 키워드 수집 스크립트용 (아래 7장). 사이트 실행에는 필요 없습니다.
+- 나머지(`LLM_API_KEY`, Supabase, AdSense)는 2단계용 자리입니다. 실제 값은 `.env.local`이나 Vercel 환경변수에만 넣고, **git에는 절대 올리지 마세요.** (`.env.local`은 `.gitignore`에 들어 있어 git에 올라가지 않습니다.)
 
-## 7. Vercel 배포 (참고)
+## 7. 키워드 수집 스크립트 (`scripts/collect-keywords.ts`)
+
+네이버 검색광고 API의 **키워드 도구**로 "꿈" 관련 연관 키워드와 **월간 검색량(PC/모바일)**을 모읍니다. 어떤 꿈을 사전에 먼저 추가할지 고를 때 씁니다.
+
+### API 키 발급 (처음 한 번)
+
+1. [네이버 검색광고](https://searchad.naver.com)에 가입하고 로그인합니다. 광고를 집행하지 않아도 가입할 수 있어요.
+2. 광고시스템 → **도구** → **API 사용 관리**로 갑니다. (메뉴 이름은 바뀔 수 있어요.)
+3. "네이버 검색광고 API 서비스 신청" 후 **액세스라이선스**와 **비밀키**를 발급받고, 같은 화면의 **CUSTOMER_ID**를 확인합니다.
+4. `.env.local`에 넣습니다. (없으면 `cp .env.example .env.local`로 만든 뒤 채우기)
+   ```
+   NAVER_AD_API_KEY=발급받은_액세스라이선스
+   NAVER_AD_SECRET_KEY=발급받은_비밀키
+   NAVER_AD_CUSTOMER_ID=숫자로된_CUSTOMER_ID
+   ```
+
+### 실행
+
+```bash
+npm run keywords                  # 기본 씨앗 단어: 꿈해몽·꿈풀이·로또꿈·태몽·길몽 + 사전 상징마다 "○○꿈"
+npm run keywords -- 고양이꿈 시험꿈   # 씨앗 단어를 직접 지정
+```
+
+결과는 `data/keywords.csv`에 저장됩니다.
+
+| 열 | 뜻 |
+| --- | --- |
+| `keyword` | 연관 키워드 ("꿈"이 들어간 것만) |
+| `pc`, `mobile` | 월간 검색량. 네이버가 `< 10`으로 주는 값은 `<10`으로 적고 합계에는 0으로 셉니다 |
+| `total` | pc + mobile (이 값이 큰 순서로 정렬) |
+| `in_dictionary` | 이미 사전에 있는 상징이면 `Y` |
+| `symbols` | 해당 상징 slug (예: `pig`) |
+| `seeds` | 이 키워드를 돌려준 씨앗 단어 |
+
+- 씨앗 단어는 **5개씩 묶어** 요청하고(API 제한), 요청 사이에 **1초** 쉽니다. `NAVER_AD_INTERVAL_MS`로 바꿀 수 있어요.
+- 너무 잦은 요청(429)이나 서버 오류(5xx), 네트워크 오류는 1초 → 2초 → 4초 기다리며 최대 3번 다시 시도합니다. 키가 틀리면(401/403) 바로 멈추고 알려 줍니다.
+- 띄어쓰기만 다른 키워드("돼지꿈", "돼지 꿈")는 하나로 합칩니다.
+- 실제 API 없이 가짜 응답으로 동작을 검사하는 테스트가 `tests/collect-keywords.test.ts`에 있습니다.
+
+## 8. Vercel 배포 (참고)
 
 1. GitHub 저장소를 Vercel에서 Import합니다. Framework는 Next.js로 자동 인식됩니다.
 2. Environment Variables에 `NEXT_PUBLIC_SITE_URL=https://내도메인`을 추가합니다.
@@ -194,7 +236,7 @@ tests/                      Vitest 테스트
 
 ---
 
-## 8. 2단계에서 손댈 파일
+## 9. 2단계에서 손댈 파일
 
 | 기능 | 손댈 파일 |
 | --- | --- |
