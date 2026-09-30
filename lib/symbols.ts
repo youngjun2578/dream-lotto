@@ -40,6 +40,18 @@ export function getSymbolsByCategory(category: Category): DreamSymbol[] {
   return SYMBOLS.filter((s) => s.category === category);
 }
 
+/**
+ * "비슷한 꿈" 링크: 같은 카테고리의 다른 상징, 그리고 다른 카테고리 중 같은 운세 유형인 상징.
+ * (두 목록에 같은 상징이 겹치지 않는다)
+ */
+export function getRelatedSymbols(symbol: DreamSymbol): { sameCategory: DreamSymbol[]; sameFortune: DreamSymbol[] } {
+  const others = SYMBOLS.filter((s) => s.slug !== symbol.slug);
+  return {
+    sameCategory: others.filter((s) => s.category === symbol.category),
+    sameFortune: others.filter((s) => s.category !== symbol.category && s.fortune_type === symbol.fortune_type),
+  };
+}
+
 /** 홈 화면 "인기 꿈 키워드"에 보여줄 상징 (가중치 3인 대표 길몽 + 자주 찾는 꿈) */
 export function getPopularSymbols(): DreamSymbol[] {
   const extra = ["teeth", "snake", "ex-lover", "chased"];

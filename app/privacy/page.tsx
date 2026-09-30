@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
 import { StaticPage } from "@/components/StaticPage";
+import { pageMetadata } from "@/lib/seo";
 import { CONTACT_EMAIL, SITE_NAME } from "@/lib/site";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "개인정보처리방침",
   description: `${SITE_NAME} 개인정보처리방침`,
-};
+  path: "/privacy",
+});
 
 // 초안: 실제 서비스 운영 방식(DB 저장, 광고, 분석 도구 등)이 바뀌면 반드시 함께 수정해 주세요.
 export default function PrivacyPage() {

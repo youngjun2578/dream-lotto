@@ -1,18 +1,29 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { FortuneBadge } from "@/components/FortuneBadge";
-import { getSymbolsByCategory } from "@/lib/symbols";
+import { JsonLd } from "@/components/JsonLd";
+import { breadcrumbJsonLd, dreamListJsonLd, pageMetadata } from "@/lib/seo";
+import { getAllSymbols, getSymbolsByCategory } from "@/lib/symbols";
 import { CATEGORIES } from "@/lib/types";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "꿈해몽 사전 – 카테고리별 꿈 상징 모음",
-  description: "동물, 사람, 자연, 행동, 물건별로 자주 꾸는 꿈의 의미와 해몽을 정리한 꿈해몽 사전이에요.",
-  alternates: { canonical: "/dream" },
-};
+  description: "동물, 사람, 자연, 행동, 물건별로 자주 꾸는 꿈의 의미와 상황별 해몽을 정리한 꿈해몽 사전이에요.",
+  path: "/dream",
+});
 
 export default function DreamIndexPage() {
   return (
     <>
+      <JsonLd
+        data={[
+          dreamListJsonLd(getAllSymbols()),
+          breadcrumbJsonLd([
+            { name: "홈", path: "/" },
+            { name: "꿈해몽 사전", path: "/dream" },
+          ]),
+        ]}
+      />
       <h1 className="text-2xl font-bold">꿈해몽 사전</h1>
       <p className="mt-2 text-slate-600">자주 꾸는 꿈 상징을 카테고리별로 모았어요. 궁금한 꿈을 눌러 자세한 풀이를 확인해 보세요.</p>
 

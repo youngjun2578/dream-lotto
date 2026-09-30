@@ -25,7 +25,7 @@ npm run dev        # 개발 서버 실행 → http://localhost:3000
 | `npm run build` | 배포용 빌드 (사전 페이지 30개를 미리 생성) |
 | `npm start` | 빌드한 결과 실행 |
 | `npm run typecheck` | 타입 검사만 |
-| `npm run keywords` | 꿈 관련 검색 키워드 수집 (네이버 검색광고 API 키 필요, 7장) |
+| `npm run keywords` | 꿈 관련 검색 키워드 수집 (네이버 검색광고 API 키 필요, 8장) |
 
 ### 확인해 볼 화면
 
@@ -50,7 +50,9 @@ app/                        화면(페이지)과 API
   dream/page.tsx            /dream  사전 목록
   dream/[slug]/page.tsx     /dream/돼지 등 사전 상세 (SSG + 메타 태그)
   about, privacy, terms, contact/
+  opengraph-image.tsx       기본 공유 미리보기 이미지 (사전 상세는 dream/[slug]/opengraph-image.tsx)
   sitemap.ts, robots.ts, icon.svg, not-found.tsx
+assets/fonts/               공유 이미지용 한글 글꼴 (Pretendard 서브셋, SIL OFL 1.1)
 components/                 화면 조각 (DreamForm, AdSlot, Disclaimer, LottoBall …)
 data/
   symbols/*.json            꿈 상징 사전 30개 (카테고리별 파일: animal·person·nature·behavior·object)
@@ -64,6 +66,8 @@ lib/                        핵심 로직 — 화면과 분리되어 있어 테�
   service.ts                전체 흐름 조립
 scripts/collect-keywords.ts 네이버 검색광고 키워드 수집 (npm run keywords)
   symbols.ts, actions.ts    사전 데이터 불러오기 + 유효성 검사
+  seo.ts                    페이지 메타데이터 + 구조화 데이터(JSON-LD)
+  og.tsx                    공유 미리보기 이미지(1200×630) 공통 틀
   date.ts, site.ts, types.ts
 tests/                      Vitest 테스트
 ```
@@ -181,15 +185,24 @@ tests/                      Vitest 테스트
 
 ---
 
-## 6. 환경변수
+## 6. SEO (검색·공유)
+
+- **페이지별 메타 태그**: `lib/seo.ts`의 `pageMetadata()`로 제목·설명·대표 주소(canonical)·공유 미리보기(OG, 트위터 카드)를 한 번에 채웁니다.
+- **공유 미리보기 이미지**: `next/og`로 **빌드할 때 PNG를 미리 만듭니다**. 사전 상세 30개는 제목·대표 풀이·행운 숫자가 들어간 각자의 이미지를, 나머지 페이지는 사이트 기본 이미지를 씁니다.
+  - 한글이 나오도록 `assets/fonts`의 Pretendard 서브셋(자주 쓰는 한글 2,350자)을 씁니다. 새 글을 추가했을 때 서브셋에 없는 글자가 있으면 `tests/seo.test.ts`가 알려 줍니다.
+- **구조화 데이터(JSON-LD)**: 홈 `WebSite`, 사전 목록 `CollectionPage`+`ItemList`, 사전 상세 `Article`+`BreadcrumbList`. [리치 결과 테스트](https://search.google.com/test/rich-results)로 확인할 수 있어요.
+- **비슷한 꿈 링크**: 사전 상세 아래에 "같은 카테고리 꿈"과 "같은 운세(다른 카테고리) 꿈"을 보여 줘 사이트 안에서 이어 읽게 합니다.
+- **sitemap.xml**: 홈·사전 목록·사전 상세·기본 페이지를 `lastmod`(= `lib/site.ts`의 `CONTENT_UPDATED_AT`)와 함께 알립니다. 사전 내용을 크게 고치면 이 날짜를 바꿔 주세요.
+
+## 7. 환경변수
 
 `.env.example`을 복사해 `.env.local`을 만듭니다. 1단계에서는 **아무것도 넣지 않아도 동작**합니다.
 
 - `NEXT_PUBLIC_SITE_URL`: 배포 주소 (sitemap과 메타 태그용)
-- `NAVER_AD_*`: 키워드 수집 스크립트용 (아래 7장). 사이트 실행에는 필요 없습니다.
+- `NAVER_AD_*`: 키워드 수집 스크립트용 (아래 8장). 사이트 실행에는 필요 없습니다.
 - 나머지(`LLM_API_KEY`, Supabase, AdSense)는 2단계용 자리입니다. 실제 값은 `.env.local`이나 Vercel 환경변수에만 넣고, **git에는 절대 올리지 마세요.** (`.env.local`은 `.gitignore`에 들어 있어 git에 올라가지 않습니다.)
 
-## 7. 키워드 수집 스크립트 (`scripts/collect-keywords.ts`)
+## 8. 키워드 수집 스크립트 (`scripts/collect-keywords.ts`)
 
 네이버 검색광고 API의 **키워드 도구**로 "꿈" 관련 연관 키워드와 **월간 검색량(PC/모바일)**을 모읍니다. 어떤 꿈을 사전에 먼저 추가할지 고를 때 씁니다.
 
@@ -228,15 +241,16 @@ npm run keywords -- 고양이꿈 시험꿈   # 씨앗 단어를 직접 지정
 - 띄어쓰기만 다른 키워드("돼지꿈", "돼지 꿈")는 하나로 합칩니다.
 - 실제 API 없이 가짜 응답으로 동작을 검사하는 테스트가 `tests/collect-keywords.test.ts`에 있습니다.
 
-## 8. Vercel 배포 (참고)
+## 9. Vercel 배포 (참고)
 
 1. GitHub 저장소를 Vercel에서 Import합니다. Framework는 Next.js로 자동 인식됩니다.
 2. Environment Variables에 `NEXT_PUBLIC_SITE_URL=https://내도메인`을 추가합니다.
 3. Deploy. 별도 설정 파일(`vercel.json`)은 필요 없습니다.
+4. 배포 후 공유 이미지·sitemap 주소가 실제 도메인으로 나오는지 확인하세요. (`NEXT_PUBLIC_SITE_URL`을 바꾸면 다시 배포해야 반영돼요)
 
 ---
 
-## 9. 2단계에서 손댈 파일
+## 10. 2단계에서 손댈 파일
 
 | 기능 | 손댈 파일 |
 | --- | --- |

@@ -1,4 +1,4 @@
-// 상징별 꿈해몽 사전 페이지 — 빌드할 때 symbols.json 으로 미리 만들어 둔다(SSG)
+// 상징별 꿈해몽 사전 페이지 — 빌드할 때 data/symbols/*.json 으로 미리 만들어 둔다(SSG)
 
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -6,12 +6,15 @@ import { notFound } from "next/navigation";
 import { AdSlot } from "@/components/AdSlot";
 import { Disclaimer } from "@/components/Disclaimer";
 import { FortuneBadge } from "@/components/FortuneBadge";
+import { JsonLd } from "@/components/JsonLd";
 import { LottoBall } from "@/components/LottoBall";
-import { getAllSymbols, getSymbolBySlug, getSymbolsByCategory } from "@/lib/symbols";
+import { breadcrumbJsonLd, dreamArticleJsonLd, dreamPageTitle, pageMetadata } from "@/lib/seo";
+import { getAllSymbols, getRelatedSymbols, getSymbolBySlug } from "@/lib/symbols";
+import type { DreamSymbol } from "@/lib/types";
 
 type Props = { params: Promise<{ slug: string }> };
 
-// symbols.json 에 없는 주소는 404
+// 사전에 없는 주소는 404
 export const dynamicParams = false;
 
 export function generateStaticParams() {
@@ -21,13 +24,35 @@ export function generateStaticParams() {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const symbol = getSymbolBySlug((await params).slug);
   if (!symbol) return {};
-  const title = `${symbol.keyword} 꿈 해몽 – 의미와 행운 숫자`;
-  return {
-    title,
+  return pageMetadata({
+    title: dreamPageTitle(symbol),
     description: symbol.meaning,
-    alternates: { canonical: `/dream/${symbol.slug}` },
-    openGraph: { title, description: symbol.meaning, type: "article" },
-  };
+    path: `/dream/${symbol.slug}`,
+    type: "article",
+    ownImage: true,
+  });
+}
+
+/** "비슷한 꿈" 링크 목록 */
+function RelatedList({ title, symbols }: { title: string; symbols: DreamSymbol[] }) {
+  if (symbols.length === 0) return null;
+  return (
+    <section className="mt-8">
+      <h3 className="mb-3 font-semibold">{title}</h3>
+      <ul className="flex flex-wrap gap-2">
+        {symbols.map((s) => (
+          <li key={s.slug}>
+            <Link
+              href={`/dream/${s.slug}`}
+              className="inline-block rounded-full bg-white px-3.5 py-1.5 text-sm ring-1 ring-slate-200 hover:text-violet-700"
+            >
+              {s.keyword} 꿈
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
 }
 
 export default async function DreamSymbolPage({ params }: Props) {
@@ -36,11 +61,21 @@ export default async function DreamSymbolPage({ params }: Props) {
 
   const paragraphs = symbol.body.split(/\n{2,}/);
   const middle = Math.ceil(paragraphs.length / 2);
-  const related = getSymbolsByCategory(symbol.category).filter((s) => s.slug !== symbol.slug);
+  const related = getRelatedSymbols(symbol);
 
   return (
     <article>
-      <nav className="mb-4 text-sm text-slate-500">
+      <JsonLd
+        data={[
+          dreamArticleJsonLd(symbol),
+          breadcrumbJsonLd([
+            { name: "홈", path: "/" },
+            { name: "꿈해몽 사전", path: "/dream" },
+            { name: `${symbol.keyword} 꿈`, path: `/dream/${symbol.slug}` },
+          ]),
+        ]}
+      />
+      <nav aria-label="이동 경로" className="mb-4 text-sm text-slate-500">
         <Link href="/dream" className="hover:text-violet-700">
           꿈해몽 사전
         </Link>{" "}
@@ -114,23 +149,13 @@ export default async function DreamSymbolPage({ params }: Props) {
         내 꿈 전체로 해몽하고 번호 뽑기 →
       </Link>
 
-      {related.length > 0 && (
-        <section className="mt-10">
-          <h2 className="mb-3 font-bold">다른 {symbol.category} 꿈</h2>
-          <ul className="flex flex-wrap gap-2">
-            {related.map((s) => (
-              <li key={s.slug}>
-                <Link
-                  href={`/dream/${s.slug}`}
-                  className="inline-block rounded-full bg-white px-3.5 py-1.5 text-sm ring-1 ring-slate-200 hover:text-violet-700"
-                >
-                  {s.keyword} 꿈
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
+      <section className="mt-10" aria-labelledby="related-heading">
+        <h2 id="related-heading" className="text-xl font-bold">
+          비슷한 꿈
+        </h2>
+        <RelatedList title={`같은 ${symbol.category} 꿈`} symbols={related.sameCategory} />
+        <RelatedList title={`같은 ${symbol.fortune_type}운 꿈`} symbols={related.sameFortune} />
+      </section>
 
       <AdSlot name="dictionary-bottom" />
       <Disclaimer />

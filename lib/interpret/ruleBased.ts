@@ -15,6 +15,12 @@ const FORTUNE_PHRASE: Record<FortuneType, string> = {
   주의: "조심할 부분을 알려 주는 꿈",
 };
 
+/** 요약에 쓰일 수 있는 고정 문구 (공유 이미지 글꼴 검사용) */
+export const FORTUNE_PHRASE_TEXT = [
+  ...Object.values(FORTUNE_PHRASE),
+  "함께 나온 상징까지 더하면 전체적으로 으로 풀이돼요. 이니, 서두르기보다 차분하게 하루를 보내 보세요.",
+];
+
 /** 요약에 넣을 이름 ('이빨 빠지는' 같은 행동 상징은 '이빨 빠지는 꿈'으로) */
 function labelOf(symbol: DreamSymbol): string {
   return symbol.category === "행동" ? `${symbol.keyword} 꿈` : symbol.keyword;

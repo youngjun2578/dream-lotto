@@ -12,10 +12,14 @@ export const metadata: Metadata = {
   },
   description: SITE_DESCRIPTION,
   openGraph: {
+    title: `${SITE_NAME} – 꿈해몽과 행운 번호 추천`,
+    description: SITE_DESCRIPTION,
+    url: "/",
     siteName: SITE_NAME,
     locale: "ko_KR",
     type: "website",
   },
+  twitter: { card: "summary_large_image" },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

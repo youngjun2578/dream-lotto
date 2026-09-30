@@ -1,12 +1,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { StaticPage } from "@/components/StaticPage";
+import { pageMetadata } from "@/lib/seo";
 import { DISCLAIMER, SITE_NAME } from "@/lib/site";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "소개",
   description: `${SITE_NAME}는 꿈해몽과 꿈 상징 기반 행운 번호를 재미로 즐기는 서비스예요.`,
-};
+  path: "/about",
+});
 
 // 초안: 실제 운영 정보에 맞게 다듬어 주세요.
 export default function AboutPage() {

@@ -1,12 +1,19 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { DreamForm } from "@/components/DreamForm";
+import { JsonLd } from "@/components/JsonLd";
+import { websiteJsonLd } from "@/lib/seo";
 import { getPopularSymbols } from "@/lib/symbols";
+
+// 제목·설명·공유 설정은 app/layout.tsx 의 기본값을 쓰고, 대표 주소만 지정한다.
+export const metadata: Metadata = { alternates: { canonical: "/" } };
 
 export default function HomePage() {
   const popular = getPopularSymbols();
 
   return (
     <>
+      <JsonLd data={websiteJsonLd()} />
       <section className="mb-6 text-center">
         <h1 className="text-2xl font-bold sm:text-3xl">꿈해몽 로또번호 추첨기</h1>
         <p className="mt-2 text-slate-600">꿈 이야기를 적으면 해몽을 풀어 주고, 꿈속 상징으로 행운 번호를 뽑아 드려요.</p>

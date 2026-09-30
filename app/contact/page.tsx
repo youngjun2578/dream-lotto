@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
 import { StaticPage } from "@/components/StaticPage";
+import { pageMetadata } from "@/lib/seo";
 import { CONTACT_EMAIL, SITE_NAME } from "@/lib/site";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "문의",
   description: `${SITE_NAME} 문의하기`,
-};
+  path: "/contact",
+});
 
 // 초안: lib/site.ts 의 CONTACT_EMAIL 을 실제 주소로 바꿔 주세요.
 export default function ContactPage() {
