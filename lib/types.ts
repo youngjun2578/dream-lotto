@@ -79,4 +79,6 @@ export interface InterpretResponse {
   date: string;
   /** 다시 뽑기 횟수 (처음은 0) */
   counter: number;
+  /** 공유 링크용 값 (/r/[share]). 꿈 원문은 들어 있지 않다. */
+  share: string;
 }

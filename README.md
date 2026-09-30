@@ -25,7 +25,7 @@ npm run dev        # 개발 서버 실행 → http://localhost:3000
 | `npm run build` | 배포용 빌드 (사전 페이지 30개를 미리 생성) |
 | `npm start` | 빌드한 결과 실행 |
 | `npm run typecheck` | 타입 검사만 |
-| `npm run keywords` | 꿈 관련 검색 키워드 수집 (네이버 검색광고 API 키 필요, 9장) |
+| `npm run keywords` | 꿈 관련 검색 키워드 수집 (네이버 검색광고 API 키 필요, 10장) |
 
 ### 확인해 볼 화면
 
@@ -49,6 +49,7 @@ app/                        화면(페이지)과 API
   api/interpret/route.ts    POST /api/interpret
   dream/page.tsx            /dream  사전 목록
   dream/[slug]/page.tsx     /dream/돼지 등 사전 상세 (SSG + 메타 태그)
+  r/[payload]/page.tsx      공유 링크 결과 페이지 (+ 공유 미리보기 이미지)
   about, privacy, terms, contact/
   fonts/pretendard/         사이트 글꼴 (Pretendard 가변 글꼴, 글자 범위별 woff2)
   opengraph-image.tsx       기본 공유 미리보기 이미지 (사전 상세는 dream/[slug]/opengraph-image.tsx)
@@ -69,6 +70,7 @@ scripts/collect-keywords.ts 네이버 검색광고 키워드 수집 (npm run key
   symbols.ts, actions.ts    사전 데이터 불러오기 + 유효성 검사
   seo.ts                    페이지 메타데이터 + 구조화 데이터(JSON-LD)
   og.tsx                    공유 미리보기 이미지(1200×630) 공통 틀
+  share.ts                  공유 링크 값 인코딩/디코딩/검사
   date.ts, site.ts, types.ts
 tests/                      Vitest 테스트
 ```
@@ -186,7 +188,20 @@ tests/                      Vitest 테스트
 
 ---
 
-## 6. SEO (검색·공유)
+## 6. 공유 링크 (`/r/[payload]`, DB 없음)
+
+- 결과 화면의 **링크 복사**(모든 기기)와 **공유하기**(휴대폰 등 Web Share API를 지원하는 브라우저) 버튼으로 공유합니다.
+- 링크에는 **꿈 원문을 넣지 않습니다.** 결과를 다시 만드는 데 필요한 값만 JSON 배열로 만들어 base64url로 인코딩해요.
+  ```
+  [1, 시드, "2026-10-01", 다시뽑기횟수, ["pig","enter"], ["fire"]]   → /r/WzEsMTQx…
+  ```
+  - 시드는 `SHA-256(정규화된 꿈|날짜)`의 앞 4바이트라 원문을 되돌릴 수 없어요. 번호는 `lib/lotto.ts`의 `generateGamesFromSeed()`로 같은 규칙대로 다시 계산합니다.
+- 링크로 들어오면 **같은 해몽과 번호**가 보이고, **나도 해몽 받기** 버튼으로 메인에 갈 수 있어요. 사람마다 다른 결과라 검색 노출은 막았습니다(`noindex`, sitemap 제외).
+- 주소는 누구나 고칠 수 있으므로 모든 값을 검사합니다(버전, 시드 범위, 실제 날짜, 횟수 0~999, 사전에 있는 상징·상황, 최대 4개, 길이 400자). **잘못된 링크는 메인으로 이동(307)**합니다.
+- 공유 미리보기 이미지는 `next/og`로 요청이 올 때 만듭니다(해몽 요약 + A게임 번호).
+- 테스트: `tests/share.test.ts` (인코딩/디코딩, 잘못된 값 21가지, 원문 미포함, **공유 결과 = 원래 결과**)
+
+## 7. SEO (검색·공유)
 
 - **페이지별 메타 태그**: `lib/seo.ts`의 `pageMetadata()`로 제목·설명·대표 주소(canonical)·공유 미리보기(OG, 트위터 카드)를 한 번에 채웁니다.
 - **공유 미리보기 이미지**: `next/og`로 **빌드할 때 PNG를 미리 만듭니다**. 사전 상세 30개는 제목·대표 풀이·행운 숫자가 들어간 각자의 이미지를, 나머지 페이지는 사이트 기본 이미지를 씁니다.
@@ -195,7 +210,7 @@ tests/                      Vitest 테스트
 - **비슷한 꿈 링크**: 사전 상세 아래에 "같은 카테고리 꿈"과 "같은 운세(다른 카테고리) 꿈"을 보여 줘 사이트 안에서 이어 읽게 합니다.
 - **sitemap.xml**: 홈·사전 목록·사전 상세·기본 페이지를 `lastmod`(= `lib/site.ts`의 `CONTENT_UPDATED_AT`)와 함께 알립니다. 사전 내용을 크게 고치면 이 날짜를 바꿔 주세요.
 
-## 7. 디자인
+## 8. 디자인
 
 - **분위기**: 밤하늘(짙은 남색) + 달빛(금색) 포인트. 헤더와 첫 화면은 두 테마 모두 남색 띠이고, 본문은 글 읽기 편한 밝은/어두운 면을 씁니다.
 - **색은 모두 토큰으로**: `app/globals.css`의 `--page`, `--surface`, `--ink` 등. Tailwind에서는 `bg-surface`, `text-ink-soft`, `border-line`처럼 씁니다. 색을 바꿀 땐 이 파일만 고치면 돼요.
@@ -208,15 +223,15 @@ tests/                      Vitest 테스트
 - **이유 태그**: 꿈 번호에는 `돼지 → 재물`처럼 운세 색 태그가 붙습니다. (`lib/reasonTag.ts`가 `lotto.ts`의 이유 문장을 화면용으로만 다듬고, 번호 규칙은 건드리지 않아요)
 - **광고 자리 규칙은 그대로**: 결과 번호 아래, 사전 본문 중간/끝 (입력창 옆 X).
 
-## 8. 환경변수
+## 9. 환경변수
 
 `.env.example`을 복사해 `.env.local`을 만듭니다. 1단계에서는 **아무것도 넣지 않아도 동작**합니다.
 
 - `NEXT_PUBLIC_SITE_URL`: 배포 주소 (sitemap과 메타 태그용)
-- `NAVER_AD_*`: 키워드 수집 스크립트용 (아래 9장). 사이트 실행에는 필요 없습니다.
+- `NAVER_AD_*`: 키워드 수집 스크립트용 (아래 10장). 사이트 실행에는 필요 없습니다.
 - 나머지(`LLM_API_KEY`, Supabase, AdSense)는 2단계용 자리입니다. 실제 값은 `.env.local`이나 Vercel 환경변수에만 넣고, **git에는 절대 올리지 마세요.** (`.env.local`은 `.gitignore`에 들어 있어 git에 올라가지 않습니다.)
 
-## 9. 키워드 수집 스크립트 (`scripts/collect-keywords.ts`)
+## 10. 키워드 수집 스크립트 (`scripts/collect-keywords.ts`)
 
 네이버 검색광고 API의 **키워드 도구**로 "꿈" 관련 연관 키워드와 **월간 검색량(PC/모바일)**을 모읍니다. 어떤 꿈을 사전에 먼저 추가할지 고를 때 씁니다.
 
@@ -255,7 +270,7 @@ npm run keywords -- 고양이꿈 시험꿈   # 씨앗 단어를 직접 지정
 - 띄어쓰기만 다른 키워드("돼지꿈", "돼지 꿈")는 하나로 합칩니다.
 - 실제 API 없이 가짜 응답으로 동작을 검사하는 테스트가 `tests/collect-keywords.test.ts`에 있습니다.
 
-## 10. Vercel 배포 (참고)
+## 11. Vercel 배포 (참고)
 
 1. GitHub 저장소를 Vercel에서 Import합니다. Framework는 Next.js로 자동 인식됩니다.
 2. Environment Variables에 `NEXT_PUBLIC_SITE_URL=https://내도메인`을 추가합니다.
@@ -264,11 +279,11 @@ npm run keywords -- 고양이꿈 시험꿈   # 씨앗 단어를 직접 지정
 
 ---
 
-## 11. 2단계에서 손댈 파일
+## 12. 2단계에서 손댈 파일
 
 | 기능 | 손댈 파일 |
 | --- | --- |
 | **AI 해몽** | `lib/interpret/llm.ts` 새로 만들기 (`InterpretationProvider` 구현), `lib/interpret/index.ts`에서 `LLM_API_KEY`가 있으면 LlmProvider를 돌려주도록 변경. 실패하면 RuleBasedProvider로 대체. **번호는 계속 `lib/lotto.ts`가 생성** |
 | **Supabase** | `lib/symbols.ts`의 함수 내용만 DB 조회로 교체 (함수 이름 유지). 저장이 생기면 `app/privacy/page.tsx` 수정 |
-| **공유 링크** | `app/r/[id]/page.tsx` 새 페이지, `app/api/interpret/route.ts`에 결과 저장, `components/DreamForm.tsx`에 공유 버튼 |
+| **공유 링크** | 1단계에서 DB 없이 구현 완료(`/r/[payload]`). AI 해몽 문장까지 그대로 공유하려면 Supabase에 결과를 저장하고 `app/r/[payload]/page.tsx`가 저장된 결과를 읽도록 바꾸기 |
 | **애드센스** | `components/AdSlot.tsx`에만 광고 코드 넣기, `app/layout.tsx`에 AdSense 스크립트, `public/ads.txt` 추가, `lib/site.ts`의 `CONTACT_EMAIL` 실제 주소로 변경 |

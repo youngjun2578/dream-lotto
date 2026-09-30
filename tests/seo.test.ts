@@ -122,6 +122,7 @@ describe("공유 이미지(OG) 글꼴", () => {
       NO_SYMBOL_SUMMARY,
       ...FORTUNE_PHRASE_TEXT,
       "꿈해몽 사전 · 행운 숫자 후보 재미로 보는 꿈해몽 · 당첨과 무관해요 꿈으로 뽑는 행운 번호",
+      "공유된 꿈해몽 · 2026-10-01 나의 꿈해몽 결과 추천 번호 (A게임)",
       ...SYMBOLS.flatMap((s) => [
         s.keyword,
         s.category,

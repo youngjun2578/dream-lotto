@@ -34,6 +34,9 @@ export interface OgContent {
   numbers?: number[];
   /** 번호 위 설명 (예: "행운 숫자 후보") */
   numbersLabel?: string;
+  /** 제목·설명을 이 글자 수에서 줄인다 (긴 글이 이미지 밖으로 넘치지 않게) */
+  titleMax?: number;
+  descriptionMax?: number;
 }
 
 // 밤하늘 별 위치 (고정값이라 매번 같은 그림). 글자와 겹치면 가운뎃점처럼 보이므로 가장자리에만 둔다.
@@ -48,7 +51,15 @@ function clamp(text: string, max: number): string {
 }
 
 /** 공통 OG 이미지 만들기 */
-export async function renderOgImage({ eyebrow, title, description, numbers, numbersLabel }: OgContent) {
+export async function renderOgImage({
+  eyebrow,
+  title,
+  description,
+  numbers,
+  numbersLabel,
+  titleMax = 40,
+  descriptionMax = 90,
+}: OgContent) {
   return new ImageResponse(
     (
       <div
@@ -96,11 +107,11 @@ export async function renderOgImage({ eyebrow, title, description, numbers, numb
             wordBreak: "keep-all",
           }}
         >
-          {clamp(title, 40)}
+          {clamp(title, titleMax)}
         </div>
         {description && (
           <div style={{ display: "flex", marginTop: 22, fontSize: 32, lineHeight: 1.5, color: "#c7cdef", maxWidth: 1000, wordBreak: "keep-all" }}>
-            {clamp(description, 90)}
+            {clamp(description, descriptionMax)}
           </div>
         )}
 

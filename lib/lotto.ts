@@ -99,8 +99,15 @@ export interface GenerateOptions {
 
 /** 5게임을 같은 PRNG 로 이어서 생성한다. */
 export function generateGames({ normalizedDream, date, symbols, counter = 0 }: GenerateOptions): LottoGame[] {
-  const seed = (makeSeed(normalizedDream, date) + counter) >>> 0;
-  const rng = mulberry32(seed);
+  return generateGamesFromSeed(makeSeed(normalizedDream, date), symbols, counter);
+}
+
+/**
+ * 이미 계산한 시드(makeSeed 결과)로 5게임을 만든다. generateGames 와 결과가 같다.
+ * 공유 링크처럼 꿈 원문 없이 시드만 가지고 있을 때 쓴다.
+ */
+export function generateGamesFromSeed(baseSeed: number, symbols: DreamSymbol[], counter = 0): LottoGame[] {
+  const rng = mulberry32((baseSeed + counter) >>> 0);
   const table = buildScoreTable(symbols);
   return Array.from({ length: GAME_COUNT }, () => generateGame(rng, table));
 }

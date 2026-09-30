@@ -6,6 +6,7 @@ import { useState } from "react";
 import { MAX_DREAM_LENGTH } from "@/lib/normalize";
 import type { InterpretResponse } from "@/lib/types";
 import { ResultView } from "./ResultView";
+import { ShareButtons } from "./ShareButtons";
 
 export function DreamForm() {
   const [text, setText] = useState("");
@@ -96,6 +97,7 @@ export function DreamForm() {
                 다시 뽑기
               </button>
             }
+            afterNumbers={<ShareButtons share={result.share} />}
           />
         </section>
       )}
