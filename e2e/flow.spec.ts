@@ -1,7 +1,7 @@
 // 사용자 흐름 테스트: 휴대폰(mobile)과 PC(desktop) 크기에서 각각 실행된다.
 
 import { expect, test, type Page } from "@playwright/test";
-import { AGE_NOTICE, DEFAULT_SITE_URL, DISCLAIMER } from "../lib/site";
+import { AGE_NOTICE, DEFAULT_SITE_URL, DISCLAIMER, SITE_NAME } from "../lib/site";
 
 const DREAM = "돼지가 집으로 들어오고 뱀에게 물렸어요";
 
@@ -66,6 +66,14 @@ test("입력 → 결과 → 다시 뽑기 → 공유 링크 → 같은 결과", 
   expect(await readGames(page)).toEqual(second);
   await page.getByRole("link", { name: "나도 해몽 받기" }).first().click();
   await expect(page).toHaveURL(/\/$/);
+});
+
+test("사이트 이름: 헤더와 페이지 제목", async ({ page }) => {
+  await page.goto("/");
+  await expect(page).toHaveTitle(`${SITE_NAME} – 꿈해몽과 행운 번호 추천`);
+  await expect(page.getByRole("banner").getByRole("link", { name: SITE_NAME, exact: true })).toBeVisible();
+  await page.goto("/dream/pig");
+  await expect(page).toHaveTitle(new RegExp(`\\| ${SITE_NAME}$`));
 });
 
 test("잘못된 공유 링크는 메인으로 이동", async ({ page }) => {
