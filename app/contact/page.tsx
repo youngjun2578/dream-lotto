@@ -9,7 +9,7 @@ export const metadata: Metadata = pageMetadata({
   path: "/contact",
 });
 
-// 초안: lib/site.ts 의 CONTACT_EMAIL 을 실제 주소로 바꿔 주세요.
+// 문의 메일 주소는 lib/site.ts 의 CONTACT_EMAIL 에서 바꾼다.
 export default function ContactPage() {
   return (
     <StaticPage title="문의">

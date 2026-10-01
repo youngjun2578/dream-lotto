@@ -325,7 +325,7 @@ npm run review:screenshots        # 검토용 화면 캡처 → review/screensho
 - **robots.txt·sitemap.xml**: sitemap 주소, 전체 차단 여부, 다른 도메인·공유 링크·중복·빠진 페이지·이상한 날짜
 - **빌드 결과**: `.next`가 있으면 그 안의 robots·sitemap·canonical이 지금 설정과 같은지 (다르면 다시 빌드)
 
-> 지금은 문의 메일이 자리표시자라서 **실패하는 게 정상**입니다. 실제 주소를 넣으면 통과합니다.
+> 문의 메일(`young@haemongru.com`)을 넣어 지금은 통과합니다. 배포 전에 한 번씩 돌려 보세요.
 
 ### Lighthouse (성능·접근성·SEO 점수)
 
@@ -358,4 +358,4 @@ npx lighthouse http://localhost:3000/dream/pig --preset=desktop --view # PC 기�
 | **AI 해몽** | `lib/interpret/llm.ts` 새로 만들기 (`InterpretationProvider` 구현), `lib/interpret/index.ts`에서 `LLM_API_KEY`가 있으면 LlmProvider를 돌려주도록 변경. 실패하면 RuleBasedProvider로 대체. **번호는 계속 `lib/lotto.ts`가 생성**. 꿈 원문이 외부 AI 업체로 전송되므로 **켜기 전에 개인정보처리방침에 처리 위탁·국외 이전 고지를 추가하고 입력창 근처에 안내**를 넣어야 합니다(`app/privacy/page.tsx` 위쪽 주석) |
 | **Supabase** | `lib/symbols.ts`의 함수 내용만 DB 조회로 교체 (함수 이름 유지). 저장이 생기면 `app/privacy/page.tsx` 수정 |
 | **공유 링크** | 1단계에서 DB 없이 구현 완료(`/r/[payload]`). AI 해몽 문장까지 그대로 공유하려면 Supabase에 결과를 저장하고 `app/r/[payload]/page.tsx`가 저장된 결과를 읽도록 바꾸기 |
-| **애드센스** | `components/AdSlot.tsx`에만 광고 코드 넣기, `app/layout.tsx`에 AdSense 스크립트, `public/ads.txt` 추가, `lib/site.ts`의 `CONTACT_EMAIL` 실제 주소로 변경 |
+| **애드센스** | `components/AdSlot.tsx`에만 광고 코드 넣기, `app/layout.tsx`에 AdSense 스크립트, `public/ads.txt` 추가 (문의 메일 `CONTACT_EMAIL`은 설정 완료) |

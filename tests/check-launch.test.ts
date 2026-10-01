@@ -103,10 +103,8 @@ describe("robots.txt · sitemap.xml", () => {
 });
 
 describe("전체 점검 (npm run check:launch)", () => {
-  it("지금 남은 문제는 자리표시자 문의 메일뿐이다", async () => {
+  it("지금 설정은 모두 통과한다 (빌드 결과 검사는 .next 상태에 따라 달라서 제외)", async () => {
     const problems = await runLaunchChecks();
-    for (const [area, message] of problems) {
-      expect(`${area}: ${message}`).toMatch(/example\.com/);
-    }
+    expect(problems.filter(([area]) => area !== "빌드 결과")).toEqual([]);
   });
 });
