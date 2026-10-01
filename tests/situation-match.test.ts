@@ -79,7 +79,8 @@ describe("matchDream (상징 + 행동 → 상황 풀이)", () => {
   });
 
   it("다른 문장의 행동이나 너무 먼 행동은 짝짓지 않는다", () => {
-    expect(pairs("돼지를 봤어요. 그리고 친구가 집에 들어왔어요.")).toEqual(["pig", "house"]);
+    // 친구·집에는 '들어오다' 풀이가 없어 일반 풀이 (친구는 사전 확장 1차에서 추가)
+    expect(pairs("돼지를 봤어요. 그리고 친구가 집에 들어왔어요.")).toEqual(["pig", "house", "friend"]);
     const far = `돼지가 ${"아주 ".repeat(Math.ceil(ACTION_AFTER_LIMIT / 3) + 1)}들어왔다`;
     expect(pairs(far)).toEqual(["pig"]);
   });

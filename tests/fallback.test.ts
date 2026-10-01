@@ -21,7 +21,7 @@ const CASES: [string, string[]][] = [
   ["집에 불이 났는데 아무도 안 다쳤어요", ["fire+burn", "house+burn"]], // '안 다쳤어요'는 무시
   ["금반지를 잃어버려서 한참 찾았어요", ["gold+lose"]], // '한참 찾았다'는 줍는 꿈이 아님
   ["은행에서 돈을 찾았어요", ["money"]], // 돈을 '찾다'(인출)는 줍는 꿈이 아님
-  ["엄마가 아기를 낳았어요", ["baby+birth"]],
+  ["엄마가 아기를 낳았어요", ["mother", "baby+birth"]], // 어머니(사전 확장 1차)에는 '낳다' 풀이가 없어 일반 풀이
   ["시험을 망치는 꿈을 꿨어요", []], // 사전에 없는 꿈 → 길몽이라고 단정하지 않는다
   ["도둑을 잡지 못했어요", ["thief"]], // 부정된 '잡다'는 무시
   ["이 꿈 무슨 뜻이에요?", []], // '이'(이빨)로 잘못 잡지 않는다
@@ -59,7 +59,7 @@ describe("매칭 폴백 15개 입력", () => {
 
   it("다른 사람이 아기를 낳은 꿈에도 어색하지 않다 ('직접' 같은 말이 없다)", async () => {
     const res = await interpretDream("엄마가 아기를 낳았어요", { now: NOW });
-    expect(res.symbols[0].meaning).not.toMatch(/직접/);
+    expect(res.symbols.find((s) => s.slug === "baby")!.meaning).not.toMatch(/직접/);
   });
 
   it("비슷한 글자로 엉뚱한 상징을 잡지 않는다", async () => {

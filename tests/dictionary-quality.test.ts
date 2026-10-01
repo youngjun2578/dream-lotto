@@ -42,6 +42,32 @@ const DECIDED_CONFLICTS = [
   "thief < cat:도둑고양이 → cat",
   "sea < turtle:바다거북 → turtle",
   "moon < bear:반달곰 → bear",
+  // 사람: 아기를 가진 것은 임신으로, 임신부의 '신부'는 결혼이 아니라 임신으로
+  "baby < pregnancy:아기를 가졌 → pregnancy",
+  "baby < pregnancy:배 속의 아기 → pregnancy",
+  "baby < pregnancy:배 속에 아기 → pregnancy",
+  "wedding < pregnancy:임신부 → pregnancy",
+  // 사람: 남자친구·여자친구는 친구가 아니라 애인으로, 헤어진 사이는 애인이 아니라 전 애인으로
+  "friend < lover:남자친구 → lover",
+  "friend < lover:여자친구 → lover",
+  "friend < lover:남자 친구 → lover",
+  "friend < lover:여자 친구 → lover",
+  "friend < ex-lover:전 남자친구 → ex-lover",
+  "friend < ex-lover:전 여자친구 → ex-lover",
+  "friend < ex-lover:전남자친구 → ex-lover",
+  "friend < ex-lover:전여자친구 → ex-lover",
+  "friend < ex-lover:헤어진 남자친구 → ex-lover",
+  "friend < ex-lover:헤어진 여자친구 → ex-lover",
+  "lover < ex-lover:전 애인 → ex-lover",
+  "lover < ex-lover:옛 애인 → ex-lover",
+  "lover < ex-lover:옛 연인 → ex-lover",
+  "lover < ex-lover:헤어진 연인 → ex-lover",
+  "lover < ex-lover:전 남친 → ex-lover",
+  "lover < ex-lover:전 여친 → ex-lover",
+  "lover < ex-lover:전 남자친구 → ex-lover",
+  "lover < ex-lover:전 여자친구 → ex-lover",
+  "lover < ex-lover:헤어진 남자친구 → ex-lover",
+  "lover < ex-lover:헤어진 여자친구 → ex-lover",
 ];
 
 function findConflicts(): string[] {

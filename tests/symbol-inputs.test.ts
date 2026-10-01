@@ -41,6 +41,25 @@ const CASES: [string, string[]][] = [
   ["거북이를 선물받았어요", ["turtle+receive"]],
   ["곰에게 쫓겨서 도망쳤어요", ["bear+chased", "chased+escape"]],
   ["북극곰을 끌어안았어요", ["bear+hug"]],
+  // 사람
+  ["임신해서 배가 불러 왔어요", ["pregnancy"]],
+  ["아기를 가졌는데 너무 기뻐서 웃었어요", ["pregnancy+laugh"]],
+  ["임신부가 지나갔어요", ["pregnancy"]],
+  ["시어머니에게 혼났어요", ["mother+angry"]],
+  ["돌아가신 어머니가 밥을 차려 주셔서 먹었어요", ["ancestor+eat", "mother+eat"]],
+  ["아빠가 나를 꼭 안아 줬어요", ["father+hug"]],
+  ["아버지와 악수했어요", ["father+handshake"]],
+  ["친구랑 싸웠어요", ["friend+fight"]],
+  ["단짝과 수다를 떨었어요", ["friend+talk"]],
+  ["남자친구와 데이트했어요", ["lover+date"]],
+  ["짝사랑하는 사람이 나왔어요", ["lover"]],
+  ["전 남자친구가 나왔어요", ["ex-lover"]],
+  ["귀신에게 쫓겼어요", ["ghost+chased", "chased"]],
+  ["유령을 피해 숨었어요", ["ghost+hide"]],
+  ["경찰에게 잡혔어요", ["police+caught"]],
+  ["경찰이 찾아왔어요", ["police+enter"]],
+  ["선생님께 칭찬을 받았어요", ["teacher+receive"]],
+  ["담임 선생님한테 혼났어요", ["teacher+angry"]],
 ];
 
 /** [입력, 잡히면 안 되는 상징] */
@@ -65,6 +84,12 @@ const FALSE_POSITIVES: [string, string[]][] = [
   ["곰곰이 생각해 봤어요", ["bear"]],
   ["속이 거북했어요", ["turtle"]],
   ["닭살이 돋았어요", ["chicken"]],
+  ["할아버지가 나왔어요", ["father"]],
+  ["외할아버지 댁에 갔어요", ["father"]],
+  ["장애인 화장실에 들어갔어요", ["lover"]],
+  ["남자친구가 나왔어요", ["friend"]],
+  ["전 남자친구가 나왔어요", ["lover", "friend"]],
+  ["임신부가 지나갔어요", ["wedding"]],
 ];
 
 describe("새 상징 대표 입력", () => {
