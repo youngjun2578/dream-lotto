@@ -135,10 +135,13 @@ describe("하드코딩된 도메인", () => {
     });
   }
 
+  // lib/site.ts: 대표 주소를 정하는 곳 / scripts/check-launch.ts: 잘못된 주소를 '찾아내는' 검사 패턴
+  const ALLOWED = [join("lib", "site.ts"), join("scripts", "check-launch.ts")];
+
   it("haemongru·vercel.app·localhost 주소는 lib/site.ts 에만 있다", () => {
     const files = [...["app", "components", "lib", "data", "scripts"].flatMap(sourceFiles), "next.config.ts"];
     const found = files
-      .filter((file) => file !== join("lib", "site.ts"))
+      .filter((file) => !ALLOWED.includes(file))
       .flatMap((file) =>
         readFileSync(file, "utf8")
           .split("\n")

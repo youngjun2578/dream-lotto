@@ -26,6 +26,7 @@ npm run dev        # 개발 서버 실행 → http://localhost:3000
 | `npm start` | 빌드한 결과 실행 |
 | `npm run typecheck` | 타입 검사만 |
 | `npm run keywords` | 꿈 관련 검색 키워드 수집 (네이버 검색광고 API 키 필요, 12장) |
+| `npm run check:launch` | 출시 전 점검: 문의 메일·정책 문구·사이트 주소·robots/sitemap. 문제가 있으면 목록을 보여 주고 실패 (13장) |
 | `npm run test:e2e` | 자동 화면 테스트 (휴대폰·PC 크기, Playwright, 13장) |
 | `npm run review:screenshots` | 검토용 화면 캡처 → `review/screenshots/` (13장) |
 
@@ -78,6 +79,7 @@ lib/                        핵심 로직 — 화면과 분리되어 있어 테�
   date.ts, site.ts, types.ts
 public/fonts/pretendard/    사이트 글꼴 (Pretendard 한글 2,350자 서브셋, 굵기 400·600·700)
 scripts/collect-keywords.ts 네이버 검색광고 키워드 수집 (npm run keywords)
+scripts/check-launch.ts     출시 전 점검 (npm run check:launch)
 tests/                      Vitest 테스트 (로직 단위)
 e2e/                        Playwright 화면 테스트 + 검토용 화면 캡처
 playwright.config.ts        화면 테스트 설정 (휴대폰·PC)
@@ -313,6 +315,18 @@ npm run review:screenshots        # 검토용 화면 캡처 → review/screensho
 - 화면 캡처는 6개 화면 × 휴대폰/PC × 라이트/다크 = 24장(JPEG)입니다. 공 애니메이션이 끝난 모습을 찍으려고 '움직임 줄이기' 설정으로, Pretendard가 적용된 뒤에 찍습니다.
 - 실패하면 `test-results/`에 기록이 남습니다(git에는 올라가지 않음).
 
+### 출시 전 점검 (`npm run check:launch`)
+
+배포 직전에 실행하세요. 빌드 없이 몇 초면 끝나고, 하나라도 걸리면 고칠 목록을 보여 주며 실패합니다.
+
+- **문의 메일**: `lib/site.ts`의 `CONTACT_EMAIL`이 `contact@example.com` 같은 자리표시자인지
+- **정책 문구**: 소개·개인정보처리방침·이용약관·문의 페이지를 실제로 그려 보고, 너무 짧거나 자리표시자(TODO, example.com 등)가 남았는지, 꼭 필요한 내용(애드센스·쿠키·맞춤 광고·꿈 내용 미저장·접속 기록·문의처, 당첨 보장 없음, 만 19세)이 있는지
+- **사이트 주소**: `SITE_URL`이 대표 도메인(`https://www.haemongru.com`)과 같은지, vercel.app·localhost·http 주소가 아닌지
+- **robots.txt·sitemap.xml**: sitemap 주소, 전체 차단 여부, 다른 도메인·공유 링크·중복·빠진 페이지·이상한 날짜
+- **빌드 결과**: `.next`가 있으면 그 안의 robots·sitemap·canonical이 지금 설정과 같은지 (다르면 다시 빌드)
+
+> 지금은 문의 메일이 자리표시자라서 **실패하는 게 정상**입니다. 실제 주소를 넣으면 통과합니다.
+
 ### Lighthouse (성능·접근성·SEO 점수)
 
 점수와 개선 내역은 `review/lighthouse.md`에 있습니다. 직접 재 보려면 크롬이 설치된 컴퓨터에서:
@@ -341,7 +355,7 @@ npx lighthouse http://localhost:3000/dream/pig --preset=desktop --view # PC 기�
 
 | 기능 | 손댈 파일 |
 | --- | --- |
-| **AI 해몽** | `lib/interpret/llm.ts` 새로 만들기 (`InterpretationProvider` 구현), `lib/interpret/index.ts`에서 `LLM_API_KEY`가 있으면 LlmProvider를 돌려주도록 변경. 실패하면 RuleBasedProvider로 대체. **번호는 계속 `lib/lotto.ts`가 생성** |
+| **AI 해몽** | `lib/interpret/llm.ts` 새로 만들기 (`InterpretationProvider` 구현), `lib/interpret/index.ts`에서 `LLM_API_KEY`가 있으면 LlmProvider를 돌려주도록 변경. 실패하면 RuleBasedProvider로 대체. **번호는 계속 `lib/lotto.ts`가 생성**. 꿈 원문이 외부 AI 업체로 전송되므로 **켜기 전에 개인정보처리방침에 처리 위탁·국외 이전 고지를 추가하고 입력창 근처에 안내**를 넣어야 합니다(`app/privacy/page.tsx` 위쪽 주석) |
 | **Supabase** | `lib/symbols.ts`의 함수 내용만 DB 조회로 교체 (함수 이름 유지). 저장이 생기면 `app/privacy/page.tsx` 수정 |
 | **공유 링크** | 1단계에서 DB 없이 구현 완료(`/r/[payload]`). AI 해몽 문장까지 그대로 공유하려면 Supabase에 결과를 저장하고 `app/r/[payload]/page.tsx`가 저장된 결과를 읽도록 바꾸기 |
 | **애드센스** | `components/AdSlot.tsx`에만 광고 코드 넣기, `app/layout.tsx`에 AdSense 스크립트, `public/ads.txt` 추가, `lib/site.ts`의 `CONTACT_EMAIL` 실제 주소로 변경 |

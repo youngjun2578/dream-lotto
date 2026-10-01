@@ -12,6 +12,7 @@
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
     "keywords": "tsx scripts/collect-keywords.ts",
+    "check:launch": "tsx scripts/check-launch.ts",
     "test:e2e": "playwright test --project=mobile --project=desktop",
     "review:screenshots": "playwright test --project=review"
   },

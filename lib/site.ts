@@ -32,7 +32,7 @@ export const SITE_URL = normalizeSiteUrl(process.env.NEXT_PUBLIC_SITE_URL);
 /** 사전·가이드 콘텐츠를 마지막으로 크게 고친 날 (sitemap, 구조화 데이터의 dateModified) */
 export const CONTENT_UPDATED_AT = "2026-10-01";
 
-/** 문의 메일 (초안 — 실제 주소로 바꿔 주세요) */
+/** 문의 메일 (자리표시자 — 실제 주소로 바꿔 주세요. 바꾸기 전에는 npm run check:launch 가 실패한다) */
 export const CONTACT_EMAIL = "contact@example.com";
 
 /** 결과·사전·가이드·푸터에 보이는 고지 (재미용, 당첨 보장 없음) */
