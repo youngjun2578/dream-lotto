@@ -152,3 +152,30 @@
 
 - 이번 작업으로 main에 3번 push했으므로 Vercel 배포 3번이 정상인지, 사이트 헤더·탭 제목에 "해몽루"가 보이는지 확인
 - 카카오톡 등은 공유 미리보기를 캐시하므로 예전 이름이 한동안 보일 수 있다 (카카오 디벨로퍼스의 공유 디버거에서 캐시 초기화 가능)
+
+### 2026-10-01 · 네이버 서치어드바이저 소유 확인 태그 — `main`
+
+**한 일**
+
+| 커밋 | 내용 |
+| --- | --- |
+| (이 커밋) | `<meta name="naver-site-verification" content="f6e2f88fd423c42b3e0c014d6c7d29187349cccb"/>`를 `<head>`에 추가. 값은 `lib/site.ts`의 `NAVER_SITE_VERIFICATION`, 루트 layout의 `metadata.verification.other`에서 참조. 검사: `tests/verification.test.ts`, `e2e/domain.spec.ts`, `npm run check:launch`(빌드된 `index.html`) |
+
+확인 결과 (프로덕션 빌드)
+
+- 홈(`/`): 태그 1개, `<head>` 안
+- 다른 페이지(`/dream`, `/dream/pig`, `/guide/wealth-dreams`, `/privacy`, `/about`, 공유 페이지 `/r/…`, 404): 루트 layout을 물려받아 모두 1개씩, `<head>` 안. 일반 브라우저와 네이버 수집 로봇(Yeti) 모두 같다.
+
+**판단과 이유**
+
+- 누구나 볼 수 있는 공개 메타 태그라 비밀값이 아니어서 환경변수로 빼지 않고 코드 상수로 두었다.
+- `verification`은 루트 layout에서만 정의한다. Next.js 메타데이터는 얕게 합쳐져서, 하위 페이지가 `verification`을 정의하면 루트 값이 통째로 사라진다. 테스트가 이를 막는다.
+- 모든 페이지에 한 번씩 들어가는 것은 문제없다. 네이버는 홈에서 확인하고, 다른 페이지의 같은 태그는 영향이 없다. 한 페이지에 두 번 들어가는 중복은 테스트가 막는다.
+- 단위 테스트는 빌드를 직접 할 수 없어서, 최신 빌드가 있을 때만 `.next`의 HTML을 읽는다(없거나 소스보다 오래되면 건너뜀). 빌드 뒤에 도는 e2e와 `check:launch`가 매번 실제 HTML을 확인한다.
+- 구글 소유 확인(DNS TXT)과 번호 생성 로직은 건드리지 않았다.
+
+**사람이 할 일**
+
+- Vercel 배포가 끝나면 네이버 서치어드바이저에서 HTML 태그 방식으로 "소유확인" 누르기
+- 확인되면 사이트맵 제출(`https://www.haemongru.com/sitemap.xml`)과 robots.txt 수집 확인
+

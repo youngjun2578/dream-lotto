@@ -4,7 +4,8 @@
 //   2) 정책 페이지(소개·개인정보처리방침·이용약관·문의)가 비었거나 자리표시자가 남았는지, 꼭 필요한 내용이 있는지
 //   3) 사이트 주소(SITE_URL)가 대표 도메인과 다른지 (vercel.app·localhost·http 포함)
 //   4) robots.txt·sitemap.xml 이 이상한지 (주소, 빠진 페이지, 중복, /api·공유 링크 포함 등)
-//   5) 빌드 결과(.next)가 있으면, 그 안의 robots·sitemap·canonical 주소가 지금 설정과 같은지
+//   5) 빌드 결과(.next)가 있으면, 그 안의 robots·sitemap·canonical 주소가 지금 설정과 같은지,
+//      홈 HTML 의 <head> 에 네이버 소유 확인 태그가 정확히 한 번 있는지
 // 빌드 없이도 돌아간다. (빌드 결과 검사는 .next 가 있을 때만)
 
 import { existsSync, readFileSync } from "node:fs";
@@ -132,8 +133,23 @@ export function checkSitemap(entries: MetadataRoute.Sitemap, siteUrl: string, re
   return problems;
 }
 
-/** 5) 빌드 결과가 지금 주소 설정과 맞는지 (.next 가 있을 때만) */
-export function checkBuildOutput(nextDir: string, siteUrl: string): string[] {
+/**
+ * 빌드된 HTML 에서 네이버 소유 확인 태그 검사: <head> 안에 정확히 한 번, 값이 맞는지.
+ * (RSC 데이터 안의 JSON 이 아니라 실제 <meta> 태그만 센다)
+ */
+export function checkNaverVerificationTag(html: string, expected: string): string[] {
+  const tags = [...html.matchAll(/<meta\b[^>]*\bname="naver-site-verification"[^>]*>/g)];
+  if (tags.length !== 1) return [`네이버 소유 확인 태그가 ${tags.length}개 있어요. 홈 <head> 에 정확히 1개여야 해요.`];
+  const problems: string[] = [];
+  const content = tags[0][0].match(/\bcontent="([^"]*)"/)?.[1];
+  if (content !== expected) problems.push(`네이버 소유 확인 값이 달라요: ${content ?? "(없음)"} (기대: ${expected})`);
+  const headEnd = html.indexOf("</head>");
+  if (headEnd === -1 || (tags[0].index ?? 0) > headEnd) problems.push("네이버 소유 확인 태그가 <head> 밖에 있어요.");
+  return problems;
+}
+
+/** 5) 빌드 결과가 지금 설정과 맞는지 (.next 가 있을 때만) */
+export function checkBuildOutput(nextDir: string, siteUrl: string, naverVerification?: string): string[] {
   const app = join(nextDir, "server", "app");
   if (!existsSync(join(nextDir, "BUILD_ID")) || !existsSync(app)) return [];
   const problems: string[] = [];
@@ -155,6 +171,10 @@ export function checkBuildOutput(nextDir: string, siteUrl: string): string[] {
       problems.push(`빌드된 ${file} 의 canonical 이 ${canonical ?? "(없음)"} 이에요 (기대: ${siteUrl}${path}). 다시 빌드해 주세요.`);
     }
   }
+  const home = read("index.html");
+  if (naverVerification && home !== null) {
+    problems.push(...checkNaverVerificationTag(home, naverVerification).map((p) => `빌드된 index.html: ${p}`));
+  }
   return problems;
 }
 
@@ -162,7 +182,7 @@ export function checkBuildOutput(nextDir: string, siteUrl: string): string[] {
 export async function renderPolicyPages(): Promise<PolicyPage[]> {
   const pages: PolicyPage[] = [];
   for (const name of Object.keys(POLICY_RULES)) {
-    const mod = (await import(`../app/${name}/page`)) as { default: ComponentType };
+    const mod = (await import(/* @vite-ignore */ `../app/${name}/page`)) as { default: ComponentType };
     const html = renderToStaticMarkup(createElement(mod.default));
     const text = html
       .replace(/<[^>]+>/g, " ")
@@ -177,7 +197,7 @@ export async function renderPolicyPages(): Promise<PolicyPage[]> {
 
 /** 전체 점검: [분야, 문제] 목록 */
 export async function runLaunchChecks(): Promise<[string, string][]> {
-  const { CONTACT_EMAIL, DEFAULT_SITE_URL, SITE_URL } = await import("../lib/site");
+  const { CONTACT_EMAIL, DEFAULT_SITE_URL, NAVER_SITE_VERIFICATION, SITE_URL } = await import("../lib/site");
   const { default: robots } = await import("../app/robots");
   const { default: sitemap } = await import("../app/sitemap");
   const { getAllSymbols } = await import("../lib/symbols");
@@ -201,7 +221,7 @@ export async function runLaunchChecks(): Promise<[string, string][]> {
     ...tag("사이트 주소", checkSiteUrl(SITE_URL, DEFAULT_SITE_URL, process.env.NEXT_PUBLIC_SITE_URL)),
     ...tag("robots.txt", checkRobots(robots(), SITE_URL)),
     ...tag("sitemap.xml", checkSitemap(sitemap(), SITE_URL, requiredPaths)),
-    ...tag("빌드 결과", checkBuildOutput(".next", SITE_URL)),
+    ...tag("빌드 결과", checkBuildOutput(".next", SITE_URL, NAVER_SITE_VERIFICATION)),
   ];
 }
 

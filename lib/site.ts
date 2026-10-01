@@ -33,6 +33,13 @@ export const SITE_URL = normalizeSiteUrl(process.env.NEXT_PUBLIC_SITE_URL);
 /** 사전·가이드 콘텐츠를 마지막으로 크게 고친 날 (sitemap, 구조화 데이터의 dateModified) */
 export const CONTENT_UPDATED_AT = "2026-10-01";
 
+/**
+ * 네이버 서치어드바이저 소유 확인 값 → <meta name="naver-site-verification" content="…">.
+ * 누구나 볼 수 있는 공개 메타 태그라 비밀값이 아니어서 환경변수로 빼지 않는다.
+ * 루트 layout 의 metadata.verification 에서만 쓴다. (구글 소유 확인은 DNS TXT 로 끝나서 여기 없다)
+ */
+export const NAVER_SITE_VERIFICATION = "f6e2f88fd423c42b3e0c014d6c7d29187349cccb";
+
 /** 문의 메일 (문의·개인정보처리방침 페이지에 보인다. 자리표시자로 바뀌면 npm run check:launch 가 실패한다) */
 export const CONTACT_EMAIL = "young@haemongru.com";
 

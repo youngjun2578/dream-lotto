@@ -3,7 +3,7 @@
 
 import { request as httpRequest } from "node:http";
 import { expect, test, type Page } from "@playwright/test";
-import { DEFAULT_SITE_URL } from "../lib/site";
+import { DEFAULT_SITE_URL, NAVER_SITE_VERIFICATION } from "../lib/site";
 
 const SITE = DEFAULT_SITE_URL; // https://www.haemongru.com
 const SITE_HOST = new URL(SITE).hostname; // www.haemongru.com
@@ -95,5 +95,19 @@ test("vercel.app·루트·www 어느 주소로 들어와도 리디렉션 없이 
     expect(res.body, host).toContain(`<link rel="canonical" href="${SITE}/dream/pig"/>`);
     expect(res.body, host).toContain(`<meta property="og:url" content="${SITE}/dream/pig"/>`);
     expect(res.body, host).not.toMatch(FOREIGN);
+  }
+});
+
+test("네이버 소유 확인 태그: 홈 <head>에 정확히 한 번, 다른 페이지도 중복 없음", async ({ request }) => {
+  const tag = `<meta name="naver-site-verification" content="${NAVER_SITE_VERIFICATION}"/>`;
+  const count = (html: string) => html.split(tag).length - 1;
+
+  const home = await (await request.get("/")).text();
+  expect(count(home)).toBe(1);
+  expect(home.indexOf(tag)).toBeLessThan(home.indexOf("</head>"));
+
+  for (const path of ["/dream", "/dream/pig", "/guide/wealth-dreams", "/privacy"]) {
+    const html = await (await request.get(path)).text();
+    expect(count(html), path).toBe(1);
   }
 });

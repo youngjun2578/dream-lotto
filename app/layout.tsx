@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { THEME_INIT_SCRIPT } from "@/components/ThemeToggle";
-import { absoluteUrl, SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/site";
+import { absoluteUrl, NAVER_SITE_VERIFICATION, SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/site";
 import "./globals.css";
 
 /**
@@ -40,6 +40,9 @@ export const metadata: Metadata = {
     type: "website",
   },
   twitter: { card: "summary_large_image" },
+  // 검색엔진 소유 확인 메타 태그. Next.js 는 메타데이터를 얕게 합치므로 하위 페이지가 verification 을
+  // 정의하면 이 값이 통째로 사라진다. 그래서 verification 은 여기서만 정의한다. (tests/verification.test.ts)
+  verification: { other: { "naver-site-verification": NAVER_SITE_VERIFICATION } },
 };
 
 export const viewport: Viewport = {
