@@ -25,6 +25,8 @@ export interface MatchableSymbol {
   keyword: string;
   synonyms: string[];
   weight: number;
+  /** 다른 뜻으로 흔히 쓰이는 이름이라 엄격하게 찾는다. (isStrictHit 참고) */
+  strict?: boolean;
   situations?: Situation[];
 }
 
@@ -80,6 +82,17 @@ function isWordStart(text: string, start: number): boolean {
   return start === 0 || text[start - 1] === " ";
 }
 
+/**
+ * strict 상징(말, 눈, 새, 별, 아버지 …)의 표현은 더 엄격하게 인정한다.
+ * 1) 단어 첫머리에서 시작해야 한다. ("할아버지" ≠ 아버지, "냄새가 날" ≠ 새, "건강을" ≠ 강)
+ * 2) 한 글자 이름은 바로 뒤에 '꿈'이 올 때만 인정한다. ("말 꿈", "말꿈")
+ *    "말을 했다", "눈을 떴다", "새 옷", "별로"처럼 다른 뜻이 흔해서, 나머지는 동의어의 구체적인 표현으로 찾는다.
+ */
+function isStrictHit(text: string, start: number, end: number): boolean {
+  if (!isWordStart(text, start)) return false;
+  return end - start > 1 || /^ ?꿈/.test(text.slice(end));
+}
+
 /** "안 다쳤다", "못 잡았다", "다치지 않았다", "잡지 못했다" 처럼 부정된 행동인지 */
 function isNegated(text: string, start: number, end: number): boolean {
   if (/(^| )(안|못) $/.test(text.slice(Math.max(0, start - 3), start))) return true;
@@ -100,9 +113,10 @@ function findSymbolHits<T extends MatchableSymbol>(sentences: string[], symbols:
       for (const term of terms) {
         for (const start of findAll(text, term)) {
           const end = start + term.length;
-          if (term.length > 1 || isStandalone(text, start, end)) {
-            hits.push({ symbol, start: offset + start, end: offset + end, sentence });
-          }
+          const accepted = symbol.strict
+            ? isStrictHit(text, start, end)
+            : term.length > 1 || isStandalone(text, start, end);
+          if (accepted) hits.push({ symbol, start: offset + start, end: offset + end, sentence });
         }
       }
     }

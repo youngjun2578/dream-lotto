@@ -106,6 +106,9 @@ export function validateSymbols(data: unknown, options: ValidateOptions = {}): s
     if (![1, 2, 3].includes(s.weight as number)) {
       errors.push(`${where}: weight 는 1, 2, 3 중 하나여야 합니다.`);
     }
+    if (s.strict !== undefined && typeof s.strict !== "boolean") {
+      errors.push(`${where}: strict 는 true/false 여야 합니다.`);
+    }
     const nums = s.numbers;
     if (!Array.isArray(nums) || nums.length < 3 || nums.length > 5) {
       errors.push(`${where}: numbers 는 3~5개여야 합니다.`);

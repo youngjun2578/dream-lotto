@@ -16,7 +16,9 @@ export default function HomePage() {
   const popular = getPopularSymbols();
   const symbols = getAllSymbols();
   // 입력 도우미에 필요한 만큼만 화면으로 넘긴다. (본문 같은 긴 글은 빼고)
-  const dictionary = symbols.map(({ slug, keyword, synonyms, weight }) => ({ slug, keyword, synonyms, weight }));
+  const dictionary = symbols.map(({ slug, keyword, synonyms, weight, strict }) =>
+    strict ? { slug, keyword, synonyms, weight, strict } : { slug, keyword, synonyms, weight },
+  );
   const vocabulary = buildVocabulary(symbols, getAllActions());
 
   return (

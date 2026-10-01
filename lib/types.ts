@@ -34,6 +34,11 @@ export interface DreamSymbol {
   fortune_type: FortuneType;
   numbers: number[];
   weight: 1 | 2 | 3;
+  /**
+   * 이름이 다른 뜻으로 흔히 쓰이는 상징(말, 눈, 새, 아버지 …)이면 true.
+   * 표현이 단어 첫머리에서 시작할 때만 찾고, 한 글자 이름은 '말 꿈'처럼 '꿈'이 붙을 때만 찾는다. (lib/matcher.ts)
+   */
+  strict?: boolean;
   body: string;
   situations: Situation[];
 }

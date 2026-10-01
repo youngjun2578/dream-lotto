@@ -107,7 +107,7 @@ describe("비슷한 꿈 링크", () => {
 });
 
 describe("sitemap", () => {
-  it("홈, 사전 목록, 사전 상세 30개, 기본 페이지를 절대 주소로 담는다 (중복 없음)", () => {
+  it("홈, 사전 목록, 사전 상세 전체, 기본 페이지를 절대 주소로 담는다 (중복 없음)", () => {
     const urls = sitemap().map((e) => e.url);
     expect(urls).toContain(`${SITE_URL}/`);
     expect(urls).toContain(`${SITE_URL}/dream`);

@@ -1,7 +1,20 @@
 // 사용자 흐름 테스트: 휴대폰(mobile)과 PC(desktop) 크기에서 각각 실행된다.
 
+import { readFileSync } from "node:fs";
 import { expect, test, type Page } from "@playwright/test";
 import { AGE_NOTICE, DEFAULT_SITE_URL, DISCLAIMER, SITE_NAME } from "../lib/site";
+
+/** 사전 데이터 (카테고리 순서대로). 화면에 모든 상징이 나오는지 비교할 때 쓴다. */
+const DICTIONARY = [
+  ["동물", "animal"],
+  ["사람", "person"],
+  ["자연", "nature"],
+  ["행동", "behavior"],
+  ["물건", "object"],
+].map(([category, file]) => ({
+  category,
+  slugs: (JSON.parse(readFileSync(`data/symbols/${file}.json`, "utf8")) as { slug: string }[]).map((s) => s.slug),
+}));
 
 const DREAM = "돼지가 집으로 들어오고 뱀에게 물렸어요";
 
@@ -157,5 +170,33 @@ test("미리보기 이미지: 있는 주소는 그림, 없는 주소는 404", as
   }
   for (const path of ["/dream/unicorn/opengraph-image", "/dream/%EC%97%86%EB%8A%94%EA%B2%83/opengraph-image", "/guide/nope/opengraph-image"]) {
     expect((await request.get(path)).status(), path).toBe(404);
+  }
+});
+
+test("사전 목록·카테고리·sitemap·비슷한 꿈·미리보기 이미지에 모든 상징이 나온다", async ({ page, request }) => {
+  // 사전 목록: 카테고리마다 그 카테고리 상징이 데이터 순서대로 모두 있다.
+  await page.goto("/dream");
+  for (const { category, slugs } of DICTIONARY) {
+    const hrefs = await page.locator(`#category-${category} a`).evaluateAll((links) => links.map((a) => a.getAttribute("href")));
+    expect(hrefs, category).toEqual(slugs.map((slug) => `/dream/${slug}`));
+  }
+
+  const sitemap = await (await request.get("/sitemap.xml")).text();
+  const allSlugs = DICTIONARY.flatMap((d) => d.slugs);
+  for (const slug of allSlugs) expect(sitemap, slug).toContain(`/dream/${slug}</loc>`);
+
+  // 비슷한 꿈: 카테고리의 마지막 상징 페이지에 같은 카테고리의 다른 상징이 모두 링크된다.
+  for (const { category, slugs } of DICTIONARY) {
+    await page.goto(`/dream/${slugs[slugs.length - 1]}`);
+    const related = page.locator("section", { has: page.getByRole("heading", { name: "비슷한 꿈", exact: true }) });
+    const hrefs = await related.locator("a").evaluateAll((links) => links.map((a) => a.getAttribute("href")));
+    for (const slug of slugs.slice(0, -1)) expect(hrefs, `${category}: ${slug}`).toContain(`/dream/${slug}`);
+  }
+
+  // 모든 상징의 미리보기 이미지 (빌드할 때 미리 만든 PNG)
+  for (const slug of allSlugs) {
+    const res = await request.get(`/dream/${slug}/opengraph-image`);
+    expect(res.status(), slug).toBe(200);
+    expect(res.headers()["content-type"], slug).toContain("image/png");
   }
 });

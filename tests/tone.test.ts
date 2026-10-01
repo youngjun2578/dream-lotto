@@ -54,7 +54,7 @@ describe("풀이 문장 톤", () => {
     expect(problems(texts)).toEqual([]);
   });
 
-  it("상징 일반 풀이(요약·본문 30개)도 같은 기준을 지킨다", () => {
+  it("상징 일반 풀이(요약·본문 전체)도 같은 기준을 지킨다", () => {
     const texts = getAllSymbols().flatMap((s) => [
       { where: `${s.slug}.meaning`, text: s.meaning },
       ...s.body.split("\n\n").map((text) => ({ where: `${s.slug}.body`, text })),
