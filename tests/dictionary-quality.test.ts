@@ -74,6 +74,14 @@ const DECIDED_CONFLICTS = [
   "falling < exam:시험에 떨어져 → exam",
   "exam < late:시험에 늦 → late",
   "fight < snow:눈싸움 → snow",
+  // 물건: 옷을 벗는 건 옷이 아니라 벌거벗은 꿈으로, 수영복은 수영이 아니라 옷으로
+  "clothes < naked:옷을 벗 → naked",
+  "clothes < naked:옷을 다 벗 → naked",
+  "clothes < naked:옷이 벗겨 → naked",
+  "clothes < naked:옷을 안 입 → naked",
+  "clothes < naked:옷을 입지 않 → naked",
+  "clothes < naked:옷을 하나도 → naked",
+  "swimming < clothes:수영복 → clothes",
 ];
 
 function findConflicts(): string[] {
