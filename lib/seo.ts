@@ -20,12 +20,18 @@ export interface PageMetaInput {
 }
 
 /** 사이트 기본 공유 이미지 (app/opengraph-image.tsx) */
-export const DEFAULT_OG_IMAGE = { url: "/opengraph-image", width: 1200, height: 630, alt: `${SITE_NAME} – 꿈해몽과 행운 번호 추천` };
+export const DEFAULT_OG_IMAGE = {
+  url: absoluteUrl("/opengraph-image"),
+  width: 1200,
+  height: 630,
+  alt: `${SITE_NAME} – 꿈해몽과 행운 번호 추천`,
+};
 
 /**
  * 페이지별 메타데이터 (title/description + 대표 주소 + 공유 미리보기).
  * Next.js 는 openGraph 를 얕게 합치므로(부모 값이 통째로 덮어써짐) 페이지마다 전부 채워 준다.
  * 이미지는 사이트 기본 이미지를 넣고, 자기 이미지 파일이 있는 경로(ownImage)는 그 파일을 쓴다.
+ * 주소는 모두 lib/site.ts 의 SITE_URL 로 만든 절대 주소다. (파일 이미지는 metadataBase = SITE_URL 로 절대 주소가 된다)
  */
 export function pageMetadata({
   title,
@@ -39,11 +45,11 @@ export function pageMetadata({
   return {
     title,
     description,
-    alternates: { canonical: path },
+    alternates: { canonical: absoluteUrl(path) },
     openGraph: {
       title,
       description,
-      url: path,
+      url: absoluteUrl(path),
       siteName: SITE_NAME,
       locale: "ko_KR",
       type,

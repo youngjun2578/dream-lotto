@@ -5,11 +5,12 @@ import { JsonLd } from "@/components/JsonLd";
 import { getAllActions } from "@/lib/actions";
 import { getAllGuides } from "@/lib/guides";
 import { websiteJsonLd } from "@/lib/seo";
+import { absoluteUrl } from "@/lib/site";
 import { buildVocabulary } from "@/lib/suggest";
 import { getAllSymbols, getPopularSymbols } from "@/lib/symbols";
 
 // 제목·설명·공유 설정은 app/layout.tsx 의 기본값을 쓰고, 대표 주소만 지정한다.
-export const metadata: Metadata = { alternates: { canonical: "/" } };
+export const metadata: Metadata = { alternates: { canonical: absoluteUrl("/") } };
 
 export default function HomePage() {
   const popular = getPopularSymbols();

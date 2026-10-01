@@ -4,6 +4,7 @@
 // 처음 한 번은 브라우저를 설치해야 해요: npx playwright install chromium
 
 import { defineConfig, devices } from "@playwright/test";
+import { DEFAULT_SITE_URL } from "./lib/site";
 
 const PORT = Number(process.env.E2E_PORT ?? 3100);
 const BASE_URL = `http://localhost:${PORT}`;
@@ -33,5 +34,7 @@ export default defineConfig({
     url: BASE_URL,
     reuseExistingServer: !process.env.CI,
     timeout: 300_000,
+    // .env.local 에 다른 주소가 있어도 실제 배포와 같은 대표 주소로 빌드한다.
+    env: { NEXT_PUBLIC_SITE_URL: DEFAULT_SITE_URL },
   },
 });

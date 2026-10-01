@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { THEME_INIT_SCRIPT } from "@/components/ThemeToggle";
-import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/site";
+import { absoluteUrl, SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/site";
 import "./globals.css";
 
 /**
@@ -34,7 +34,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: `${SITE_NAME} – 꿈해몽과 행운 번호 추천`,
     description: SITE_DESCRIPTION,
-    url: "/",
+    url: absoluteUrl("/"),
     siteName: SITE_NAME,
     locale: "ko_KR",
     type: "website",

@@ -1,6 +1,7 @@
 // 사용자 흐름 테스트: 휴대폰(mobile)과 PC(desktop) 크기에서 각각 실행된다.
 
 import { expect, test, type Page } from "@playwright/test";
+import { DEFAULT_SITE_URL } from "../lib/site";
 
 const DREAM = "돼지가 집으로 들어오고 뱀에게 물렸어요";
 
@@ -50,12 +51,13 @@ test("입력 → 결과 → 다시 뽑기 → 공유 링크 → 같은 결과", 
   await page.getByRole("button", { name: "링크 복사" }).click();
   await expect(page.getByRole("status")).toContainText("링크를 복사했어요");
   const url = await page.evaluate(() => navigator.clipboard.readText());
-  expect(url).toMatch(/\/r\/[A-Za-z0-9_-]+$/);
+  // 공유 주소는 항상 대표 도메인으로 만든다 (lib/site.ts)
+  expect(url).toMatch(new RegExp(`^${DEFAULT_SITE_URL}/r/[A-Za-z0-9_-]+$`));
   const payload = Buffer.from(url.split("/r/")[1], "base64url").toString("utf8");
   expect(payload).not.toMatch(/[가-힣]/);
 
-  // 공유 페이지: 같은 해몽과 번호, "나도 해몽 받기"
-  await page.goto(url);
+  // 공유 페이지: 같은 해몽과 번호, "나도 해몽 받기" (테스트 서버에서 같은 경로로 연다)
+  await page.goto(new URL(url).pathname);
   await expect(page.getByRole("heading", { name: "공유받은 꿈해몽 결과예요" })).toBeVisible();
   await expect(page.locator("#summary-heading + p")).toHaveText(summary ?? "");
   expect(await readGames(page)).toEqual(second);

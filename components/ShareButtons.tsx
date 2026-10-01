@@ -4,6 +4,7 @@
 // 링크에는 꿈 원문이 없고, 결과를 다시 만드는 데 필요한 값만 들어 있다. (lib/share.ts)
 
 import { useEffect, useState } from "react";
+import { absoluteUrl } from "@/lib/site";
 
 function copyWithTextarea(text: string): boolean {
   const el = document.createElement("textarea");
@@ -29,7 +30,8 @@ export function ShareButtons({ share }: { share: string }) {
   // navigator.share 는 브라우저에서만 알 수 있어서, 화면에 붙은 뒤에 확인한다.
   useEffect(() => setCanShare(typeof navigator.share === "function"), []);
 
-  const shareUrl = () => `${window.location.origin}/r/${share}`;
+  // 공유 주소는 지금 연 주소(www, 미리보기 주소 등)와 상관없이 항상 대표 주소로 만든다. (lib/site.ts)
+  const shareUrl = () => absoluteUrl(`/r/${share}`);
 
   async function copyLink() {
     const url = shareUrl();

@@ -22,11 +22,11 @@ const pig = getSymbolBySlug("pig")!;
 describe("pageMetadata", () => {
   it("대표 주소, 공유 미리보기(OG), 트위터 카드를 모두 채운다", () => {
     const meta = pageMetadata({ title: "돼지 꿈 해몽", description: "설명", path: "/dream/pig", type: "article" });
-    expect(meta.alternates).toEqual({ canonical: "/dream/pig" });
+    expect(meta.alternates).toEqual({ canonical: `${SITE_URL}/dream/pig` });
     expect(meta.openGraph).toMatchObject({
       title: "돼지 꿈 해몽",
       description: "설명",
-      url: "/dream/pig",
+      url: `${SITE_URL}/dream/pig`,
       siteName: SITE_NAME,
       locale: "ko_KR",
       type: "article",
@@ -37,7 +37,10 @@ describe("pageMetadata", () => {
 
   it("기본 공유 이미지를 넣되, 자기 이미지 파일이 있는 경로는 비워 둔다", () => {
     const withDefault = pageMetadata({ title: "t", description: "d", path: "/dream" });
-    expect(withDefault.openGraph).toMatchObject({ images: [{ url: "/opengraph-image", width: 1200, height: 630 }] });
+    expect(withDefault.openGraph).toMatchObject({
+      images: [{ url: `${SITE_URL}/opengraph-image`, width: 1200, height: 630 }],
+    });
+    expect(withDefault.twitter).toMatchObject({ images: [`${SITE_URL}/opengraph-image`] });
     const own = pageMetadata({ title: "t", description: "d", path: "/dream/pig", ownImage: true });
     expect(own.openGraph).not.toHaveProperty("images");
     expect(own.twitter).not.toHaveProperty("images");
