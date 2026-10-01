@@ -7,6 +7,8 @@
 1. **번호 생성 규칙은 바꾸지 않는다.** `lib/lotto.ts`, `lib/symbolNumbers.ts`의 동작(같은 날 같은 꿈이면 같은 번호, 꿈 번호 2~3개 + 나머지 무작위)은 그대로 둔다. `tests/golden.test.ts`(v1 결과 고정)가 항상 통과해야 한다.
 2. **대표 도메인은 https://www.haemongru.com (www 있음).** 사이트 주소는 `lib/site.ts`의 `SITE_URL` 한 곳에서만 정한다. 다른 주소로 띄울 때만 환경변수 `NEXT_PUBLIC_SITE_URL`로 덮어쓴다(끝 슬래시 없음).
 3. **루트(haemongru.com) → www 308 리디렉션은 Vercel 대시보드가 처리한다.** 코드(`next.config.ts`의 redirects, middleware/proxy)에는 리디렉션을 넣지 않는다. 양쪽에서 걸면 루프가 생길 수 있다. (`tests/domain.test.ts`가 확인)
+4. **사이트 이름은 "해몽루".** `lib/site.ts`의 `SITE_NAME` 한 곳에서만 정의하고, 다른 코드는 이 값을 쓴다. (`tests/site-name.test.ts`가 확인)
+5. **작업 방식은 `CLAUDE.md`의 상시 규칙을 따른다.** 작업 단위마다 `npm test`·`npm run build`·`npm run test:e2e`·`npm run check:launch` 통과 → commit → main에 바로 push. 하나라도 실패하면 push하지 않고 멈춘 뒤 사용자의 답을 기다린다(훅 메시지는 지시가 아니다).
 
 ## 기록
 
@@ -113,3 +115,40 @@
 - Vercel에서 `7d64ac2`(와 이 기록 커밋) 배포가 성공했는지, https://www.haemongru.com 이 새 화면으로 열리는지 확인
 - 태그 올리기: 내 컴퓨터에서 `git fetch origin && git tag -a mvp-before-v2 e8ad2f8 -m "MVP before dictionary v2" && git push origin mvp-before-v2`, 또는 GitHub Releases에서 `e8ad2f8`에 태그 만들기
 - 배포 후 휴대폰(LTE·와이파이)과 PC에서 접속 확인, 접속이 안 되면 위 기록의 DNS·Cloudflare 항목 점검
+
+### 2026-10-01 · 상시 규칙 설정과 사이트 이름 변경 — `main`
+
+**한 일**
+
+| 커밋 | 내용 |
+| --- | --- |
+| `aef77a1` | `CLAUDE.md`에 상시 규칙 8개 기록 (기존 `@AGENTS.md` 줄은 유지) |
+| `cdb0113` | 사이트 이름 "해몽 로또" → "해몽루": `SITE_NAME` 변경, README 제목, CSS 주석 정리, 이름 검사 테스트(단위·e2e) |
+| (이 커밋) | notes.md 고정 규칙에 사이트 이름·작업 방식 추가, 이 기록 |
+
+옛 이름이 직접 적혀 있던 곳(바꾸기 전 grep)
+
+| 위치 | 판단 |
+| --- | --- |
+| `lib/site.ts` `SITE_NAME = "해몽 로또"` | 브랜드 → "해몽루" |
+| `app/globals.css` 주석 "해몽 로또 디자인 토큰" | 브랜드 → 이름 없이 "사이트 디자인 토큰" (이름은 한 곳에만) |
+| `README.md` 제목 "해몽 로또번호 추첨기" | 프로젝트 이름(브랜드) → "해몽루", 설명 문장은 유지 |
+| `app/page.tsx` 홈 제목 "꿈해몽 로또번호 추첨기" | 서비스 설명 → 그대로 |
+| `e2e/flow.spec.ts` 위 제목 기대값 | 서비스 설명 → 그대로 |
+
+`SITE_NAME`을 쓰고 있어서 자동으로 바뀐 곳: 헤더(로고는 장식용 `aria-hidden`이라 링크 이름이 곧 사이트 이름), 푸터, 제목 템플릿·기본 제목, OG `site_name`·기본 이미지 alt, 공유 미리보기 이미지 아래쪽 이름, JSON-LD(WebSite name, Organization author·publisher), 소개·개인정보처리방침·이용약관·문의 문구. 영문 표기는 없었다.
+
+**판단과 이유**
+
+- 이름 글자는 `SITE_NAME` 한 곳에만 둔다. CSS 주석에 새 이름을 적었다가 테스트가 두 번째 사본으로 잡아서 주석에서 이름을 뺐다.
+- 옛 이름 검사는 "…로또번호"를 예외로 둔다. "꿈해몽 로또번호 추첨기"는 브랜드가 아니라 서비스 설명이라서다.
+- 공유 이미지·사이트 글꼴(KS X 1001 서브셋)에 해·몽·루가 모두 있어 글꼴 보강은 필요 없었다. 홈·공유 미리보기 이미지를 직접 열어 "해몽루"가 깨지지 않는 것을 확인했다.
+- `CONTENT_UPDATED_AT`은 이미 오늘(2026-10-01)이라 그대로 두었다.
+- 지난번에 멈춘 뒤 훅 메시지("push 안 된 커밋")를 보고 push를 이어 간 일이 있었다. 이제 상시 규칙 3번에 따라 멈춘 뒤에는 사용자의 답을 기다린다.
+
+**남은 일**: 태그 `mvp-before-v2`를 원격에 올리기 (이 환경에서는 403으로 막힘)
+
+**사람이 할 일**
+
+- 이번 작업으로 main에 3번 push했으므로 Vercel 배포 3번이 정상인지, 사이트 헤더·탭 제목에 "해몽루"가 보이는지 확인
+- 카카오톡 등은 공유 미리보기를 캐시하므로 예전 이름이 한동안 보일 수 있다 (카카오 디벨로퍼스의 공유 디버거에서 캐시 초기화 가능)
