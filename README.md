@@ -255,7 +255,7 @@ review/                     검토 자료: screenshots/(화면 캡처 24장), li
 
 `.env.example`을 복사해 `.env.local`을 만듭니다. 1단계에서는 **아무것도 넣지 않아도 동작**합니다.
 
-- `NEXT_PUBLIC_SITE_URL`: 사이트 대표 주소. **비워 두면 `https://haemongru.com`** 입니다(`lib/site.ts`). 주소는 이 한 곳에서만 정하고, canonical·공유 미리보기·sitemap·robots·구조화 데이터·공유 링크·www 리디렉션이 모두 이 값을 씁니다. 로컬에서 복사한 공유 링크를 그대로 열어 보려면 `.env.local`에 `NEXT_PUBLIC_SITE_URL=http://localhost:3000`을 넣으세요.
+- `NEXT_PUBLIC_SITE_URL`: 사이트 대표 주소. **비워 두면 `https://www.haemongru.com`** 입니다(`lib/site.ts`의 `DEFAULT_SITE_URL`, 끝 슬래시 없이 다듬음). 주소는 이 한 곳에서만 정하고, metadataBase·canonical·공유 미리보기(OG/Twitter)·sitemap·robots·구조화 데이터(url, @id)·공유 링크가 모두 이 값을 씁니다. vercel.app 주소로 열어도 canonical은 이 주소를 가리킵니다. 로컬에서 복사한 공유 링크를 그대로 열어 보려면 `.env.local`에 `NEXT_PUBLIC_SITE_URL=http://localhost:3000`을 넣으세요.
 - `NAVER_AD_*`: 키워드 수집 스크립트용 (아래 12장). 사이트 실행에는 필요 없습니다.
 - 나머지(`LLM_API_KEY`, Supabase, AdSense)는 2단계용 자리입니다. 실제 값은 `.env.local`이나 Vercel 환경변수에만 넣고, **git에는 절대 올리지 마세요.** (`.env.local`은 `.gitignore`에 들어 있어 git에 올라가지 않습니다.)
 
@@ -328,12 +328,12 @@ npx lighthouse http://localhost:3000/dream/pig --preset=desktop --view # PC 기�
 ## 14. Vercel 배포 (참고)
 
 1. GitHub 저장소를 Vercel에서 Import합니다. Framework는 Next.js로 자동 인식됩니다.
-2. 환경변수는 넣지 않아도 됩니다. 사이트 주소 기본값이 `https://haemongru.com`입니다. 다른 주소로 띄울 때만 `NEXT_PUBLIC_SITE_URL`을 넣으세요. (바꾸면 다시 배포해야 반영돼요)
+2. 환경변수는 넣지 않아도 됩니다. 사이트 주소 기본값이 `https://www.haemongru.com`입니다(`lib/site.ts`). 다른 주소로 띄울 때만 `NEXT_PUBLIC_SITE_URL`을 넣으세요. (바꾸면 다시 배포해야 반영돼요)
 3. Deploy. 별도 설정 파일(`vercel.json`)은 필요 없습니다.
-4. **Domains**에 `haemongru.com`과 `www.haemongru.com`을 추가하고, 대표(Primary)는 `haemongru.com`(www 없음)으로 둡니다.
-   - `www.haemongru.com/경로` → `https://haemongru.com/경로` 이동(308)은 코드(`next.config.ts`)가 처리합니다.
-   - **반대 방향(haemongru.com → www)으로 리디렉션을 설정하면 두 규칙이 서로 보내는 무한 이동(루프)이 생깁니다.** 대시보드에서 리디렉션을 걸 거라면 www → haemongru.com 방향만 쓰세요.
-5. 배포 후 확인: `https://www.haemongru.com/dream/pig`가 `https://haemongru.com/dream/pig`로 바뀌는지, `/sitemap.xml`과 `/robots.txt`의 주소가 `https://haemongru.com`인지 봅니다.
+4. **Domains**: 대표(Primary)는 `www.haemongru.com`입니다. 루트 도메인 → www 이동(308)은 **Vercel 대시보드에서만** 설정합니다.
+   - 코드(`next.config.ts`의 redirects, middleware/proxy)에는 리디렉션을 넣지 않습니다. 양쪽에서 걸면 서로 보내는 무한 이동(루프)이 생길 수 있어요. `tests/domain.test.ts`가 코드에 리디렉션이 없는지 확인합니다.
+   - 대시보드에서 www → 루트 방향으로 바꾸지 마세요. canonical·sitemap이 www를 가리키므로 루프가 됩니다.
+5. 배포 후 확인: 루트 도메인으로 열면 `https://www.haemongru.com`으로 바뀌는지, vercel.app 주소로 열어도 페이지 소스의 canonical이 `https://www.haemongru.com/...`인지, `/sitemap.xml`과 `/robots.txt`의 주소가 `https://www.haemongru.com`인지 봅니다.
 
 ---
 

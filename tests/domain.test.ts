@@ -1,24 +1,44 @@
-// 도메인 정리: 사이트 주소는 lib/site.ts 한 곳에서만 정하고, 모든 절대 주소가 대표 도메인을 가리킨다.
+// 도메인: 대표 주소는 https://www.haemongru.com 이고 lib/site.ts 한 곳에서만 정한다.
+// 루트 도메인 → www 리디렉션은 Vercel 대시보드가 처리하므로, 코드에는 리디렉션이 없어야 한다.
 
-import { readdirSync, readFileSync, statSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import nextConfig from "@/next.config";
-import { DEFAULT_SITE_URL, normalizeSiteUrl, wwwRedirects } from "@/lib/site";
+import { DEFAULT_SITE_URL, normalizeSiteUrl } from "@/lib/site";
 
-const APEX = "https://haemongru.com";
+const SITE = "https://www.haemongru.com";
 
-/** 환경변수를 비운 상태(= 실제 배포 기본값)로 모듈을 새로 불러온다. */
-async function loadWithDefaultEnv() {
-  vi.stubEnv("NEXT_PUBLIC_SITE_URL", "");
+/** 객체 안의 모든 주소 문자열 (schema.org 의 @context 는 빼고) */
+function urlsIn(value: unknown): string[] {
+  if (typeof value === "string") return /^https?:\/\//.test(value) && !value.startsWith("https://schema.org") ? [value] : [];
+  if (Array.isArray(value)) return value.flatMap(urlsIn);
+  if (value instanceof URL) return [value.href];
+  if (value && typeof value === "object") return Object.values(value).flatMap(urlsIn);
+  return [];
+}
+
+/** 모든 주소가 대표 도메인으로 시작하고, 루트 도메인·vercel.app 주소가 섞이지 않았는지 */
+function expectOnSiteDomain(urls: string[]) {
+  expect(urls.length).toBeGreaterThan(0);
+  for (const url of urls) {
+    expect(url === SITE || url.startsWith(`${SITE}/`), url).toBe(true);
+    expect(url, url).not.toMatch(/:\/\/haemongru\.com|vercel\.app|localhost/);
+  }
+}
+
+/** 환경변수를 바꾼 상태로 사이트 관련 모듈을 새로 불러온다. */
+async function loadWith(env: Record<string, string>) {
+  for (const [key, value] of Object.entries(env)) vi.stubEnv(key, value);
   vi.resetModules();
-  const [site, seo, robots, sitemap] = await Promise.all([
+  const [site, seo, robots, sitemap, layout] = await Promise.all([
     import("@/lib/site"),
     import("@/lib/seo"),
     import("@/app/robots"),
     import("@/app/sitemap"),
+    import("@/app/layout"),
   ]);
-  return { site, seo, robots: robots.default, sitemap: sitemap.default };
+  return { site, seo, robots: robots.default, sitemap: sitemap.default, layoutMetadata: layout.metadata };
 }
 
 afterEach(() => {
@@ -27,79 +47,81 @@ afterEach(() => {
 });
 
 describe("사이트 주소 (lib/site.ts)", () => {
-  it("대표 도메인은 www 없는 https://haemongru.com", () => {
-    expect(DEFAULT_SITE_URL).toBe(APEX);
-    expect(normalizeSiteUrl(undefined)).toBe(APEX);
-    expect(normalizeSiteUrl("   ")).toBe(APEX);
+  it("대표 도메인은 www 가 붙은 https://www.haemongru.com", () => {
+    expect(DEFAULT_SITE_URL).toBe(SITE);
+    expect(normalizeSiteUrl(undefined)).toBe(SITE);
+    expect(normalizeSiteUrl("   ")).toBe(SITE);
   });
 
-  it("환경변수 값은 https://도메인 형태로 다듬는다", () => {
-    expect(normalizeSiteUrl("https://haemongru.com/")).toBe(APEX);
-    expect(normalizeSiteUrl("haemongru.com")).toBe(APEX);
-    expect(normalizeSiteUrl("https://HaemongRu.com/dream?x=1")).toBe(APEX);
-    expect(normalizeSiteUrl("http://localhost:3000")).toBe("http://localhost:3000");
+  it("환경변수 값은 끝 슬래시 없이 https://도메인 형태로 다듬는다", () => {
+    expect(normalizeSiteUrl("https://www.haemongru.com/")).toBe(SITE);
+    expect(normalizeSiteUrl("https://www.haemongru.com///")).toBe(SITE);
+    expect(normalizeSiteUrl("www.haemongru.com")).toBe(SITE);
+    expect(normalizeSiteUrl("https://WWW.HaemongRu.com/dream?x=1")).toBe(SITE);
+    expect(normalizeSiteUrl("http://localhost:3000/")).toBe("http://localhost:3000");
   });
 
-  it("환경변수가 없으면 canonical·OG·sitemap·robots·JSON-LD 가 모두 대표 도메인을 쓴다", async () => {
-    const { site, seo, robots, sitemap } = await loadWithDefaultEnv();
-    expect(site.SITE_URL).toBe(APEX);
+  it("metadataBase·canonical·OG·Twitter·sitemap·robots·JSON-LD(url, @id)가 모두 대표 도메인", async () => {
+    const { site, seo, robots, sitemap, layoutMetadata } = await loadWith({ NEXT_PUBLIC_SITE_URL: "" });
+    expect(site.SITE_URL).toBe(SITE);
+    expect(String(layoutMetadata.metadataBase)).toBe(`${SITE}/`);
 
     const meta = seo.pageMetadata({ title: "t", description: "d", path: "/dream/pig" });
-    expect(meta.alternates?.canonical).toBe(`${APEX}/dream/pig`);
-    expect(meta.openGraph).toMatchObject({ url: `${APEX}/dream/pig`, images: [{ url: `${APEX}/opengraph-image` }] });
-    expect(meta.twitter).toMatchObject({ images: [`${APEX}/opengraph-image`] });
+    expect(meta.alternates?.canonical).toBe(`${SITE}/dream/pig`);
+    expect(meta.openGraph).toMatchObject({ url: `${SITE}/dream/pig` });
+    expectOnSiteDomain([...urlsIn(layoutMetadata), ...urlsIn(meta), ...urlsIn(seo.pageMetadata({ title: "t", description: "d", path: "/r/x", ownImage: true }))]);
 
-    expect(robots().sitemap).toBe(`${APEX}/sitemap.xml`);
-    const urls = sitemap().map((e) => e.url);
-    expect(urls.length).toBeGreaterThan(30);
-    for (const url of urls) expect(url.startsWith(`${APEX}/`)).toBe(true);
+    expect(robots().sitemap).toBe(`${SITE}/sitemap.xml`);
+    expectOnSiteDomain(urlsIn(robots()));
+    expectOnSiteDomain(sitemap().map((e) => e.url));
 
-    expect(seo.websiteJsonLd().url).toBe(`${APEX}/`);
-    expect(seo.articleJsonLd({ title: "t", description: "d", path: "/guide/x" })).toMatchObject({
-      url: `${APEX}/guide/x`,
-      mainEntityOfPage: `${APEX}/guide/x`,
-      image: `${APEX}/guide/x/opengraph-image`,
-    });
+    const jsonLd = [
+      seo.websiteJsonLd(),
+      seo.articleJsonLd({ title: "t", description: "d", path: "/guide/x" }),
+      seo.breadcrumbJsonLd([{ name: "홈", path: "/" }, { name: "돼지", path: "/dream/pig" }]),
+      seo.dreamListJsonLd([]),
+    ];
+    expect(jsonLd.map((d) => d["@id"])).toEqual([
+      `${SITE}/#website`,
+      `${SITE}/guide/x#article`,
+      `${SITE}/dream/pig#breadcrumb`,
+      `${SITE}/dream#collection`,
+    ]);
+    expectOnSiteDomain(urlsIn(jsonLd));
   });
 
-  it("NEXT_PUBLIC_SITE_URL 로 덮어쓸 수 있다", async () => {
-    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://preview.example.org/");
-    vi.resetModules();
-    const site = await import("@/lib/site");
+  it("vercel.app 주소로 배포·접속해도 사이트 주소는 바뀌지 않는다 (Vercel 이 넣는 환경변수 무시)", async () => {
+    const { site, seo } = await loadWith({
+      NEXT_PUBLIC_SITE_URL: "",
+      VERCEL_URL: "dream-lotto-nine.vercel.app",
+      VERCEL_BRANCH_URL: "dream-lotto-git-main.vercel.app",
+      VERCEL_PROJECT_PRODUCTION_URL: "dream-lotto-nine.vercel.app",
+      NEXT_PUBLIC_VERCEL_URL: "dream-lotto-nine.vercel.app",
+    });
+    expect(site.SITE_URL).toBe(SITE);
+    expect(seo.pageMetadata({ title: "t", description: "d", path: "/dream/pig" }).alternates?.canonical).toBe(
+      `${SITE}/dream/pig`,
+    );
+  });
+
+  it("NEXT_PUBLIC_SITE_URL 로 덮어쓸 수 있다 (끝 슬래시 제거)", async () => {
+    const { site } = await loadWith({ NEXT_PUBLIC_SITE_URL: "https://preview.example.org/" });
     expect(site.SITE_URL).toBe("https://preview.example.org");
     expect(site.absoluteUrl("/r/abc")).toBe("https://preview.example.org/r/abc");
   });
 });
 
-describe("www → 대표 도메인 리디렉션 (next.config.ts)", () => {
-  it("www.haemongru.com 의 모든 경로를 같은 경로로 308 이동", () => {
-    expect(wwwRedirects(APEX)).toEqual([
-      {
-        source: "/:path*",
-        has: [{ type: "host", value: "www\\.haemongru\\.com" }],
-        destination: `${APEX}/:path*`,
-        permanent: true,
-      },
-    ]);
+describe("리디렉션은 코드에 두지 않는다 (Vercel 대시보드와 겹치면 루프 위험)", () => {
+  it("next.config.ts 에 redirects 가 없다", async () => {
+    const redirects = nextConfig.redirects ? await nextConfig.redirects() : [];
+    expect(redirects).toEqual([]);
   });
 
-  it("next.config.ts 가 이 규칙을 그대로 쓴다", async () => {
-    expect(await nextConfig.redirects!()).toEqual(wwwRedirects());
-  });
-
-  it("루프가 생기지 않는다: 대표 도메인 요청은 규칙에 걸리지 않는다", () => {
-    const [rule] = wwwRedirects(APEX);
-    // Next.js 는 host 조건을 ^값$ 정규식으로 비교한다 (포트는 떼고 소문자로).
-    const matches = (host: string) => new RegExp(`^${rule.has[0].value}$`).test(host);
-    expect(matches("www.haemongru.com")).toBe(true);
-    expect(matches("haemongru.com")).toBe(false);
-    expect(matches(new URL(rule.destination.replace("/:path*", "/")).hostname)).toBe(false);
-    expect(matches("wwwxhaemongruxcom")).toBe(false);
-  });
-
-  it("대표 주소가 www 이거나 로컬 주소면 규칙을 만들지 않는다", () => {
-    expect(wwwRedirects("https://www.example.org")).toEqual([]);
-    expect(wwwRedirects("http://localhost:3000")).toEqual([]);
+  it("middleware / proxy 파일이 없다", () => {
+    const candidates = ["middleware", "proxy"].flatMap((name) =>
+      ["", "src/"].flatMap((dir) => ["ts", "tsx", "js", "mjs"].map((ext) => `${dir}${name}.${ext}`)),
+    );
+    expect(candidates.filter((file) => existsSync(file))).toEqual([]);
   });
 });
 
@@ -114,7 +136,7 @@ describe("하드코딩된 도메인", () => {
   }
 
   it("haemongru·vercel.app·localhost 주소는 lib/site.ts 에만 있다", () => {
-    const files = [...["app", "components", "lib", "data"].flatMap(sourceFiles), "next.config.ts"];
+    const files = [...["app", "components", "lib", "data", "scripts"].flatMap(sourceFiles), "next.config.ts"];
     const found = files
       .filter((file) => file !== join("lib", "site.ts"))
       .flatMap((file) =>

@@ -62,12 +62,14 @@ export function pageMetadata({
 
 type JsonLd = Record<string, unknown>;
 
-const publisher = { "@type": "Organization", name: SITE_NAME, url: absoluteUrl("/") };
+// 구조화 데이터의 url 과 @id 도 모두 SITE_URL(absoluteUrl)로 만든다.
+const publisher = { "@type": "Organization", "@id": absoluteUrl("/#organization"), name: SITE_NAME, url: absoluteUrl("/") };
 
 export function websiteJsonLd(): JsonLd {
   return {
     "@context": "https://schema.org",
     "@type": "WebSite",
+    "@id": absoluteUrl("/#website"),
     name: SITE_NAME,
     url: absoluteUrl("/"),
     description: SITE_DESCRIPTION,
@@ -80,6 +82,7 @@ export function breadcrumbJsonLd(items: { name: string; path: string }[]): JsonL
   return {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
+    "@id": `${absoluteUrl(items[items.length - 1]?.path ?? "/")}#breadcrumb`,
     itemListElement: items.map((item, i) => ({
       "@type": "ListItem",
       position: i + 1,
@@ -101,6 +104,7 @@ export function articleJsonLd({ title, description, path, section, keywords }: A
   return {
     "@context": "https://schema.org",
     "@type": "Article",
+    "@id": `${absoluteUrl(path)}#article`,
     headline: title,
     description,
     inLanguage: "ko-KR",
@@ -136,6 +140,7 @@ export function dreamListJsonLd(symbols: DreamSymbol[]): JsonLd {
   return {
     "@context": "https://schema.org",
     "@type": "CollectionPage",
+    "@id": `${absoluteUrl("/dream")}#collection`,
     name: "꿈해몽 사전",
     url: absoluteUrl("/dream"),
     inLanguage: "ko-KR",
