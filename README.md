@@ -22,7 +22,7 @@ npm run dev        # 개발 서버 실행 → http://localhost:3000
 | --- | --- |
 | `npm run dev` | 개발 서버 (코드를 고치면 바로 반영) |
 | `npm test` | 테스트 실행 (Vitest) |
-| `npm run build` | 배포용 빌드 (사전 페이지 30개를 미리 생성) |
+| `npm run build` | 배포용 빌드 (사전 페이지 70개를 미리 생성) |
 | `npm start` | 빌드한 결과 실행 |
 | `npm run typecheck` | 타입 검사만 |
 | `npm run keywords` | 꿈 관련 검색 키워드 수집 (네이버 검색광고 API 키 필요, 12장) |
@@ -61,7 +61,7 @@ app/                        화면(페이지)과 API
 assets/fonts/               공유 이미지용 한글 글꼴 (Pretendard 서브셋, SIL OFL 1.1)
 components/                 화면 조각 (DreamForm, ResultView, AdSlot, LottoBall, ThemeToggle …)
 data/
-  symbols/*.json            꿈 상징 사전 30개 (카테고리별 파일: animal·person·nature·behavior·object)
+  symbols/*.json            꿈 상징 사전 70개 (카테고리별 파일: animal·person·nature·behavior·object)
   actions.json              꿈속 행동 사전 (들어오다, 쫓기다, 먹다 … 63개, 활용형 포함)
   guides.json               꿈 가이드 칼럼 5편
 lib/                        핵심 로직 — 화면과 분리되어 있어 테스트하기 쉬움
@@ -233,7 +233,7 @@ review/                     검토 자료: screenshots/(화면 캡처 24장), li
 ## 9. SEO (검색·공유)
 
 - **페이지별 메타 태그**: `lib/seo.ts`의 `pageMetadata()`로 제목·설명·대표 주소(canonical)·공유 미리보기(OG, 트위터 카드)를 한 번에 채웁니다.
-- **공유 미리보기 이미지**: `next/og`로 **빌드할 때 PNG를 미리 만듭니다**. 사전 상세 30개는 제목·대표 풀이·행운 숫자가 들어간 각자의 이미지를, 나머지 페이지는 사이트 기본 이미지를 씁니다.
+- **공유 미리보기 이미지**: `next/og`로 **빌드할 때 PNG를 미리 만듭니다**. 사전 상세 70개는 제목·대표 풀이·행운 숫자가 들어간 각자의 이미지를, 나머지 페이지는 사이트 기본 이미지를 씁니다.
   - 한글이 나오도록 `assets/fonts`의 Pretendard 서브셋(자주 쓰는 한글 2,350자)을 씁니다. 새 글을 추가했을 때 서브셋에 없는 글자가 있으면 `tests/seo.test.ts`가 알려 줍니다.
 - **구조화 데이터(JSON-LD)**: 홈 `WebSite`, 사전 목록 `CollectionPage`+`ItemList`, 사전 상세·가이드 `Article`+`BreadcrumbList`. [리치 결과 테스트](https://search.google.com/test/rich-results)로 확인할 수 있어요.
 - **비슷한 꿈 링크**: 사전 상세 아래에 "같은 카테고리 꿈"과 "같은 운세(다른 카테고리) 꿈"을 보여 줘 사이트 안에서 이어 읽게 합니다.
