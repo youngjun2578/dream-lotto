@@ -1,19 +1,21 @@
 import type { Metadata } from "next";
 import { StaticPage } from "@/components/StaticPage";
+import { pageMetadata } from "@/lib/seo";
 import { CONTACT_EMAIL, SITE_NAME } from "@/lib/site";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "문의",
   description: `${SITE_NAME} 문의하기`,
-};
+  path: "/contact",
+});
 
-// 초안: lib/site.ts 의 CONTACT_EMAIL 을 실제 주소로 바꿔 주세요.
+// 문의 메일 주소는 lib/site.ts 의 CONTACT_EMAIL 에서 바꾼다.
 export default function ContactPage() {
   return (
     <StaticPage title="문의">
       <p>서비스 이용 중 궁금한 점, 오류 제보, 꿈해몽 사전에 추가했으면 하는 꿈이 있다면 아래 메일로 알려 주세요.</p>
       <p className="text-lg font-semibold">
-        📮 <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>
+        <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>
       </p>
       <h2>보내 주시면 좋은 내용</h2>
       <ul>

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import raw from "@/data/symbols.json";
+import { rawSymbolData as raw } from "@/lib/symbols";
 import { matchSymbols } from "@/lib/matcher";
 import { candidateNumbers } from "@/lib/symbolNumbers";
 import { getAllSymbols, validateSymbols } from "@/lib/symbols";

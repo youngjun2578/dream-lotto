@@ -1,19 +1,39 @@
-// 로또 공 (실제 로또처럼 번호대별 색상)
+// 로또 공: 번호 구간별 색 (1~10 노랑, 11~20 파랑, 21~30 빨강, 31~40 회색, 41~45 초록)
+// 꿈 상징에서 나온 번호는 달빛색 테두리로 표시한다.
 
-function ballColor(n: number): string {
-  if (n <= 10) return "bg-yellow-400 text-yellow-950";
-  if (n <= 20) return "bg-sky-400 text-sky-950";
-  if (n <= 30) return "bg-rose-400 text-rose-950";
-  if (n <= 40) return "bg-slate-400 text-slate-950";
-  return "bg-lime-400 text-lime-950";
-}
+import type { CSSProperties } from "react";
+import { ballColor } from "@/lib/ballColors";
 
-export function LottoBall({ n, highlight = false, small = false }: { n: number; highlight?: boolean; small?: boolean }) {
-  const size = small ? "h-9 w-9 text-sm" : "h-11 w-11 text-base";
-  const ring = highlight ? "ring-4 ring-violet-500/60 ring-offset-2" : "";
+const SIZE = {
+  sm: "h-9 w-9 text-sm",
+  md: "h-11 w-11 text-base",
+} as const;
+
+export function LottoBall({
+  n,
+  highlight = false,
+  size = "md",
+  className = "",
+  style,
+}: {
+  n: number;
+  highlight?: boolean;
+  size?: keyof typeof SIZE;
+  className?: string;
+  style?: CSSProperties;
+}) {
+  const c = ballColor(n);
   return (
     <span
-      className={`inline-flex shrink-0 items-center justify-center rounded-full font-bold shadow-sm ${size} ${ballColor(n)} ${ring}`}
+      className={`inline-flex shrink-0 items-center justify-center rounded-full font-bold tabular-nums shadow-sm ${SIZE[size]} ${
+        highlight ? "ring-[3px] ring-[color:var(--highlight-ring)] ring-offset-2 ring-offset-[color:var(--surface)]" : ""
+      } ${className}`}
+      style={{
+        backgroundColor: c.bg,
+        color: c.fg,
+        backgroundImage: "radial-gradient(circle at 32% 28%, rgb(255 255 255 / 0.5), transparent 45%)",
+        ...style,
+      }}
     >
       {n}
     </span>

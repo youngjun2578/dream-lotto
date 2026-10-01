@@ -1,11 +1,12 @@
 import type { FortuneType } from "@/lib/types";
 
+// 색은 app/globals.css 의 --f-* 토큰 (라이트/다크 모두 명도 대비 AA 이상)
 const STYLE: Record<FortuneType, string> = {
-  재물: "bg-amber-100 text-amber-800",
-  연애: "bg-pink-100 text-pink-800",
-  건강: "bg-emerald-100 text-emerald-800",
-  직장: "bg-blue-100 text-blue-800",
-  주의: "bg-red-100 text-red-800",
+  재물: "bg-[var(--f-money-bg)] text-[var(--f-money-fg)]",
+  연애: "bg-[var(--f-love-bg)] text-[var(--f-love-fg)]",
+  건강: "bg-[var(--f-health-bg)] text-[var(--f-health-fg)]",
+  직장: "bg-[var(--f-work-bg)] text-[var(--f-work-fg)]",
+  주의: "bg-[var(--f-warn-bg)] text-[var(--f-warn-fg)]",
 };
 
 export function FortuneBadge({ type }: { type: FortuneType }) {

@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
 import { StaticPage } from "@/components/StaticPage";
+import { pageMetadata } from "@/lib/seo";
 import { DISCLAIMER, SITE_NAME } from "@/lib/site";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "이용약관",
   description: `${SITE_NAME} 이용약관`,
-};
+  path: "/terms",
+});
 
 // 초안: 실제 운영 전 검토가 필요합니다.
 export default function TermsPage() {
