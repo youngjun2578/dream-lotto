@@ -9,19 +9,40 @@ export interface VocabEntry {
   weight: number;
 }
 
+/** 이름 뒤에 붙는 조사 (받침이 있으면 이·을·은·과, 없으면 가·를·는·와). "강가"(강변)는 조사가 아니다. */
+const PARTICLES_AFTER_CONSONANT = new Set(["이", "을", "은", "과", "에", "에서", "의", "도", "만"]);
+const PARTICLES_AFTER_VOWEL = new Set(["가", "를", "는", "와", "에", "에서", "의", "도", "만"]);
+
+function hasFinalConsonant(word: string): boolean {
+  const code = word.charCodeAt(word.length - 1) - 0xac00;
+  return code >= 0 && code <= 11171 && code % 28 !== 0;
+}
+
+/** "비가", "별을"처럼 이름에 조사만 붙인 표현인지 */
+function isParticleForm(word: string, name: string): boolean {
+  if (!word.startsWith(name) || word === name) return false;
+  const particles = hasFinalConsonant(name) ? PARTICLES_AFTER_CONSONANT : PARTICLES_AFTER_VOWEL;
+  return particles.has(word.slice(name.length));
+}
+
 /**
  * 추천 단어 목록 만들기 (서버에서 한 번 만들어 화면에 넘긴다)
  * - 상징 이름(keyword)과 명사형 동의어만 넣는다. "떨어지", "불타"처럼 행동 사전에 있는 동사 조각은 빼고,
  *   "해가 뜨"처럼 띄어쓰기가 든 매칭용 표현도 뺀다.
  * - 행동 카테고리 상징(쫓기는, 이빨 빠지는 …)은 이름만 넣는다.
  * - strict 상징의 한 글자 이름(말, 새 …)은 넣지 않는다. ("조랑말", "참새" 같은 동의어는 넣는다)
+ * - "비가", "별을"처럼 이름에 조사만 붙인 매칭용 표현도 뺀다.
  */
 export function buildVocabulary(symbols: DreamSymbol[], actions: DreamAction[]): VocabEntry[] {
   const verbFragments = new Set(actions.flatMap((a) => a.synonyms));
   const seen = new Set<string>();
   const vocab: VocabEntry[] = [];
   for (const s of symbols) {
-    const nouns = s.category === "행동" ? [] : s.synonyms.filter((w) => !w.includes(" ") && !verbFragments.has(w));
+    // "비가", "별을"처럼 이름에 조사만 붙인 표현은 매칭용이라 추천하지 않는다.
+    const nouns =
+      s.category === "행동"
+        ? []
+        : s.synonyms.filter((w) => !w.includes(" ") && !verbFragments.has(w) && !isParticleForm(w, s.keyword));
     // strict 상징의 한 글자 이름(말, 새 …)은 그 글자만으로는 상징으로 잡히지 않으므로 추천하지 않는다.
     const names = s.strict && s.keyword.length === 1 ? [] : [s.keyword];
     for (const term of [...names, ...nouns]) {

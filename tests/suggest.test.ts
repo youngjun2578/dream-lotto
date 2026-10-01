@@ -14,10 +14,10 @@ describe("추천 단어 목록", () => {
     expect(new Set(all).size).toBe(all.length);
   });
 
-  it("strict 상징의 한 글자 이름은 추천하지 않는다 (그 글자만으로는 상징이 잡히지 않아서)", () => {
+  it("strict 상징의 한 글자 이름과 조사만 붙인 표현은 추천하지 않는다", () => {
     const all = VOCAB.map((v) => v.term);
-    for (const name of ["말", "새", "쥐"]) expect(all).not.toContain(name);
-    for (const word of ["조랑말", "참새", "생쥐", "강아지"]) expect(all).toContain(word);
+    for (const name of ["말", "새", "쥐", "비가", "별을", "강을", "새가"]) expect(all).not.toContain(name);
+    for (const word of ["조랑말", "참새", "생쥐", "강아지", "강가"]) expect(all).toContain(word);
   });
 });
 
