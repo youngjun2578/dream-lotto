@@ -1,4 +1,4 @@
-// "[돼지 꿈](/dream/pig)" 표시를 사이트 안 링크로 바꿔 보여 준다. (가이드 본문용)
+// "[돼지 꿈](/dream/pig)" 표시를 사이트 안 링크로 바꿔 보여 준다. (가이드 본문, 사전 본문)
 
 import Link from "next/link";
 import { Fragment } from "react";

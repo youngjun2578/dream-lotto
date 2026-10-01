@@ -4,15 +4,17 @@ import { readFileSync } from "node:fs";
 import { expect, test, type Page } from "@playwright/test";
 import { AGE_NOTICE, DEFAULT_SITE_URL, DISCLAIMER, SITE_NAME } from "../lib/site";
 
-/** 사전 데이터 (카테고리 순서대로). 화면에 모든 상징이 나오는지 비교할 때 쓴다. */
+/** 사전 데이터 (카테고리 순서대로). 화면에 모든 상징이 나오는지 비교할 때 쓴다. (파일 이름 = 카테고리 페이지 주소) */
 const DICTIONARY = [
   ["동물", "animal"],
   ["사람", "person"],
   ["자연", "nature"],
   ["행동", "behavior"],
   ["물건", "object"],
+  ["연애·결혼", "love"],
 ].map(([category, file]) => ({
   category,
+  file,
   slugs: (JSON.parse(readFileSync(`data/symbols/${file}.json`, "utf8")) as { slug: string }[]).map((s) => s.slug),
 }));
 
@@ -221,6 +223,15 @@ test("사전·가이드 페이지와 404", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "비슷한 꿈", exact: true })).toBeVisible();
 
   await expect(page.getByRole("note").filter({ hasText: DISCLAIMER })).toContainText(AGE_NOTICE);
+  // 이동 경로의 카테고리는 카테고리 페이지로 간다.
+  await expect(page.getByRole("navigation", { name: "이동 경로" }).getByRole("link", { name: "동물" })).toHaveAttribute(
+    "href",
+    "/dream/category/animal",
+  );
+
+  // 사전 본문의 링크 (자녀 꿈 → 태몽 가이드)
+  await page.goto("/dream/children");
+  await expect(page.getByRole("link", { name: "태몽 가이드" })).toHaveAttribute("href", "/guide/taemong");
 
   await page.goto("/guide/wealth-dreams");
   await expect(page.getByRole("heading", { level: 1, name: "재물운이 트이는 꿈 모음" })).toBeVisible();
@@ -246,14 +257,26 @@ test("미리보기 이미지: 있는 주소는 그림, 없는 주소는 404", as
 });
 
 test("사전 목록·카테고리·sitemap·비슷한 꿈·미리보기 이미지에 모든 상징이 나온다", async ({ page, request }) => {
-  // 사전 목록: 카테고리마다 그 카테고리 상징이 데이터 순서대로 모두 있다.
+  // 사전 목록: 카테고리마다 그 카테고리 상징이 데이터 순서대로 모두 있고, 카테고리 페이지로 가는 링크가 있다.
   await page.goto("/dream");
-  for (const { category, slugs } of DICTIONARY) {
-    const hrefs = await page.locator(`#category-${category} a`).evaluateAll((links) => links.map((a) => a.getAttribute("href")));
+  for (const { category, file, slugs } of DICTIONARY) {
+    const section = page.locator(`#category-${category}`);
+    const hrefs = await section.locator("ul a").evaluateAll((links) => links.map((a) => a.getAttribute("href")));
     expect(hrefs, category).toEqual(slugs.map((slug) => `/dream/${slug}`));
+    await expect(section.getByRole("link", { name: `${category} 꿈 모아 보기 →` })).toHaveAttribute("href", `/dream/category/${file}`);
   }
 
+  // 카테고리 페이지: 그 카테고리 상징이 데이터 순서대로 모두 있다.
+  for (const { category, file, slugs } of DICTIONARY) {
+    await page.goto(`/dream/category/${file}`);
+    await expect(page.getByRole("heading", { level: 1, name: `${category} 꿈해몽` })).toBeVisible();
+    const hrefs = await page.getByRole("list", { name: new RegExp(`^${category} 꿈 \\d+개$`) }).locator("a").evaluateAll((links) => links.map((a) => a.getAttribute("href")));
+    expect(hrefs, category).toEqual(slugs.map((slug) => `/dream/${slug}`));
+  }
+  expect((await request.get("/dream/category/no-such")).status()).toBe(404);
+
   const sitemap = await (await request.get("/sitemap.xml")).text();
+  for (const { file } of DICTIONARY) expect(sitemap, file).toContain(`/dream/category/${file}</loc>`);
   const allSlugs = DICTIONARY.flatMap((d) => d.slugs);
   for (const slug of allSlugs) expect(sitemap, slug).toContain(`/dream/${slug}</loc>`);
 

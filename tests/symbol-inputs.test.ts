@@ -1,4 +1,4 @@
-// 상징별 대표 입력과 오매칭 방지 (사전 확장 1차)
+// 상징별 대표 입력과 오매칭 방지 (사전 확장 1차·2차)
 // - 새로 넣은 상징마다 실제로 쓸 법한 문장 2개 이상으로 찾는 상징과 상황 풀이를 확인한다.
 // - 다른 뜻으로 흔히 쓰이는 말("말했어요", "한 개", "눈물" …)은 상징으로 잡지 않는다.
 
@@ -45,14 +45,14 @@ const CASES: [string, string[]][] = [
   ["임신해서 배가 불러 왔어요", ["pregnancy"]],
   ["아기를 가졌는데 너무 기뻐서 웃었어요", ["pregnancy+laugh"]],
   ["임신부가 지나갔어요", ["pregnancy"]],
-  ["시어머니에게 혼났어요", ["mother+angry"]],
+  ["엄마가 울고 있었어요", ["mother+cry"]],
   ["돌아가신 어머니가 밥을 차려 주셔서 먹었어요", ["ancestor+eat", "mother+eat"]],
   ["아빠가 나를 꼭 안아 줬어요", ["father+hug"]],
   ["아버지와 악수했어요", ["father+handshake"]],
   ["친구랑 싸웠어요", ["friend+fight", "fight"]],
   ["단짝과 수다를 떨었어요", ["friend+talk"]],
-  ["남자친구와 데이트했어요", ["lover+date"]],
-  ["짝사랑하는 사람이 나왔어요", ["lover"]],
+  ["애인과 데이트했어요", ["lover+date", "dating"]],
+  ["연인이 갑자기 사라졌어요", ["lover+disappear"]],
   ["전 남자친구가 나왔어요", ["ex-lover"]],
   ["귀신에게 쫓겼어요", ["ghost+chased", "chased"]],
   ["유령을 피해 숨었어요", ["ghost+hide"]],
@@ -60,6 +60,68 @@ const CASES: [string, string[]][] = [
   ["경찰이 찾아왔어요", ["police+enter"]],
   ["선생님께 칭찬을 받았어요", ["teacher+receive"]],
   ["담임 선생님한테 혼났어요", ["teacher+angry"]],
+  // 사람(2차): 가족·직장·이웃
+  ["부모님과 함께 밥을 먹었어요", ["parents+eat"]],
+  ["엄마 아빠가 나를 꼭 껴안아 줬어요", ["parents+hug"]],
+  ["부모님께 혼났어요", ["parents+angry"]],
+  ["언니랑 크게 다퉜어요", ["siblings+fight", "fight"]],
+  ["남동생이 웃고 있었어요", ["siblings+laugh"]],
+  ["오빠에게 선물을 받았어요", ["siblings+receive"]],
+  ["딸이 서럽게 울었어요", ["children+cry"]],
+  ["아들을 꼭 안아 줬어요", ["children+hug"]],
+  ["남편이랑 싸웠어요", ["spouse+fight", "fight"]],
+  ["아내가 갑자기 사라졌어요", ["spouse+disappear"]],
+  ["우리 신랑이랑 여행 갔어요", ["spouse", "travel"]],
+  ["시어머니가 화를 냈어요", ["in-laws+angry"]],
+  ["시어머니에게 혼났어요", ["in-laws+angry"]],
+  ["장모님께 선물을 받았어요", ["in-laws+receive"]],
+  ["시댁에서 밥을 먹었어요", ["in-laws+eat"]],
+  ["부장님한테 혼났어요", ["boss+angry"]],
+  ["팀장님께 칭찬을 받았어요", ["boss+receive"]],
+  ["회사 동료랑 점심을 먹었어요", ["coworker+eat"]],
+  ["동료와 다퉜어요", ["coworker+fight", "fight"]],
+  ["옆집 사람이 찾아왔어요", ["neighbor+enter"]],
+  ["이웃에게 떡을 받았어요", ["neighbor+receive"]],
+  ["명절에 친척들과 음식을 먹었어요", ["relatives+eat"]],
+  ["외삼촌에게 용돈을 받았어요", ["money+receive", "relatives+receive"]],
+  ["사촌 동생이 울었어요", ["relatives"]],
+  ["조카딸이 놀러 왔어요", ["relatives"]],
+  // 연애·결혼
+  ["여자친구와 데이트했어요", ["girlfriend+date", "dating"]],
+  ["여친이랑 크게 싸웠어요", ["girlfriend+fight", "fight"]],
+  ["남자친구가 나왔어요", ["boyfriend"]],
+  ["남자친구와 데이트했어요", ["boyfriend+date", "dating"]],
+  ["남친한테 꽃을 받았어요", ["boyfriend+receive", "flower+receive"]],
+  ["첫사랑을 다시 만났어요", ["first-love+reunite"]],
+  ["첫사랑과 결혼했어요", ["wedding", "first-love+marry"]],
+  ["짝사랑하는 사람이 나왔어요", ["crush"]],
+  ["썸남이랑 대화했어요", ["crush+talk"]],
+  ["소개팅에서 도망쳤어요", ["blind-date+escape"]],
+  ["맞선 자리에서 밥을 먹었어요", ["blind-date+eat"]],
+  ["데이트하다 싸웠어요", ["dating+fight", "fight"]],
+  ["데이트 약속을 놓쳤어요", ["dating+lose"]],
+  ["고백을 받았어요", ["confession+receive"]],
+  ["좋아한다고 말했다가 울었어요", ["confession+cry"]],
+  ["키스하는 꿈을 꿨어요", ["kiss"]],
+  ["이마에 뽀뽀를 받았어요", ["kiss+receive"]],
+  ["청혼을 받았어요", ["proposal+receive"]],
+  ["프러포즈를 받고 울었어요", ["proposal+cry"]],
+  ["결혼하자고 했어요", ["proposal"]],
+  ["결혼식에 갔어요", ["wedding-ceremony"]],
+  ["청첩장을 받았어요", ["wedding-ceremony+receive"]],
+  ["웨딩드레스를 입었어요", ["wedding-ceremony+wear"]],
+  ["결혼식에서 울었어요", ["wedding-ceremony+cry"]],
+  ["결혼하는 꿈", ["wedding"]],
+  ["이혼하고 펑펑 울었어요", ["divorce+cry"]],
+  ["이혼 서류에 도장을 찍었어요", ["divorce"]],
+  ["헤어지는 꿈을 꿨어요", ["breakup"]],
+  ["남자친구와 헤어지고 울었어요", ["boyfriend+cry", "breakup+cry"]],
+  ["이별 통보를 받았어요", ["breakup"]],
+  ["남편이 바람피우는 꿈을 꿨어요", ["spouse", "affair"]],
+  ["바람 피는 꿈을 꿨어요", ["affair"]],
+  ["외도를 알고 울었어요", ["affair+cry"]],
+  ["이상형과 사귀는 꿈을 꿨어요", ["ideal-type+date"]],
+  ["이상형이 나를 보며 웃었어요", ["ideal-type+laugh"]],
   // 자연
   ["비가 엄청 쏟아졌어요", ["rain"]],
   ["소나기를 피해 숨었어요", ["rain+hide"]],
@@ -149,7 +211,22 @@ const FALSE_POSITIVES: [string, string[]][] = [
   ["외할아버지 댁에 갔어요", ["father"]],
   ["장애인 화장실에 들어갔어요", ["lover"]],
   ["남자친구가 나왔어요", ["friend"]],
-  ["전 남자친구가 나왔어요", ["lover", "friend"]],
+  ["전 남자친구가 나왔어요", ["lover", "friend", "boyfriend"]],
+  ["친구를 만났어요", ["boyfriend", "girlfriend"]],
+  ["시어머니가 화를 냈어요", ["mother"]],
+  ["시아버지가 웃었어요", ["father"]],
+  ["엄마 아빠가 나왔어요", ["mother", "father"]],
+  ["결혼식에 갔어요", ["wedding"]],
+  ["딸기를 먹었어요", ["children"]],
+  ["형광등이 켜졌어요", ["siblings"]],
+  ["인형이 웃고 있었어요", ["siblings"]],
+  ["성형을 했어요", ["siblings"]],
+  ["학부모 모임에 갔어요", ["parents"]],
+  ["이모티콘을 보냈어요", ["relatives"]],
+  ["상사병에 걸렸어요", ["boss"]],
+  ["장인 정신이 느껴졌어요", ["in-laws"]],
+  ["바람을 피해 숨었어요", ["affair"]],
+  ["이상한 꿈이었어요", ["ideal-type"]],
   ["임신부가 지나갔어요", ["wedding"]],
   ["눈을 떴어요", ["snow"]],
   ["눈이 아팠어요", ["snow"]],
@@ -203,4 +280,32 @@ describe("오매칭 방지", () => {
       expect(found.filter((slug) => forbidden.includes(slug))).toEqual([]);
     });
   }
+});
+
+describe("겹치는 호칭은 긴 표현이 이긴다 (사전 확장 2차)", () => {
+  const slugs = (dream: string) => pairs(dream).map((p) => p.split("+")[0]);
+
+  it("'남자친구가 나왔어요'는 남자친구이고 친구가 아니다", () => {
+    expect(slugs("남자친구가 나왔어요")).toContain("boyfriend");
+    expect(slugs("남자친구가 나왔어요")).not.toContain("friend");
+  });
+
+  it("'친구를 만났어요'는 친구이고 남자친구가 아니다", () => {
+    expect(slugs("친구를 만났어요")).toEqual(["friend"]);
+  });
+
+  it("'시어머니가 화를 냈어요'는 시댁·처가이고 어머니가 아니다", () => {
+    expect(pairs("시어머니가 화를 냈어요")).toEqual(["in-laws+angry"]);
+    expect(slugs("시어머니가 화를 냈어요")).not.toContain("mother");
+  });
+
+  it("'결혼식에 갔어요'는 결혼식, '결혼하는 꿈'은 결혼", () => {
+    expect(slugs("결혼식에 갔어요")).toEqual(["wedding-ceremony"]);
+    expect(slugs("결혼하는 꿈")).toEqual(["wedding"]);
+  });
+
+  it("'딸기를 먹었어요'는 자녀가 아니고, '형광등이 켜졌어요'는 형제자매가 아니다", () => {
+    expect(slugs("딸기를 먹었어요")).not.toContain("children");
+    expect(slugs("형광등이 켜졌어요")).not.toContain("siblings");
+  });
 });

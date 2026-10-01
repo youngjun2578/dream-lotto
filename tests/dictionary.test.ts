@@ -3,21 +3,23 @@
 import { describe, expect, it } from "vitest";
 import { getAllActions, MIN_ACTIONS, rawActionData, validateActions } from "@/lib/actions";
 import { getAllSymbols, rawSymbolData, SYMBOL_FILES, validateSymbolFiles, validateSymbols } from "@/lib/symbols";
-import type { DreamSymbol } from "@/lib/types";
+import { DICTIONARY_CATEGORIES, type DreamSymbol } from "@/lib/types";
 
 describe("data/symbols/*.json (카테고리별 파일)", () => {
   it("파일마다 그 카테고리 상징만 들어 있다", () => {
     expect(validateSymbolFiles()).toEqual([]);
   });
 
-  it("파일 5개를 합치면 전체 사전이 된다 (v1 과 같은 순서)", () => {
+  it("파일 6개를 합치면 전체 사전이 된다 (v1 순서 + 연애·결혼)", () => {
     expect(SYMBOL_FILES.map((f) => f.file)).toEqual([
       "animal.json",
       "person.json",
       "nature.json",
       "behavior.json",
       "object.json",
+      "love.json",
     ]);
+    expect(SYMBOL_FILES.map((f) => f.category)).toEqual([...DICTIONARY_CATEGORIES]);
     expect(getAllSymbols()).toHaveLength(rawSymbolData.length);
   });
 

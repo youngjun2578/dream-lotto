@@ -135,14 +135,14 @@ export function dreamArticleJsonLd(symbol: DreamSymbol): JsonLd {
   });
 }
 
-/** 사전 목록 페이지: 모음 페이지 + 항목 목록 */
-export function dreamListJsonLd(symbols: DreamSymbol[]): JsonLd {
+/** 사전 목록·카테고리 페이지: 모음 페이지 + 항목 목록 */
+export function dreamListJsonLd(symbols: DreamSymbol[], { name = "꿈해몽 사전", path = "/dream" } = {}): JsonLd {
   return {
     "@context": "https://schema.org",
     "@type": "CollectionPage",
-    "@id": `${absoluteUrl("/dream")}#collection`,
-    name: "꿈해몽 사전",
-    url: absoluteUrl("/dream"),
+    "@id": `${absoluteUrl(path)}#collection`,
+    name,
+    url: absoluteUrl(path),
     inLanguage: "ko-KR",
     mainEntity: {
       "@type": "ItemList",

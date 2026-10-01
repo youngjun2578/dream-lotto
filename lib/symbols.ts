@@ -4,19 +4,21 @@
 
 import animal from "@/data/symbols/animal.json";
 import behavior from "@/data/symbols/behavior.json";
+import love from "@/data/symbols/love.json";
 import nature from "@/data/symbols/nature.json";
 import object from "@/data/symbols/object.json";
 import person from "@/data/symbols/person.json";
 import { getAllActions } from "./actions";
-import { CATEGORIES, FORTUNE_TYPES, type Category, type DreamAction, type DreamSymbol } from "./types";
+import { DICTIONARY_CATEGORIES, FORTUNE_TYPES, type DictionaryCategory, type DreamAction, type DreamSymbol } from "./types";
 
 /** 카테고리 ↔ 파일 이름 (이 순서대로 합쳐서 사용) */
-export const SYMBOL_FILES: { category: Category; file: string; items: unknown[] }[] = [
+export const SYMBOL_FILES: { category: DictionaryCategory; file: string; items: unknown[] }[] = [
   { category: "동물", file: "animal.json", items: animal },
   { category: "사람", file: "person.json", items: person },
   { category: "자연", file: "nature.json", items: nature },
   { category: "행동", file: "behavior.json", items: behavior },
   { category: "물건", file: "object.json", items: object },
+  { category: "연애·결혼", file: "love.json", items: love },
 ];
 
 /** 검사 전의 원본 데이터 (모든 파일을 합친 것, 테스트용) */
@@ -36,7 +38,7 @@ export function getSymbolBySlug(slug: string): DreamSymbol | undefined {
   return SYMBOLS.find((s) => s.slug === slug);
 }
 
-export function getSymbolsByCategory(category: Category): DreamSymbol[] {
+export function getSymbolsByCategory(category: DictionaryCategory): DreamSymbol[] {
   return SYMBOLS.filter((s) => s.category === category);
 }
 
@@ -97,8 +99,8 @@ export function validateSymbols(data: unknown, options: ValidateOptions = {}): s
     if (!Array.isArray(s.synonyms) || s.synonyms.length === 0 || s.synonyms.some((w) => typeof w !== "string" || !w.trim())) {
       errors.push(`${where}: synonyms 는 비어 있지 않은 문자열 배열이어야 합니다.`);
     }
-    if (!CATEGORIES.includes(s.category as Category)) {
-      errors.push(`${where}: category 는 ${CATEGORIES.join("/")} 중 하나여야 합니다.`);
+    if (!DICTIONARY_CATEGORIES.includes(s.category as DictionaryCategory)) {
+      errors.push(`${where}: category 는 ${DICTIONARY_CATEGORIES.join("/")} 중 하나여야 합니다.`);
     }
     if (!FORTUNE_TYPES.includes(s.fortune_type as DreamSymbol["fortune_type"])) {
       errors.push(`${where}: fortune_type 은 ${FORTUNE_TYPES.join("/")} 중 하나여야 합니다.`);

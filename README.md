@@ -22,7 +22,7 @@ npm run dev        # 개발 서버 실행 → http://localhost:3000
 | --- | --- |
 | `npm run dev` | 개발 서버 (코드를 고치면 바로 반영) |
 | `npm test` | 테스트 실행 (Vitest) |
-| `npm run build` | 배포용 빌드 (사전 페이지 70개를 미리 생성) |
+| `npm run build` | 배포용 빌드 (사전 상세 93개와 카테고리 페이지 6개를 미리 생성) |
 | `npm start` | 빌드한 결과 실행 |
 | `npm run typecheck` | 타입 검사만 |
 | `npm run keywords` | 꿈 관련 검색 키워드 수집 (네이버 검색광고 API 키 필요, 12장) |
@@ -53,6 +53,7 @@ app/                        화면(페이지)과 API
   api/interpret/route.ts    POST /api/interpret
   dream/page.tsx            /dream  사전 목록
   dream/[slug]/page.tsx     /dream/돼지 등 사전 상세 (SSG + 메타 태그)
+  dream/category/[slug]/    /dream/category/love 등 카테고리별 모음 페이지 6개 (SSG)
   result/[payload]/page.tsx 본인 결과 페이지 (해몽하기 뒤에 여는 곳, + 미리보기 이미지)
   r/[payload]/page.tsx      공유 링크 결과 페이지 (같은 화면, 버튼만 '나도 해몽 받기') (+ 미리보기 이미지)
   guide/, guide/[slug]/     꿈 가이드 목록과 칼럼 (SSG + 공유 이미지)
@@ -62,7 +63,7 @@ app/                        화면(페이지)과 API
 assets/fonts/               공유 이미지용 한글 글꼴 (Pretendard 서브셋, SIL OFL 1.1)
 components/                 화면 조각 (DreamForm, ResultPage, ResultView, ResultActions, AdSlot, LottoBall, ThemeToggle …)
 data/
-  symbols/*.json            꿈 상징 사전 70개 (카테고리별 파일: animal·person·nature·behavior·object)
+  symbols/*.json            꿈 상징 사전 93개 (카테고리별 파일: animal·person·nature·behavior·object·love)
   actions.json              꿈속 행동 사전 (들어오다, 쫓기다, 먹다 … 63개, 활용형 포함)
   guides.json               꿈 가이드 칼럼 5편
 lib/                        핵심 로직 — 화면과 분리되어 있어 테스트하기 쉬움
@@ -73,6 +74,7 @@ lib/                        핵심 로직 — 화면과 분리되어 있어 테�
   interpret/                해몽 생성기 (Provider)
   service.ts                전체 흐름 조립
   symbols.ts, actions.ts    사전 데이터 불러오기 + 유효성 검사
+  categories.ts             사전 카테고리 6개 (카테고리 페이지 주소, 숫자 후보 구간, 소개 문장)
   seo.ts                    페이지 메타데이터 + 구조화 데이터(JSON-LD)
   og.tsx                    공유 미리보기 이미지(1200×630) 공통 틀
   share.ts                  결과·공유 주소 값 인코딩/디코딩/검사, 다시 뽑기 값
@@ -157,6 +159,8 @@ review/                     검토 자료: screenshots/(화면 캡처 24장), li
    | --- | --- | --- | --- | --- |
    | 1–9 | 10–18 | 19–27 | 28–36 | 37–45 |
 
+   **연애·결혼** 카테고리는 구간이 따로 없어 **사람 구간(10–18)** 을 씁니다. 구간은 9칸씩 5개뿐이고 `lib/symbolNumbers.ts`는 바꾸지 않기 때문에, 카테고리 → 구간 대응만 `lib/categories.ts`의 `numberCategory()`에 둡니다. 그래서 사람에서 연애·결혼으로 옮긴 애인·전 애인의 숫자 후보도 그대로입니다.
+
 2. **대표 숫자** = 구간 시작 + (키워드 글자들의 유니코드 값 합 ÷ 9의 나머지). 띄어쓰기는 빼고 계산합니다.
 3. 대표 숫자에서 시작해 **17씩 더해** 가며 숫자를 만듭니다. 45를 넘으면 45를 빼서 1~45 안으로 돌립니다. 17은 45와 서로소라서 5개까지 절대 겹치지 않습니다.
 4. 개수 = **weight + 2** (weight 1 → 3개, 2 → 4개, 3 → 5개). 저장할 때는 오름차순으로 정렬합니다.
@@ -172,7 +176,9 @@ review/                     검토 자료: screenshots/(화면 캡처 24장), li
 2. `npm test`를 실행하면 실패 메시지에 `○○ 의 numbers 는 [..] 이어야 합니다`라고 정답 숫자가 나옵니다. 그 숫자를 그대로 복사해 넣으세요.
 3. 다시 `npm test` → 통과하면 끝입니다. `npm run build` 때 사전 페이지가 자동으로 생깁니다.
 
-필드 규칙: `slug`(영문 소문자·숫자·-, 중복 불가), `keyword`, `synonyms[]`, `category`(동물/사람/자연/행동/물건, 파일과 일치), `meaning`(2~3문장), `fortune_type`(재물/연애/건강/직장/주의), `numbers[]`(3~5개, 1~45), `weight`(1~3), `body`(300자 이상, 문단은 빈 줄로 구분), `situations[]`(3~5개), `strict`(선택, 위 매칭 규칙 참고).
+필드 규칙: `slug`(영문 kebab-case, 중복 불가, 한 번 정하면 바꾸거나 지우지 않음 — 공유 링크가 slug를 씀), `keyword`, `synonyms[]`, `category`(동물/사람/자연/행동/물건/연애·결혼, 파일과 일치), `meaning`(2~3문장), `fortune_type`(재물/연애/건강/직장/주의), `numbers[]`(3~5개, 1~45), `weight`(1~3), `body`(300자 이상, 문단은 빈 줄로 구분), `situations[]`(3~5개), `strict`(선택, 위 매칭 규칙 참고).
+
+풀이 원고는 `CLAUDE.md`의 **사전 콘텐츠 작성 규칙**(새로 쓰기, 단정하지 않는 해요체, 당첨·질병·실제 인물 단정 금지 등)을 따릅니다. `body`에 `[태몽 가이드](/guide/taemong)`처럼 쓰면 사이트 안 링크가 되고, 없는 페이지로 가는 링크는 `tests/categories.test.ts`가 잡습니다.
 
 동의어 규칙: 새로 넣는 상징에는 한 글자 동의어를 넣지 않습니다(다른 뜻으로 잘못 잡히기 쉬워서. 기존 30개의 소·용·물 등은 그대로 둡니다). 띄어쓰기 변형("전 애인", "전애인")은 둘 다 넣고, 다른 뜻으로도 쓰이는 말은 구체적인 표현으로 한정합니다. 다른 상징의 표현과 겹치면 `tests/dictionary-quality.test.ts`가 알려 주니, 어느 쪽으로 잡을지 정해서 그 파일의 목록에 적습니다.
 
@@ -183,6 +189,7 @@ review/                     검토 자료: screenshots/(화면 캡처 24장), li
 | `nature.json` | 자연 |
 | `behavior.json` | 행동 |
 | `object.json` | 물건 |
+| `love.json` | 연애·결혼 |
 
 ### 상황별 풀이 (`situations`)
 
@@ -244,11 +251,12 @@ review/                     검토 자료: screenshots/(화면 캡처 24장), li
 ## 9. SEO (검색·공유)
 
 - **페이지별 메타 태그**: `lib/seo.ts`의 `pageMetadata()`로 제목·설명·대표 주소(canonical)·공유 미리보기(OG, 트위터 카드)를 한 번에 채웁니다.
-- **공유 미리보기 이미지**: `next/og`로 **빌드할 때 PNG를 미리 만듭니다**. 사전 상세 70개는 제목·대표 풀이·행운 숫자가 들어간 각자의 이미지를, 나머지 페이지는 사이트 기본 이미지를 씁니다.
+- **공유 미리보기 이미지**: `next/og`로 **빌드할 때 PNG를 미리 만듭니다**. 사전 상세 93개는 제목·대표 풀이·행운 숫자가 들어간 각자의 이미지를, 나머지 페이지는 사이트 기본 이미지를 씁니다.
   - 한글이 나오도록 `assets/fonts`의 Pretendard 서브셋(자주 쓰는 한글 2,350자)을 씁니다. 새 글을 추가했을 때 서브셋에 없는 글자가 있으면 `tests/seo.test.ts`가 알려 줍니다.
 - **구조화 데이터(JSON-LD)**: 홈 `WebSite`, 사전 목록 `CollectionPage`+`ItemList`, 사전 상세·가이드 `Article`+`BreadcrumbList`. [리치 결과 테스트](https://search.google.com/test/rich-results)로 확인할 수 있어요.
 - **비슷한 꿈 링크**: 사전 상세 아래에 "같은 카테고리 꿈"과 "같은 운세(다른 카테고리) 꿈"을 보여 줘 사이트 안에서 이어 읽게 합니다.
-- **sitemap.xml**: 홈·사전 목록·사전 상세·가이드·기본 페이지를 `lastmod`(= `lib/site.ts`의 `CONTENT_UPDATED_AT`)와 함께 알립니다. 사전 내용을 크게 고치면 이 날짜를 바꿔 주세요.
+- **카테고리 페이지**: `/dream/category/animal·person·nature·behavior·object·love` 6개. 사전 목록의 카테고리 제목 옆 "○○ 꿈 모아 보기"와 사전 상세의 이동 경로(꿈해몽 사전 › 카테고리)에서 들어갑니다. 구조화 데이터는 `CollectionPage`+`ItemList`입니다.
+- **sitemap.xml**: 홈·사전 목록·카테고리 페이지·사전 상세·가이드·기본 페이지를 `lastmod`(= `lib/site.ts`의 `CONTENT_UPDATED_AT`)와 함께 알립니다. 사전 내용을 크게 고치면 이 날짜를 바꿔 주세요.
 
 ## 10. 디자인
 
@@ -327,7 +335,7 @@ npm run test:e2e                  # 휴대폰(Pixel 7)·PC(1280×800) 크기에�
 npm run review:screenshots        # 검토용 화면 캡처 → review/screenshots/
 ```
 
-- `e2e/flow.spec.ts`: 입력 → 결과 페이지로 이동 → 새로고침해도 같은 번호 → 뒤로 가기(입력 복원) → 다시 뽑기(기록 안 쌓임) → 링크 복사 → 공유 페이지에서 같은 결과 → "나도 해몽 받기", 로딩·이중 제출 방지, 실패 안내, 잘못된 결과·공유 주소, 빈 입력, 입력 도우미, 움직임 줄이기, 사전·가이드·404를 검사합니다.
+- `e2e/flow.spec.ts`: 입력 → 결과 페이지로 이동 → 새로고침해도 같은 번호 → 뒤로 가기(입력 복원) → 다시 뽑기(기록 안 쌓임) → 링크 복사 → 공유 페이지에서 같은 결과 → "나도 해몽 받기", 로딩·이중 제출 방지, 실패 안내, 잘못된 결과·공유 주소, 빈 입력, 입력 도우미, 움직임 줄이기, 사전·가이드·404, 사전 목록·카테고리 페이지·sitemap에 모든 상징이 나오는지를 검사합니다.
 - `e2e/theme.spec.ts`: 기기를 라이트로 둔 브라우저에서 처음 방문하면 다크, 라이트를 고르면 새로고침·다른 페이지에서도 라이트, 다시 다크도 유지, 잘못된 저장값은 다크, 저장된 라이트는 첫 화면을 그리기 전에 적용(깜빡임 없음, 콘솔 오류 없음), 서버 HTML과 자바스크립트를 끈 화면도 다크, `theme-color`·`color-scheme` 메타가 테마와 맞는지 검사합니다.
 - 테스트가 알아서 `npm run build` 후 3100번 포트로 서버를 켭니다. 이미 켜 둔 서버가 있으면 그대로 씁니다. 포트를 바꾸려면 `E2E_PORT=3200 npm run test:e2e`.
 - 화면 캡처는 6개 화면 × 휴대폰/PC × 라이트/다크 = 24장(JPEG)입니다. 공 애니메이션이 끝난 모습을 찍으려고 '움직임 줄이기' 설정으로, Pretendard가 적용된 뒤에 찍습니다. 테마는 기기 설정이 아니라 저장값(localStorage `theme`)으로 정해서 찍습니다.

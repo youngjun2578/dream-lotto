@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { numberCategory } from "@/lib/categories";
 import { rawSymbolData as raw } from "@/lib/symbols";
 import { matchSymbols } from "@/lib/matcher";
 import { candidateNumbers } from "@/lib/symbolNumbers";
@@ -16,9 +17,10 @@ describe("data/symbols.json", () => {
     expect(ALL.length).toBeGreaterThanOrEqual(30);
   });
 
-  it("numbers 가 README 의 숫자 후보 규칙과 일치", () => {
+  it("numbers 가 README 의 숫자 후보 규칙과 일치 ('연애·결혼'은 '사람' 구간)", () => {
+    expect(numberCategory("연애·결혼")).toBe("사람");
     for (const s of ALL) {
-      const expected = candidateNumbers(s.keyword, s.category, s.weight);
+      const expected = candidateNumbers(s.keyword, numberCategory(s.category), s.weight);
       expect(s.numbers, `${s.slug} 의 numbers 는 ${JSON.stringify(expected)} 이어야 합니다`).toEqual(expected);
     }
   });

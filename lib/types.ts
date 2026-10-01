@@ -1,7 +1,15 @@
 // 프로젝트 전체에서 쓰는 공통 타입 모음
 
+/** 숫자 후보 규칙(lib/symbolNumbers.ts)의 카테고리. 카테고리마다 숫자 구간(9칸)이 하나씩 있다. */
 export const CATEGORIES = ["동물", "사람", "자연", "행동", "물건"] as const;
 export type Category = (typeof CATEGORIES)[number];
+
+/**
+ * 사전 카테고리: 사전 목록·카테고리 페이지·상세 페이지에 보이는 분류 (lib/categories.ts)
+ * 숫자 구간은 5개(각 9칸)뿐이라, '연애·결혼'은 숫자 후보를 '사람' 구간으로 만든다.
+ */
+export const DICTIONARY_CATEGORIES = [...CATEGORIES, "연애·결혼"] as const;
+export type DictionaryCategory = (typeof DICTIONARY_CATEGORIES)[number];
 
 export const FORTUNE_TYPES = ["재물", "연애", "건강", "직장", "주의"] as const;
 export type FortuneType = (typeof FORTUNE_TYPES)[number];
@@ -29,7 +37,7 @@ export interface DreamSymbol {
   slug: string;
   keyword: string;
   synonyms: string[];
-  category: Category;
+  category: DictionaryCategory;
   meaning: string;
   fortune_type: FortuneType;
   numbers: number[];

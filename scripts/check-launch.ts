@@ -202,10 +202,12 @@ export async function runLaunchChecks(): Promise<[string, string][]> {
   const { default: sitemap } = await import("../app/sitemap");
   const { getAllSymbols } = await import("../lib/symbols");
   const { getAllGuides } = await import("../lib/guides");
+  const { CATEGORY_INFO, categoryPath } = await import("../lib/categories");
 
   const requiredPaths = [
     "/",
     "/dream",
+    ...CATEGORY_INFO.map((c) => categoryPath(c.name)),
     ...getAllSymbols().map((s) => `/dream/${s.slug}`),
     "/guide",
     ...getAllGuides().map((g) => `/guide/${g.slug}`),

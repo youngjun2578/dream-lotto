@@ -1,8 +1,8 @@
-// 사전 품질 검사 (사전 확장 1차)
+// 사전 품질 검사 (사전 확장 1차·2차)
 // - slug·키워드·표현이 상징끼리 겹치지 않는다
-// - 한 상징의 표현이 다른 상징의 표현 안에 들어 있는 경우는 어느 쪽으로 잡을지 정해 둔 것뿐이다
+// - 한 상징의 표현이 다른 상징의 표현 안에 들어 있는 경우는 어느 쪽으로 잡을지 정해 둔 것뿐이다 (긴 표현이 이긴다)
 // - 새로 넣는 상징에는 한 글자 동의어를 쓰지 않는다
-// - 새 상징을 넣어도 기존 30개 상징의 매칭 결과는 그대로다
+// - 새 상징을 넣어도 기존 30개 상징의 매칭 결과는 그대로다 (일부러 바꾼 것만 예외로 적어 둔다)
 
 import { describe, expect, it } from "vitest";
 import { getAllActions } from "@/lib/actions";
@@ -47,27 +47,66 @@ const DECIDED_CONFLICTS = [
   "baby < pregnancy:배 속의 아기 → pregnancy",
   "baby < pregnancy:배 속에 아기 → pregnancy",
   "wedding < pregnancy:임신부 → pregnancy",
-  // 사람: 남자친구·여자친구는 친구가 아니라 애인으로, 헤어진 사이는 애인이 아니라 전 애인으로
-  "friend < lover:남자친구 → lover",
-  "friend < lover:여자친구 → lover",
-  "friend < lover:남자 친구 → lover",
-  "friend < lover:여자 친구 → lover",
+  // 사람(2차): 엄마 아빠처럼 두 분을 함께 부르면 어머니·아버지가 아니라 부모님으로
+  "mother < parents:엄마 아빠 → parents",
+  "mother < parents:엄마아빠 → parents",
+  "mother < parents:아빠 엄마 → parents",
+  "mother < parents:엄마와 아빠 → parents",
+  "mother < parents:엄마랑 아빠 → parents",
+  "mother < parents:어머니 아버지 → parents",
+  "mother < parents:아버지 어머니 → parents",
+  "father < parents:엄마 아빠 → parents",
+  "father < parents:아빠 엄마 → parents",
+  "father < parents:엄마와 아빠 → parents",
+  "father < parents:엄마랑 아빠 → parents",
+  "father < parents:어머니 아버지 → parents",
+  "father < parents:아버지 어머니 → parents",
+  // 사람(2차): 시어머니는 어머니가 아니라 시댁·처가로, 큰어머니·작은어머니와 사촌 형제는 친척으로,
+  // 이웃사촌은 친척이 아니라 이웃으로, 우리 신랑은 결혼(신랑)이 아니라 배우자로
+  "mother < in-laws:시어머니 → in-laws",
+  "mother < relatives:큰어머니 → relatives",
+  "mother < relatives:작은어머니 → relatives",
+  "siblings < relatives:사촌 동생 → relatives",
+  "siblings < relatives:사촌 언니 → relatives",
+  "siblings < relatives:사촌 오빠 → relatives",
+  "siblings < relatives:사촌 누나 → relatives",
+  "relatives < neighbor:이웃사촌 → neighbor",
+  "wedding < spouse:우리 신랑 → spouse",
+  // 연애·결혼: 남자친구·여자친구는 친구가 아니라 각자의 상징으로, 헤어진 사이는 전 애인으로
+  "friend < boyfriend:남자친구 → boyfriend",
+  "friend < boyfriend:남자 친구 → boyfriend",
+  "friend < girlfriend:여자친구 → girlfriend",
+  "friend < girlfriend:여자 친구 → girlfriend",
   "friend < ex-lover:전 남자친구 → ex-lover",
   "friend < ex-lover:전 여자친구 → ex-lover",
   "friend < ex-lover:전남자친구 → ex-lover",
   "friend < ex-lover:전여자친구 → ex-lover",
   "friend < ex-lover:헤어진 남자친구 → ex-lover",
   "friend < ex-lover:헤어진 여자친구 → ex-lover",
+  "boyfriend < ex-lover:전 남자친구 → ex-lover",
+  "boyfriend < ex-lover:전남자친구 → ex-lover",
+  "boyfriend < ex-lover:헤어진 남자친구 → ex-lover",
+  "boyfriend < ex-lover:전 남친 → ex-lover",
+  "boyfriend < ex-lover:전남친 → ex-lover",
+  "girlfriend < ex-lover:전 여자친구 → ex-lover",
+  "girlfriend < ex-lover:전여자친구 → ex-lover",
+  "girlfriend < ex-lover:헤어진 여자친구 → ex-lover",
+  "girlfriend < ex-lover:전 여친 → ex-lover",
+  "girlfriend < ex-lover:전여친 → ex-lover",
   "lover < ex-lover:전 애인 → ex-lover",
   "lover < ex-lover:옛 애인 → ex-lover",
   "lover < ex-lover:옛 연인 → ex-lover",
   "lover < ex-lover:헤어진 연인 → ex-lover",
-  "lover < ex-lover:전 남친 → ex-lover",
-  "lover < ex-lover:전 여친 → ex-lover",
-  "lover < ex-lover:전 남자친구 → ex-lover",
-  "lover < ex-lover:전 여자친구 → ex-lover",
-  "lover < ex-lover:헤어진 남자친구 → ex-lover",
-  "lover < ex-lover:헤어진 여자친구 → ex-lover",
+  // 연애·결혼: 결혼식·웨딩드레스·웨딩홀은 결혼하는 꿈이 아니라 결혼식으로, 결혼하자는 말은 프러포즈로,
+  // 약혼반지는 프러포즈가 아니라 반지로
+  "wedding < wedding-ceremony:결혼식 → wedding-ceremony",
+  "wedding < wedding-ceremony:결혼식장 → wedding-ceremony",
+  "wedding < wedding-ceremony:웨딩드레스 → wedding-ceremony",
+  "wedding < wedding-ceremony:웨딩홀 → wedding-ceremony",
+  "clothes < wedding-ceremony:웨딩드레스 → wedding-ceremony",
+  "wedding < proposal:결혼하자고 → proposal",
+  "wedding < proposal:결혼하자는 → proposal",
+  "proposal < ring:약혼반지 → ring",
   // 자연·행동: 시험에 떨어지는 건 낙하가 아니라 시험으로, 시험에 늦는 건 지각으로, 눈싸움은 싸움이 아니라 눈으로
   "falling < exam:시험에 떨어지 → exam",
   "falling < exam:시험에 떨어졌 → exam",
@@ -190,8 +229,22 @@ describe("기존 30개 상징 회귀 검사", () => {
     "웨딩드레스를 입고 결혼식을 올렸어요",
   ];
 
+  /**
+   * 사전 확장 2차에서 일부러 바꾼 결과: 입력 → 지금 결과
+   * 겹치는 표현은 긴 표현이 이긴다. 결혼식·웨딩드레스는 '결혼하는'이 아니라 '결혼식' 상징으로 잡는다.
+   */
+  const INTENDED_CHANGES: Record<string, string> = {
+    "웨딩드레스를 입고 결혼식을 올렸어요": "wedding-ceremony+wear",
+  };
+
+  it("일부러 바꾼 입력은 정해 둔 결과대로 나온다", () => {
+    for (const [dream, expected] of Object.entries(INTENDED_CHANGES)) {
+      expect(pairsOf(dream, ALL).join(" "), dream).toBe(expected);
+    }
+  });
+
   it("새 상징을 넣어도 기존 상징의 매칭 결과(상징·상황 풀이·순서)는 그대로다", () => {
-    const changed = CORPUS.flatMap((dream) => {
+    const changed = CORPUS.filter((dream) => !(dream in INTENDED_CHANGES)).flatMap((dream) => {
       const before = pairsOf(dream, V1);
       const all = pairsOf(dream, ALL);
       const after = all.filter((p) => isV1(p.split("+")[0]));

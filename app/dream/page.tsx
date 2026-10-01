@@ -2,13 +2,14 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { FortuneBadge } from "@/components/FortuneBadge";
 import { JsonLd } from "@/components/JsonLd";
+import { categoryPath } from "@/lib/categories";
 import { breadcrumbJsonLd, dreamListJsonLd, pageMetadata } from "@/lib/seo";
 import { getAllSymbols, getSymbolsByCategory } from "@/lib/symbols";
-import { CATEGORIES } from "@/lib/types";
+import { DICTIONARY_CATEGORIES } from "@/lib/types";
 
 export const metadata: Metadata = pageMetadata({
   title: "꿈해몽 사전 – 카테고리별 꿈 상징 모음",
-  description: "동물, 사람, 자연, 행동, 물건별로 자주 꾸는 꿈의 의미와 상황별 해몽을 정리한 꿈해몽 사전이에요.",
+  description: "동물, 사람, 자연, 행동, 물건, 연애·결혼별로 자주 꾸는 꿈의 의미와 상황별 해몽을 정리한 꿈해몽 사전이에요.",
   path: "/dream",
 });
 
@@ -29,7 +30,7 @@ export default function DreamIndexPage() {
         자주 꾸는 꿈 상징을 카테고리별로 모았어요. 궁금한 꿈을 눌러 상황별 풀이까지 확인해 보세요.
       </p>
       <nav aria-label="카테고리 바로가기" className="mt-5 flex flex-wrap gap-2">
-        {CATEGORIES.map((category) => (
+        {DICTIONARY_CATEGORIES.map((category) => (
           <a
             key={category}
             href={`#category-${category}`}
@@ -40,9 +41,14 @@ export default function DreamIndexPage() {
         ))}
       </nav>
 
-      {CATEGORIES.map((category) => (
+      {DICTIONARY_CATEGORIES.map((category) => (
         <section key={category} id={`category-${category}`} className="mt-10 scroll-mt-6">
-          <h2 className="mb-3 text-lg font-bold">{category}</h2>
+          <div className="mb-3 flex items-baseline justify-between gap-3">
+            <h2 className="text-lg font-bold">{category}</h2>
+            <Link href={categoryPath(category)} className="shrink-0 text-sm font-semibold text-link hover:underline">
+              {category} 꿈 모아 보기 →
+            </Link>
+          </div>
           <ul className="grid gap-3 sm:grid-cols-2">
             {getSymbolsByCategory(category).map((s) => (
               <li key={s.slug}>

@@ -8,6 +8,8 @@ import { Disclaimer } from "@/components/Disclaimer";
 import { FortuneBadge } from "@/components/FortuneBadge";
 import { JsonLd } from "@/components/JsonLd";
 import { LottoBall } from "@/components/LottoBall";
+import { RichText } from "@/components/RichText";
+import { categoryPath } from "@/lib/categories";
 import { getGuidesForSymbol } from "@/lib/guides";
 import { breadcrumbJsonLd, dreamArticleJsonLd, dreamPageTitle, pageMetadata } from "@/lib/seo";
 import { getAllSymbols, getRelatedSymbols, getSymbolBySlug } from "@/lib/symbols";
@@ -73,6 +75,7 @@ export default async function DreamSymbolPage({ params }: Props) {
           breadcrumbJsonLd([
             { name: "홈", path: "/" },
             { name: "꿈해몽 사전", path: "/dream" },
+            { name: `${symbol.category} 꿈해몽`, path: categoryPath(symbol.category) },
             { name: `${symbol.keyword} 꿈`, path: `/dream/${symbol.slug}` },
           ]),
         ]}
@@ -81,7 +84,10 @@ export default async function DreamSymbolPage({ params }: Props) {
         <Link href="/dream" className="hover:text-link hover:underline">
           꿈해몽 사전
         </Link>{" "}
-        › {symbol.category}
+        ›{" "}
+        <Link href={categoryPath(symbol.category)} className="hover:text-link hover:underline">
+          {symbol.category}
+        </Link>
       </nav>
 
       <h1 className="text-[1.75rem] font-bold leading-tight sm:text-4xl">{symbol.keyword} 꿈 해몽</h1>
@@ -100,13 +106,17 @@ export default async function DreamSymbolPage({ params }: Props) {
 
       <div className="prose-dream mt-4 text-[17px]">
         {paragraphs.slice(0, middle).map((p, i) => (
-          <p key={i}>{p}</p>
+          <p key={i}>
+            <RichText text={p} />
+          </p>
         ))}
       </div>
       <AdSlot name="dictionary-middle" />
       <div className="prose-dream text-[17px]">
         {paragraphs.slice(middle).map((p, i) => (
-          <p key={i}>{p}</p>
+          <p key={i}>
+            <RichText text={p} />
+          </p>
         ))}
       </div>
 
