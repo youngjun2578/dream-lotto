@@ -1,4 +1,5 @@
-// 공유 링크 (/r/[payload]) — DB 없이 결과를 다시 만들 수 있는 값만 주소에 담는다.
+// 결과 주소 (본인 결과 /result/[payload], 공유받은 사람 /r/[payload]) — DB 없이 결과를 다시 만들 수 있는 값만 주소에 담는다.
+// 두 주소는 같은 값을 쓰고, 서버가 이 값으로 해몽과 번호를 다시 만들어 보여 준다. (lib/service.ts 의 buildSharedResult)
 //
 // 담는 값: [버전, 시드, 날짜, 다시 뽑기 횟수, [상징 slug, 행동 slug?]...]
 //   예) [1, 1412796921, "2026-10-01", 0, ["pig", "enter"], ["fire"]]  →  JSON → base64url
@@ -79,6 +80,26 @@ export function decodeShare(text: unknown): SharePayload | null {
     matches.push(action === undefined ? { symbol } : { symbol, action: action as string });
   }
   return { seed, date, counter, matches };
+}
+
+/** 본인 결과 페이지 주소 (해몽하기·다시 뽑기 뒤에 여는 곳) */
+export function resultPath(share: string): string {
+  return `/result/${share}`;
+}
+
+/** 공유받은 사람이 여는 주소 (링크 복사·공유 버튼이 이 주소를 대표 도메인으로 만든다) */
+export function sharedPath(share: string): string {
+  return `/r/${share}`;
+}
+
+/**
+ * 다시 뽑기: 같은 시드·날짜·상징에서 다시 뽑기 횟수만 하나 올린 공유 값.
+ * 꿈 원문 없이도 같은 규칙으로 다음 번호를 만들 수 있다. 값이 잘못됐거나 횟수가 끝(999)이면 null.
+ */
+export function nextDrawShare(text: unknown): string | null {
+  const payload = decodeShare(text);
+  if (!payload || payload.counter >= MAX_SHARED_COUNTER) return null;
+  return encodeShare({ ...payload, counter: payload.counter + 1 });
 }
 
 /** 공유 값의 slug 를 실제 사전 데이터로 바꾼다. 사전에 없는 상징·상황이 있으면 null. */

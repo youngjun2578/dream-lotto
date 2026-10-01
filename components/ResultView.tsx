@@ -1,10 +1,9 @@
-// 해몽 결과 화면 (홈의 결과 영역과 공유 링크 페이지에서 함께 쓴다)
+// 해몽 결과 본문: 요약 → 상징 풀이(상황 풀이 우선) → 추천 번호 5게임
+// 본인 결과(/result/…)와 공유 페이지(/r/…)가 함께 쓴다. 버튼·광고·관련 링크는 components/ResultPage.tsx 에서 붙인다.
 
 import Link from "next/link";
 import type { ReactNode } from "react";
 import type { LottoGame, SituationReading, SymbolReading } from "@/lib/types";
-import { AdSlot } from "./AdSlot";
-import { Disclaimer } from "./Disclaimer";
 import { FortuneBadge } from "./FortuneBadge";
 import { GameList } from "./GameList";
 
@@ -19,14 +18,11 @@ export interface ResultData {
 
 export function ResultView({
   result,
-  numberActions,
-  afterNumbers,
+  emptySymbols,
 }: {
   result: ResultData;
-  /** "추천 번호" 제목 옆 버튼 (예: 다시 뽑기) */
-  numberActions?: ReactNode;
-  /** 번호 목록 바로 아래 (예: 공유 버튼) */
-  afterNumbers?: ReactNode;
+  /** 상징을 하나도 못 찾았을 때 상징 풀이 자리에 보여 줄 안내 */
+  emptySymbols?: ReactNode;
 }) {
   return (
     <div className="space-y-8">
@@ -37,7 +33,7 @@ export function ResultView({
         <p className="rounded-2xl border border-line bg-surface p-5 leading-8">{result.summary}</p>
       </section>
 
-      {result.symbols.length > 0 && (
+      {result.symbols.length > 0 ? (
         <section aria-labelledby="symbols-heading">
           <h3 id="symbols-heading" className="mb-3 font-bold">
             꿈속 상징 풀이
@@ -64,27 +60,23 @@ export function ResultView({
             })}
           </ul>
         </section>
+      ) : (
+        emptySymbols
       )}
 
-      <section aria-labelledby="numbers-heading">
-        <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
-          <div>
-            <h2 id="numbers-heading" className="text-xl font-bold">
-              추천 번호
-            </h2>
-            <p className="text-xs text-ink-faint">
-              {result.date} 기준{result.counter > 0 ? ` · 다시 뽑기 ${result.counter}회` : ""}
-            </p>
-          </div>
-          {numberActions}
+      <section aria-labelledby="numbers-heading" className="scroll-mt-4">
+        <div className="mb-3">
+          <h2 id="numbers-heading" className="scroll-mt-4 text-xl font-bold">
+            추천 번호
+          </h2>
+          <p className="text-xs text-ink-faint">
+            {result.date} 기준{result.counter > 0 ? ` · 다시 뽑기 ${result.counter}회` : ""}
+          </p>
         </div>
-        <GameList games={result.games} />
+        {/* 다시 뽑기마다 새로 그려서 공 애니메이션이 처음부터 다시 나오게 한다. */}
+        <GameList key={`${result.date}-${result.counter}`} games={result.games} />
         <p className="mt-2 text-xs text-ink-faint">달빛 테두리가 있는 공이 꿈 상징에서 나온 번호이고, 태그는 그 이유예요.</p>
-        {afterNumbers}
       </section>
-
-      <AdSlot name="result-bottom" />
-      <Disclaimer />
     </div>
   );
 }

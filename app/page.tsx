@@ -32,7 +32,7 @@ export default function HomePage() {
         </p>
       </section>
 
-      <DreamForm dictionary={dictionary} vocabulary={vocabulary} hintKeywords={popular.map((s) => s.keyword)} />
+      <DreamForm dictionary={dictionary} vocabulary={vocabulary} />
 
       <section className="mt-12" aria-labelledby="popular-heading">
         <h2 id="popular-heading" className="mb-3 text-lg font-bold">

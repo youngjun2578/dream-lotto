@@ -63,16 +63,20 @@ test("canonical·OG·트위터·JSON-LD 주소가 모두 대표 도메인", asyn
   }
 });
 
-test("공유 페이지의 미리보기 이미지 주소도 대표 도메인", async ({ page, request }) => {
+test("결과·공유 페이지의 대표 주소와 미리보기 이미지 주소도 대표 도메인", async ({ page, request }) => {
   const { share } = (await (await request.post("/api/interpret", { data: { dream: "돼지가 집으로 들어왔어요" } })).json()) as {
     share: string;
   };
-  await page.goto(`/r/${share}`);
-  await expect(page.locator('meta[property="og:image"]').first()).toHaveAttribute(
-    "content",
-    new RegExp(`^${SITE.replace(/\./g, "\\.")}/r/${share}/opengraph-image`),
-  );
-  expectOnSite(await pageUrls(page));
+  for (const route of ["r", "result"]) {
+    await page.goto(`/${route}/${share}`);
+    // 두 페이지 모두 대표 주소는 공유 주소(/r/…)
+    await expect(page.locator('link[rel="canonical"]')).toHaveAttribute("href", `${SITE}/r/${share}`);
+    await expect(page.locator('meta[property="og:image"]').first()).toHaveAttribute(
+      "content",
+      new RegExp(`^${SITE.replace(/\./g, "\\.")}/${route}/${share}/opengraph-image`),
+    );
+    expectOnSite(await pageUrls(page));
+  }
 });
 
 test("sitemap.xml 과 robots.txt 가 대표 도메인을 가리킨다", async ({ request }) => {

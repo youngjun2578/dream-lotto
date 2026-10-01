@@ -1,4 +1,4 @@
-// 공유 링크 미리보기 이미지 (결과 페이지와 같은 그림, lib/resultOg.tsx)
+// 결과 페이지 미리보기 이미지 (공유 링크와 같은 그림, lib/resultOg.tsx)
 
 import { OG_CONTENT_TYPE, OG_SIZE, RESULT_OG_ALT, renderResultOgImage } from "@/lib/resultOg";
 
