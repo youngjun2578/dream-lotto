@@ -68,6 +68,12 @@ const DECIDED_CONFLICTS = [
   "lover < ex-lover:전 여자친구 → ex-lover",
   "lover < ex-lover:헤어진 남자친구 → ex-lover",
   "lover < ex-lover:헤어진 여자친구 → ex-lover",
+  // 자연·행동: 시험에 떨어지는 건 낙하가 아니라 시험으로, 시험에 늦는 건 지각으로, 눈싸움은 싸움이 아니라 눈으로
+  "falling < exam:시험에 떨어지 → exam",
+  "falling < exam:시험에 떨어졌 → exam",
+  "falling < exam:시험에 떨어져 → exam",
+  "exam < late:시험에 늦 → late",
+  "fight < snow:눈싸움 → snow",
 ];
 
 function findConflicts(): string[] {

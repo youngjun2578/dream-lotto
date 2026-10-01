@@ -37,7 +37,7 @@ const CASES: [string, string[]][] = [
   ["참새가 창가에 앉아 있었어요", ["bird"]],
   ["새가 날아 들어왔어요", ["bird+enter"]],
   ["까치가 울었어요", ["bird+cry"]],
-  ["바다거북이 헤엄치고 있었어요", ["turtle+swim"]],
+  ["바다거북이 헤엄치고 있었어요", ["turtle+swim", "swimming"]],
   ["거북이를 선물받았어요", ["turtle+receive"]],
   ["곰에게 쫓겨서 도망쳤어요", ["bear+chased", "chased+escape"]],
   ["북극곰을 끌어안았어요", ["bear+hug"]],
@@ -49,7 +49,7 @@ const CASES: [string, string[]][] = [
   ["돌아가신 어머니가 밥을 차려 주셔서 먹었어요", ["ancestor+eat", "mother+eat"]],
   ["아빠가 나를 꼭 안아 줬어요", ["father+hug"]],
   ["아버지와 악수했어요", ["father+handshake"]],
-  ["친구랑 싸웠어요", ["friend+fight"]],
+  ["친구랑 싸웠어요", ["friend+fight", "fight"]],
   ["단짝과 수다를 떨었어요", ["friend+talk"]],
   ["남자친구와 데이트했어요", ["lover+date"]],
   ["짝사랑하는 사람이 나왔어요", ["lover"]],
@@ -81,6 +81,28 @@ const CASES: [string, string[]][] = [
   ["폭포 아래에서 몸을 씻었어요", ["waterfall+wash"]],
   ["폭포수를 마셨어요", ["waterfall+drink"]],
   ["새가 지붕 위에 앉아 있었어요", ["bird"]],
+  // 행동
+  ["시험에 떨어졌어요", ["exam+fall"]],
+  ["수능 시험지를 잃어버렸어요", ["exam+lose"]],
+  ["면접을 봤어요", ["exam"]],
+  ["회사에 늦어서 혼났어요", ["late+angry"]],
+  ["버스를 놓쳤어요", ["late+lose"]],
+  ["늦잠을 자다 깼어요", ["late+wake"]],
+  ["모르는 사람과 싸웠어요", ["fight"]],
+  ["싸우다 다쳤어요", ["fight+hurt"]],
+  ["말다툼을 하고 울었어요", ["fight+cry"]],
+  ["차를 몰고 고속도로를 달렸어요", ["driving"]],
+  ["운전면허를 받았어요", ["driving+receive"]],
+  ["운전하다 길을 잃었어요", ["driving+lose", "lost"]],
+  ["수영장에서 헤엄쳤어요", ["swimming"]],
+  ["바다에서 수영하다 물에 빠졌어요", ["sea+drown", "swimming+drown", "water+drown"]],
+  ["길을 잃고 울었어요", ["lost+cry"]],
+  ["미로에서 헤맸어요", ["lost"]],
+  ["사람들 앞에서 벌거벗고 있었어요", ["naked"]],
+  ["알몸으로 도망쳤어요", ["naked+escape"]],
+  ["가족과 해외여행을 갔어요", ["travel"]],
+  ["여행지에서 맛있는 음식을 먹었어요", ["travel+eat"]],
+  ["공항에서 비행기를 탔어요", ["travel+ride"]],
 ];
 
 /** [입력, 잡히면 안 되는 상징] */
@@ -126,6 +148,8 @@ const FALSE_POSITIVES: [string, string[]][] = [
   ["비둘기가 날아왔어요", ["rain"]],
   ["불꽃이 튀었어요", ["flower"]],
   ["꽃게를 먹었어요", ["flower"]],
+  ["밤늦게까지 일했어요", ["late"]],
+  ["늦은 밤에 꾼 꿈이에요", ["late"]],
 ];
 
 describe("새 상징 대표 입력", () => {
