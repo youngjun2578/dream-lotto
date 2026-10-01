@@ -140,3 +140,14 @@ test("사전·가이드 페이지와 404", async ({ page }) => {
   expect(res?.status()).toBe(404);
   await expect(page.getByRole("heading", { name: "페이지를 찾을 수 없어요" })).toBeVisible();
 });
+
+test("미리보기 이미지: 있는 주소는 그림, 없는 주소는 404", async ({ request }) => {
+  for (const path of ["/dream/pig/opengraph-image", "/guide/wealth-dreams/opengraph-image"]) {
+    const res = await request.get(path);
+    expect(res.status(), path).toBe(200);
+    expect(res.headers()["content-type"], path).toContain("image/png");
+  }
+  for (const path of ["/dream/unicorn/opengraph-image", "/dream/%EC%97%86%EB%8A%94%EA%B2%83/opengraph-image", "/guide/nope/opengraph-image"]) {
+    expect((await request.get(path)).status(), path).toBe(404);
+  }
+});
