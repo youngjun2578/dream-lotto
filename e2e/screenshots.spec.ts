@@ -1,6 +1,7 @@
 // 검토용 화면 캡처: 주요 화면 × (휴대폰, PC) × (라이트, 다크) → review/screenshots/
 // 실행: npm run review:screenshots
 // 애니메이션이 끝난 모습을 찍기 위해 '움직임 줄이기'로 캡처한다.
+// 테마는 기기 설정이 아니라 헤더 버튼으로 고른 값(localStorage "theme")으로 정한다. (기본은 다크, lib/theme.ts)
 
 import { mkdirSync } from "node:fs";
 import { expect, test, type Browser, type Page } from "@playwright/test";
@@ -19,10 +20,11 @@ async function shot(page: Page, name: string) {
   await page.screenshot({ path: `${OUT}/${name}.jpg`, fullPage: true, type: "jpeg", quality: 82 });
 }
 
-async function capture(browser: Browser, device: keyof typeof DEVICES, scheme: "light" | "dark") {
-  const context = await browser.newContext({ ...DEVICES[device], colorScheme: scheme, reducedMotion: "reduce", locale: "ko-KR" });
+async function capture(browser: Browser, device: keyof typeof DEVICES, theme: "light" | "dark") {
+  const context = await browser.newContext({ ...DEVICES[device], reducedMotion: "reduce", locale: "ko-KR" });
+  await context.addInitScript((t) => localStorage.setItem("theme", t), theme);
   const page = await context.newPage();
-  const suffix = `${device}-${scheme}`;
+  const suffix = `${device}-${theme}`;
 
   await page.goto("/");
   await shot(page, `1-main-${suffix}`);
@@ -53,10 +55,10 @@ async function capture(browser: Browser, device: keyof typeof DEVICES, scheme: "
 test.beforeAll(() => mkdirSync(OUT, { recursive: true }));
 
 for (const device of Object.keys(DEVICES) as (keyof typeof DEVICES)[]) {
-  for (const scheme of ["light", "dark"] as const) {
-    test(`화면 캡처: ${device} ${scheme}`, async ({ browser }) => {
+  for (const theme of ["light", "dark"] as const) {
+    test(`화면 캡처: ${device} ${theme}`, async ({ browser }) => {
       test.setTimeout(120_000);
-      await capture(browser, device, scheme);
+      await capture(browser, device, theme);
     });
   }
 }

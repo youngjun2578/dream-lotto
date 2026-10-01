@@ -3,48 +3,13 @@
 /*
  * 사이트 디자인 토큰
  * - 밤하늘/꿈 분위기: 짙은 남색 + 달빛(금색) 포인트
- * - 라이트/다크 모두 글자-배경 명도 대비 WCAG AA(4.5:1) 이상 (확인한 값은 README 참고)
- * - 테마: 시스템 설정을 따르고, 헤더의 버튼으로 바꾸면 <html data-theme="light|dark"> 로 고정
+ * - 라이트/다크 모두 글자-배경 명도 대비 WCAG AA(4.5:1) 이상 (tests/theme.test.ts 가 계산해서 확인)
+ * - 테마: 기본은 다크(기기의 라이트/다크 설정과 상관없이). 헤더의 버튼으로 라이트를 고르면
+ *   <html data-theme="light"> 로 바꾸고 기억한다. (규칙은 lib/theme.ts)
  */
 
+/* 기본(다크) 테마 값 */
 :root {
-  color-scheme: light;
-  --page: #f4f5fb;
-  --surface: #ffffff;
-  --surface-2: #eceefa;
-  --line: #d9ddef;
-  --ink: #171c3a;
-  --ink-soft: #434b73;
-  --ink-faint: #5a6390;
-  --link: #4636b8;
-  --accent: #8a6400;
-  --btn: #1f2a60;
-  --btn-hover: #2b387a;
-  --btn-ink: #ffffff;
-  --focus: #4636b8;
-  --highlight-ring: #c79a1c;
-
-  --f-money-bg: #fbefc9;
-  --f-money-fg: #6e4500;
-  --f-love-bg: #fce1eb;
-  --f-love-fg: #8a1747;
-  --f-health-bg: #d8f2e8;
-  --f-health-fg: #0c5840;
-  --f-work-bg: #dde7fb;
-  --f-work-fg: #1b418a;
-  --f-warn-bg: #fcdfe2;
-  --f-warn-fg: #951a2a;
-
-  /* 밤하늘 띠(헤더·첫 화면)는 두 테마 모두 남색 */
-  --night: #10173a;
-  --night-2: #1c2458;
-  --night-ink: #eef0fb;
-  --night-soft: #c3c9ea;
-  --moon: #f5d67b;
-}
-
-/* 다크 테마 값 (시스템 다크 + 직접 고른 다크 두 곳에서 같은 값을 쓴다) */
-:root[data-theme="dark"] {
   color-scheme: dark;
   --page: #0b1026;
   --surface: #151c3f;
@@ -60,6 +25,7 @@
   --btn-ink: #1a1640;
   --focus: #f5d67b;
   --highlight-ring: #f5d67b;
+
   --f-money-bg: #3a321a;
   --f-money-fg: #f7dc8f;
   --f-love-bg: #3d2138;
@@ -70,40 +36,44 @@
   --f-work-fg: #a8c8ff;
   --f-warn-bg: #3f1d25;
   --f-warn-fg: #ffb3bb;
+
+  /* 밤하늘 띠(헤더·첫 화면)는 두 테마 모두 남색 */
   --night: #0b1026;
   --night-2: #151c46;
+  --night-ink: #eef0fb;
+  --night-soft: #c3c9ea;
+  --moon: #f5d67b;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    color-scheme: dark;
-    --page: #0b1026;
-    --surface: #151c3f;
-    --surface-2: #1e2653;
-    --line: #2c3668;
-    --ink: #eceffb;
-    --ink-soft: #b9c0e3;
-    --ink-faint: #99a2cf;
-    --link: #c4bdff;
-    --accent: #f5d67b;
-    --btn: #f5d67b;
-    --btn-hover: #f8e29d;
-    --btn-ink: #1a1640;
-    --focus: #f5d67b;
-    --highlight-ring: #f5d67b;
-    --f-money-bg: #3a321a;
-    --f-money-fg: #f7dc8f;
-    --f-love-bg: #3d2138;
-    --f-love-fg: #ffb8d2;
-    --f-health-bg: #16382f;
-    --f-health-fg: #94e6c6;
-    --f-work-bg: #1b2d55;
-    --f-work-fg: #a8c8ff;
-    --f-warn-bg: #3f1d25;
-    --f-warn-fg: #ffb3bb;
-    --night: #0b1026;
-    --night-2: #151c46;
-  }
+/* 라이트 테마 값: 사용자가 직접 라이트를 고른 경우에만 쓴다. */
+:root[data-theme="light"] {
+  color-scheme: light;
+  --page: #f4f5fb;
+  --surface: #ffffff;
+  --surface-2: #eceefa;
+  --line: #d9ddef;
+  --ink: #171c3a;
+  --ink-soft: #434b73;
+  --ink-faint: #5a6390;
+  --link: #4636b8;
+  --accent: #8a6400;
+  --btn: #1f2a60;
+  --btn-hover: #2b387a;
+  --btn-ink: #ffffff;
+  --focus: #4636b8;
+  --highlight-ring: #c79a1c;
+  --f-money-bg: #fbefc9;
+  --f-money-fg: #6e4500;
+  --f-love-bg: #fce1eb;
+  --f-love-fg: #8a1747;
+  --f-health-bg: #d8f2e8;
+  --f-health-fg: #0c5840;
+  --f-work-bg: #dde7fb;
+  --f-work-fg: #1b418a;
+  --f-warn-bg: #fcdfe2;
+  --f-warn-fg: #951a2a;
+  --night: #10173a;
+  --night-2: #1c2458;
 }
 
 /* Tailwind 클래스로 쓰는 이름: bg-page, bg-surface, text-ink, text-ink-soft, border-line … */

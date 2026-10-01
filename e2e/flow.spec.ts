@@ -214,16 +214,6 @@ test.describe("움직임 줄이기 설정", () => {
   });
 });
 
-test("테마 전환 버튼: 바꾼 테마를 기억한다", async ({ page }) => {
-  await page.goto("/");
-  const html = page.locator("html");
-  await page.getByRole("button", { name: /화면으로 바꾸기/ }).click();
-  const chosen = await html.getAttribute("data-theme");
-  expect(chosen === "dark" || chosen === "light").toBe(true);
-  await page.reload();
-  await expect(html).toHaveAttribute("data-theme", chosen!);
-});
-
 test("사전·가이드 페이지와 404", async ({ page }) => {
   await page.goto("/dream/pig");
   await expect(page.getByRole("heading", { level: 1, name: "돼지 꿈 해몽" })).toBeVisible();

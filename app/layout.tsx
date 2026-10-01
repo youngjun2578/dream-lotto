@@ -1,8 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
-import { THEME_INIT_SCRIPT } from "@/components/ThemeToggle";
 import { absoluteUrl, NAVER_SITE_VERIFICATION, SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/site";
+import { THEME_INIT_SCRIPT, THEME_META } from "@/lib/theme";
 import "./globals.css";
 
 /**
@@ -45,14 +45,16 @@ export const metadata: Metadata = {
   verification: { other: { "naver-site-verification": NAVER_SITE_VERIFICATION } },
 };
 
+// 기본(다크) 테마의 주소창 색·기본 배경. 라이트를 고른 사용자는 THEME_INIT_SCRIPT 가 라이트 값을 앞에 끼워 넣는다. (lib/theme.ts)
 export const viewport: Viewport = {
-  themeColor: "#10173a",
+  themeColor: THEME_META.dark.themeColor,
+  colorScheme: THEME_META.dark.colorScheme,
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    // data-theme 은 저장된 테마에 따라 브라우저에서 바뀌므로 경고를 끈다.
-    <html lang="ko" suppressHydrationWarning>
+    // 기본은 다크. 저장된 라이트 선택은 THEME_INIT_SCRIPT 가 그리기 전에 data-theme 을 바꾸므로 경고를 끈다.
+    <html lang="ko" data-theme="dark" suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
         <script dangerouslySetInnerHTML={{ __html: FONT_LOADER_SCRIPT }} />

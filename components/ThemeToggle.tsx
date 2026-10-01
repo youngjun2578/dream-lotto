@@ -1,30 +1,18 @@
 "use client";
 
-// 라이트/다크 화면 전환 버튼. 처음에는 시스템 설정을 따르고, 누르면 그 선택을 기억한다.
+// 라이트/다크 화면 전환 버튼. 처음에는 기기 설정과 상관없이 다크로 보이고, 누르면 그 선택을 기억한다. (규칙은 lib/theme.ts)
 
 import { useEffect, useState } from "react";
-
-type Theme = "light" | "dark";
-
-function effectiveTheme(): Theme {
-  const chosen = document.documentElement.dataset.theme;
-  if (chosen === "light" || chosen === "dark") return chosen;
-  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-}
+import { applyTheme, currentTheme, type Theme } from "@/lib/theme";
 
 export function ThemeToggle() {
-  // 서버에서는 테마를 알 수 없으므로, 화면에 붙은 뒤에 아이콘을 정한다.
-  const [theme, setTheme] = useState<Theme | null>(null);
-  useEffect(() => setTheme(effectiveTheme()), []);
+  // 서버 HTML 은 다크(기본값)로 그린다. 라이트를 고른 사용자는 화면에 붙은 뒤에 아이콘을 바꾼다.
+  const [theme, setTheme] = useState<Theme>("dark");
+  useEffect(() => setTheme(currentTheme()), []);
 
   function toggle() {
-    const next: Theme = effectiveTheme() === "dark" ? "light" : "dark";
-    document.documentElement.dataset.theme = next;
-    try {
-      localStorage.setItem("theme", next);
-    } catch {
-      // 저장이 막혀 있어도 이번 방문에서는 바뀐 테마가 유지된다.
-    }
+    const next: Theme = currentTheme() === "dark" ? "light" : "dark";
+    applyTheme(next);
     setTheme(next);
   }
 
@@ -50,7 +38,3 @@ export function ThemeToggle() {
     </button>
   );
 }
-
-/** <head> 에 넣는 짧은 스크립트: 저장된 테마를 화면이 그려지기 전에 적용해 깜빡임을 막는다. */
-export const THEME_INIT_SCRIPT =
-  'try{var t=localStorage.getItem("theme");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t}catch(e){}';
