@@ -25,12 +25,16 @@ export function normalizeSiteUrl(value?: string): string {
 export const SITE_URL = normalizeSiteUrl(process.env.NEXT_PUBLIC_SITE_URL);
 
 /** 사전·가이드 콘텐츠를 마지막으로 크게 고친 날 (sitemap, 구조화 데이터의 dateModified) */
-export const CONTENT_UPDATED_AT = "2026-09-30";
+export const CONTENT_UPDATED_AT = "2026-10-01";
 
 /** 문의 메일 (초안 — 실제 주소로 바꿔 주세요) */
 export const CONTACT_EMAIL = "contact@example.com";
 
-export const DISCLAIMER = "재미로 보는 서비스이며, 추천 번호는 당첨 확률과 무관합니다.";
+/** 결과·사전·가이드·푸터에 보이는 고지 (재미용, 당첨 보장 없음) */
+export const DISCLAIMER = "재미로 보는 꿈해몽이며, 추천 번호는 당첨을 보장하지 않습니다.";
+
+/** 복권 구매 연령 안내 (복권 및 복권기금법: 19세 미만에게는 복권을 팔 수 없다) */
+export const AGE_NOTICE = "복권은 만 19세 이상만 구매할 수 있으며, 지나친 구매는 삼가시기 바랍니다.";
 
 /** "/dream/pig" → "https://haemongru.com/dream/pig" */
 export function absoluteUrl(path = "/"): string {

@@ -18,7 +18,7 @@ const FORTUNE_PHRASE: Record<FortuneType, string> = {
 /** 요약에 쓰일 수 있는 고정 문구 (공유 이미지 글꼴 검사용) */
 export const FORTUNE_PHRASE_TEXT = [
   ...Object.values(FORTUNE_PHRASE),
-  "함께 나온 상징까지 더하면 전체적으로 으로 풀이돼요. 이니, 서두르기보다 차분하게 하루를 보내 보세요.",
+  "함께 나온 상징까지 더하면 전체적으로 으로 볼 수 있어요. 이니, 서두르기보다 차분하게 하루를 보내 보세요.",
 ];
 
 /** 요약에 넣을 이름 ('이빨 빠지는' 같은 행동 상징은 '이빨 빠지는 꿈'으로) */
@@ -60,7 +60,7 @@ export class RuleBasedProvider implements InterpretationProvider {
     const second =
       fortune === "주의"
         ? `${lead} ${FORTUNE_PHRASE[fortune]}이니, 서두르기보다 차분하게 하루를 보내 보세요.`
-        : `${lead} ${FORTUNE_PHRASE[fortune]}으로 풀이돼요.`;
+        : `${lead} ${FORTUNE_PHRASE[fortune]}으로 볼 수 있어요.`;
 
     return {
       summary: `${first} ${second}`,

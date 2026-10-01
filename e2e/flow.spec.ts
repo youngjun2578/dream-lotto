@@ -1,7 +1,7 @@
 // 사용자 흐름 테스트: 휴대폰(mobile)과 PC(desktop) 크기에서 각각 실행된다.
 
 import { expect, test, type Page } from "@playwright/test";
-import { DEFAULT_SITE_URL } from "../lib/site";
+import { AGE_NOTICE, DEFAULT_SITE_URL, DISCLAIMER } from "../lib/site";
 
 const DREAM = "돼지가 집으로 들어오고 뱀에게 물렸어요";
 
@@ -38,7 +38,10 @@ test("입력 → 결과 → 다시 뽑기 → 공유 링크 → 같은 결과", 
     expect(numbers).toEqual([...numbers].sort((a, b) => a - b));
     for (const n of numbers) expect(n >= 1 && n <= 45).toBe(true);
   }
-  await expect(page.getByText("재미로 보는 서비스이며, 추천 번호는 당첨 확률과 무관합니다.").first()).toBeVisible();
+  // 결과 아래 고지: 재미용·당첨 보장 없음 + 구매 연령
+  const note = page.getByRole("note").filter({ hasText: DISCLAIMER });
+  await expect(note).toBeVisible();
+  await expect(note).toContainText(AGE_NOTICE);
 
   // 다시 뽑기
   await page.getByRole("button", { name: "다시 뽑기" }).click();
@@ -125,8 +128,11 @@ test("사전·가이드 페이지와 404", async ({ page }) => {
   await expect(page.locator("#situation-enter")).toContainText("돼지가 집으로 들어오는 꿈");
   await expect(page.getByRole("heading", { name: "비슷한 꿈", exact: true })).toBeVisible();
 
+  await expect(page.getByRole("note").filter({ hasText: DISCLAIMER })).toContainText(AGE_NOTICE);
+
   await page.goto("/guide/wealth-dreams");
   await expect(page.getByRole("heading", { level: 1, name: "재물운이 트이는 꿈 모음" })).toBeVisible();
+  await expect(page.getByRole("note").filter({ hasText: DISCLAIMER })).toContainText(AGE_NOTICE);
   await page.getByRole("link", { name: "돼지 꿈" }).first().click();
   await expect(page).toHaveURL(/\/dream\/pig$/);
 

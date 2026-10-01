@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { DISCLAIMER, SITE_NAME } from "@/lib/site";
+import { AGE_NOTICE, DISCLAIMER, SITE_NAME } from "@/lib/site";
 
 const LINKS = [
   { href: "/about", label: "소개" },
@@ -19,7 +19,9 @@ export function SiteFooter() {
             </Link>
           ))}
         </nav>
-        <p>{DISCLAIMER}</p>
+        <p>
+          {DISCLAIMER} {AGE_NOTICE}
+        </p>
         <p>{SITE_NAME}는 복권 판매·발행 사업자와 관련 없는 비공식 재미 서비스입니다.</p>
         <p className="text-ink-faint">
           © {new Date().getFullYear()} {SITE_NAME} · 글꼴 Pretendard (SIL Open Font License 1.1)

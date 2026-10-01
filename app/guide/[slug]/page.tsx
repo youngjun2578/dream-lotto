@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AdSlot } from "@/components/AdSlot";
+import { Disclaimer } from "@/components/Disclaimer";
 import { JsonLd } from "@/components/JsonLd";
 import { RichText } from "@/components/RichText";
 import { getAllGuides, getGuideBySlug, readingMinutes } from "@/lib/guides";
@@ -111,6 +112,7 @@ export default async function GuidePage({ params }: Props) {
       </section>
 
       <AdSlot name="guide-bottom" />
+      <Disclaimer />
     </article>
   );
 }
