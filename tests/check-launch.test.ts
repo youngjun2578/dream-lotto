@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 import robots from "@/app/robots";
 import sitemap from "@/app/sitemap";
 import { getAllGuides } from "@/lib/guides";
-import { CONTACT_EMAIL, DEFAULT_SITE_URL, SITE_URL } from "@/lib/site";
+import { CONTACT_EMAIL, DEFAULT_SITE_URL, OPERATOR_NAME, PRIVACY_OFFICER_NAME, SITE_URL } from "@/lib/site";
 import { getAllSymbols } from "@/lib/symbols";
 import {
   checkBuildOutput,
@@ -18,6 +18,8 @@ import {
 } from "@/scripts/check-launch";
 
 const REAL_EMAIL = "dream@mail.kr"; // 테스트용 가짜 '실제 주소'
+/** 지금 운영자 정보에서 메일만 테스트용 주소로 바꾼 값 */
+const CONTACT = { email: REAL_EMAIL, operator: OPERATOR_NAME, officer: PRIVACY_OFFICER_NAME };
 const REQUIRED = [
   "/",
   "/dream",
@@ -40,9 +42,9 @@ describe("문의 메일", () => {
 });
 
 describe("정책 문구", () => {
-  it("지금 정책 페이지는 문의 메일만 바꾸면 통과한다 (애드센스·쿠키·맞춤 광고·미저장·접속 기록·문의처)", async () => {
+  it("지금 정책 페이지는 문의 메일만 바꾸면 통과한다 (필수 고지, 운영자 이름, 보호책임자, 메일, 전화번호 없음)", async () => {
     const pages = (await renderPolicyPages()).map((p) => ({ ...p, text: p.text.replaceAll(CONTACT_EMAIL, REAL_EMAIL) }));
-    expect(checkPolicyPages(pages, REAL_EMAIL)).toEqual([]);
+    expect(checkPolicyPages(pages, CONTACT)).toEqual([]);
   });
 
   it("빈 문구·자리표시자·빠진 고지를 잡는다", () => {
@@ -52,7 +54,7 @@ describe("정책 문구", () => {
         { name: "terms", path: "/terms", text: "" },
         { name: "about", path: "/about", text: "소개 ".repeat(100) },
       ],
-      REAL_EMAIL,
+      CONTACT,
     );
     expect(problems.join("\n")).toMatch(/\/privacy 문구가 너무 짧아요/);
     expect(problems.join("\n")).toMatch(/\/privacy 에 자리표시자가 남아 있어요: "TODO"/);
@@ -60,6 +62,23 @@ describe("정책 문구", () => {
     expect(problems.join("\n")).toMatch(/\/terms 에 꼭 필요한 내용이 없어요: 구매 연령/);
     expect(problems.join("\n")).toMatch(/\/about 에 꼭 필요한 내용이 없어요: 재미용 고지/);
     expect(problems.join("\n")).toMatch(/정책 페이지가 없어요: \/contact/);
+    expect(problems.join("\n")).toMatch(/\/privacy 에 꼭 필요한 내용이 없어요: 국외 이전/);
+    expect(problems.join("\n")).toMatch(/\/privacy 에 개인정보 보호책임자 이름이 보이지 않아요/);
+    expect(problems.join("\n")).toMatch(/\/terms 에 운영자 이름이 보이지 않아요/);
+  });
+
+  it("전화번호, 문의 메일과 다른 메일 주소를 잡는다 (공공기관 대표번호와 다른 업체의 개인정보 문의처는 괜찮다)", async () => {
+    const pages = (await renderPolicyPages()).map((p) =>
+      p.name === "contact" ? { ...p, text: `${p.text} 전화 010-1234-5678 / old@mail.kr` } : p,
+    );
+    const problems = checkPolicyPages(pages, { email: CONTACT_EMAIL, operator: OPERATOR_NAME, officer: PRIVACY_OFFICER_NAME });
+    expect(problems).toEqual([
+      '/contact 에 전화번호가 있어요: "010-1234-5678" (연락처는 메일만 공개해요)',
+      "/contact 의 메일 주소가 문의 메일과 달라요: old@mail.kr (lib/site.ts 의 CONTACT_EMAIL 을 쓰세요)",
+    ]);
+    for (const phone of ["02-123-4567", "031 1234 5678", "+82 10 1234 5678", "(02)1234-5678"]) {
+      expect(checkPolicyPages([{ name: "about", path: "/about", text: `재미 ${phone} ${OPERATOR_NAME}`.padEnd(300, "가") }], CONTACT).join(), phone).toMatch(/전화번호가 있어요/);
+    }
   });
 });
 

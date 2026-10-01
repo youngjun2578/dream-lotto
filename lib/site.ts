@@ -40,8 +40,17 @@ export const CONTENT_UPDATED_AT = "2026-10-01";
  */
 export const NAVER_SITE_VERIFICATION = "f6e2f88fd423c42b3e0c014d6c7d29187349cccb";
 
-/** 문의 메일 (문의·개인정보처리방침 페이지에 보인다. 자리표시자로 바뀌면 npm run check:launch 가 실패한다) */
+/**
+ * 운영자 정보. 개인정보처리방침·이용약관·문의·소개 페이지가 모두 여기서 가져다 쓴다. 페이지에 직접 적지 않는다.
+ * 연락처는 메일만 공개한다. 전화번호는 사이트 어디에도 넣지 않는다. (tests/privacy.test.ts, npm run check:launch 가 확인)
+ */
+export const OPERATOR_NAME = "서영준";
+/** 개인정보 보호책임자 (운영자가 겸한다) */
+export const PRIVACY_OFFICER_NAME = OPERATOR_NAME;
+/** 문의 메일 = 개인정보 보호책임자 연락처. 자리표시자로 바뀌면 npm run check:launch 가 실패한다. */
 export const CONTACT_EMAIL = "young@haemongru.com";
+/** 문의 메일 보유 기간 (개인정보처리방침·문의 페이지가 같은 값을 쓴다. 바꾸면 실제 메일함 정리도 이 기간에 맞춘다) */
+export const INQUIRY_RETENTION = "답변을 마친 날부터 1년";
 
 /** 결과·사전·가이드·푸터에 보이는 고지 (재미용, 당첨 보장 없음) */
 export const DISCLAIMER = "재미로 보는 꿈해몽이며, 추천 번호는 당첨을 보장하지 않습니다.";

@@ -81,7 +81,7 @@
 
 - 모바일 접속: DNS의 AAAA(IPv6) 레코드, 루트 A·www CNAME 값, DNSSEC, Cloudflare 프록시·SSL·보안 규칙, 통신사 DNS 캐시 확인
 - Vercel Domains: 대표 www 유지, 루트 → www 308 유지, www → 루트 리디렉션은 걸지 않기
-- 개인정보처리방침 검토(보호책임자 표기, Cloudflare 프록시를 쓰면 위탁 업체에 추가), 애드센스 승인 후 EU 동의 메시지 설정
+- ~~개인정보처리방침 검토(보호책임자 표기, Cloudflare 프록시를 쓰면 위탁 업체에 추가)~~ → **완료(2026-10-01)**: 보호책임자 서영준 표기, Cloudflare는 DNS만(회색 구름) 쓰는 것을 확인해 메일 전달 업체로만 적음. 아래 "개인정보처리방침 전면 개정" 기록 참고. 애드센스 승인 후 EU 동의 메시지 설정은 그 기록의 "애드센스 승인 뒤 고칠 곳"으로 넘김
 - Google Search Console·네이버 서치어드바이저에 www 주소 등록, sitemap 제출
 
 ### 2026-10-01 · 병합과 push — `main`
@@ -310,3 +310,107 @@
 - 배포 후 `/dream/category/love`, `/dream/in-laws`, `/dream/children`(태몽 가이드 링크) 확인
 - 사전 페이지 23개와 카테고리 페이지 6개가 늘었으니 네이버 서치어드바이저·구글 서치 콘솔에 sitemap 다시 제출
 - 새 원고(특히 이혼·이별·외도·시댁·처가)를 사람 눈으로 한 번 읽어 보기
+
+### 2026-10-01 · 개인정보처리방침 전면 개정 (개인정보 보호책임자) — `main`
+
+**한 일**
+
+- `lib/site.ts`에 운영자 정보를 상수로 모았다: `OPERATOR_NAME`(서영준), `PRIVACY_OFFICER_NAME`(= 운영자), `CONTACT_EMAIL`(young@haemongru.com), `INQUIRY_RETENTION`(문의 메일 보유 기간 "답변을 마친 날부터 1년"). 개인정보처리방침·이용약관·문의·소개가 모두 이 값을 가져다 쓴다. 이름과 메일 글자가 다른 파일에 있으면 `tests/privacy.test.ts`가 잡는다.
+- `/privacy`를 실제 동작 기준으로 새로 썼다(합니다체, 15개 항목): 처리 항목·목적·보유 기간 / 꿈 내용 처리 방식 / 파기 / 처리 위탁 / 국외 이전(Vercel·Cloudflare·Google 각각 법정 항목) / 제3자 제공 / 쿠키와 웹 스토리지 / 광고와 행태정보 / EEA·영국·스위스 / 만 14세 미만 아동 / 이용자 권리 / 안전성 확보 조치 / 개인정보 보호책임자 / 권익침해 구제 / 변경(시행일·최종 개정일·변경 이력). 맨 위에 "한눈에 보기"와 목차(항목 링크)를 두었다.
+- 이용약관에 "6. 개인정보 보호", "7. 운영자와 문의"를 더했다(최종 수정일 2026-10-01). 문의 페이지에 운영자·보호책임자 이름과 "보내 주신 메일은 이렇게 다뤄요"를, 소개 페이지에 "운영자와 문의"를 더했다.
+- `npm run check:launch`: 처리방침 필수 항목 19개, 이용약관의 처리방침 안내, 운영자 이름·보호책임자·문의 메일 일치, 다른 메일 주소, 전화번호(0으로 시작하는 번호, +82)를 검사한다.
+- 테스트: `tests/privacy.test.ts`(운영자 상수, 이름·메일 하드코딩 금지, 전화번호 없음, 저장소 이름·쿠키·분석 패키지·광고 코드·보유 기간·국외 이전 항목·글꼴), `e2e/privacy.spec.ts`(외부 요청·쿠키 없음, 저장소 두 가지, 꿈 원문은 해몽 요청에만, 모든 종류 페이지의 푸터 링크, 목차 이동).
+
+**사실 확인 (코드와 실제 실행으로 확인한 것)**
+
+| 확인한 것 | 결과 | 근거 |
+| --- | --- | --- |
+| 꿈 원문이 서버로 가는지 | 간다. '해몽하고 번호 뽑기'를 누를 때 `POST /api/interpret` 본문에만 실린다. 입력 중 상징 미리보기·추천 칩은 브라우저 안에서 계산 | `components/DreamForm.tsx`, 운영 빌드에서 요청 본문 측정 |
+| 꿈 원문 저장 | 없다. DB 없음, 파일 쓰기 없음. 응답(해몽 결과)에도 원문이 없다 | `lib/service.ts`, `lib/interpret/ruleBased.ts`(원문을 쓰지 않음) |
+| 서버 로그 | 예상 못 한 오류일 때만 `console.error("[api/interpret]", error)`로 오류 객체를 남긴다. 입력 오류(400)는 남기지 않는다. 정상 해몽·글자 수 초과·잘못된 횟수·깨진 JSON을 보낸 뒤 서버 로그에 꿈 원문 0건 | `app/api/interpret/route.ts`, 운영 빌드 서버 로그 확인 |
+| 결과·공유 주소 | 원문 없음. `[1, 시드, 날짜, 횟수, [상징, 행동]…]`을 base64url로 담는다. 시드는 SHA-256 앞 4바이트라 원문을 되살릴 수 없다. 다만 주소가 접속 기록에 남으므로 상징·행동 영문 이름도 남는다 | `lib/share.ts`, `lib/lotto.ts`(읽기만), 실제 주소를 풀어서 확인 |
+| 쿠키 | 사이트가 만들지도 읽지도 않는다. 13종 페이지와 해몽 흐름에서 `Set-Cookie` 0건, 브라우저 쿠키 0개 | 코드 검색, 운영 빌드에서 Playwright 측정 |
+| localStorage | `theme` 하나(헤더 버튼으로 고른 밝은/어두운 화면, 고를 때만 저장) | `lib/theme.ts` |
+| sessionStorage | `dream-draft` 하나(입력 중인 꿈, 글자를 칠 때마다 저장, 입력창을 비우면 삭제) | `components/dreamDraft.ts` |
+| 분석 도구·외부 스크립트 | 없다. 의존성은 next·react·react-dom뿐. 해몽 흐름 포함 요청 381건이 모두 사이트 자신에게 간다 | `package.json`, 측정 |
+| 글꼴 | Pretendard를 `public/fonts`에 포함해 같은 주소에서 받는다(외부 글꼴·CDN 없음) | `app/layout.tsx` |
+| 광고 코드 | 없다. `AdSlot`은 빈 칸(개발 모드에서만 점선 상자) | `components/AdSlot.tsx` |
+| 푸터의 처리방침 링크 | 홈·사전 목록·카테고리·사전 상세·가이드 목록·가이드·결과·공유·소개·약관·문의·처리방침·404 모두 있음 | 루트 layout의 `SiteFooter`, 측정 |
+| 전화번호 | 사이트 코드·데이터·md 문서 어디에도 운영자 전화번호 없음(공공기관 대표번호만 처리방침 14번에 있음) | 저장소 전체 검색 |
+| 호스팅·접속 기록 | Vercel. 요청마다 IP·브라우저 정보·시각·주소·응답 코드가 기록되고, Hobby 요금제의 실행 기록 보관은 1시간 | Vercel 문서(검색 결과), 사용자 답변 |
+| 문의 메일 | Cloudflare Email Routing이 받아 Gmail로 전달·보관 | 사용자 답변 |
+| Cloudflare 프록시 | DNS만(회색 구름). 사이트 접속은 Cloudflare를 거치지 않는다 | 사용자 답변 (이 환경에서는 DNS 조회가 막혀 직접 확인 못 함) |
+| Vercel 함수 지역 | 설정 파일에 지역 지정이 없어 Vercel 기본값(미국 iad1)으로 본다 | 저장소에 `vercel.json`·`preferredRegion` 없음, Vercel 문서(검색 결과) |
+
+**참조한 정책 출처 (확인일 모두 2026-10-01)**
+
+이 작업 환경의 네트워크 정책이 원문 페이지 열기를 막아서(support.google.com, policies.google.com, www.google.com, law.go.kr, pipc.go.kr, privacy.go.kr, privacy.kisa.or.kr, vercel.com, developers.cloudflare.com, haemongru.com, dns.google 등 모두 차단), 아래는 **웹 검색 결과의 요약**으로 확인한 내용이다. 원문을 직접 열어 본 것은 아니다.
+
+| 항목 | 출처 | 확인한 내용 |
+| --- | --- | --- |
+| 애드센스 필수 콘텐츠 | https://support.google.com/adsense/answer/1348695 | Google을 포함한 제3자 공급업체가 쿠키로 이전 방문 기록 기반 광고를 게재한다는 고지, Google 광고 쿠키로 Google과 파트너가 맞춤 광고, 광고 설정에서 해제, www.aboutads.info |
+| 애드센스·게시자 정책(개인정보) | https://support.google.com/adsense/answer/48182 , https://support.google.com/adsense/answer/10502938 | 쿠키·웹 비콘·IP 주소 등 식별자 사용을 포함해 데이터 수집·공유·사용을 명확히 공개하는 처리방침을 두고 지킬 것 |
+| EU 사용자 동의 정책 | https://www.google.com/about/company/user-consent-policy/ | EEA·영국·스위스 사용자에게 공개하고 동의를 받을 것, 데이터를 받는 각 당사자를 밝힐 것 |
+| Google 인증 CMP 요건 | https://support.google.com/adsense/answer/13554116 | 맞춤 광고에 Google 인증 CMP(TCF 연동) 필요: EEA·영국 2024-01-16, 스위스 2024-07-31부터 |
+| 동의 철회 링크 | https://support.google.com/adsense/answer/14852903 , https://support.google.com/adsense/answer/10959060 | 페이지 아래쪽 'Privacy and cookie settings' 링크, 애드센스가 자동으로 넣음, 다시 열면 동의·동의하지 않음·옵션 관리 |
+| Google의 정보 사용 방식 | https://policies.google.com/technologies/partner-sites?hl=ko | 한국어 제목 "Google이 Google 서비스를 사용하는 웹사이트 또는 앱의 정보를 사용하는 방법", 애드센스 사이트 방문 시 페이지 주소·IP가 Google로 전송, 사용 목적 |
+| Google 광고·보관·서버 | https://policies.google.com/technologies/ads?hl=ko , https://policies.google.com/technologies/retention?hl=ko , https://policies.google.com/privacy?hl=ko | 광고 쿠키 안내, 데이터 보관 안내, 전 세계 서버에서 처리될 수 있음 |
+| Google 국외 이전 문의처 | https://policies.google.com/privacy/additional?gl=kr | 한국 거주자 추가 정보: googlekrsupport@google.com |
+| 내 광고 센터 | https://support.google.com/My-Ad-Center-Help/answer/12155154 | 맞춤 광고를 끄고 켜는 곳 |
+| 개인정보 보호법 제30조, 시행령 제31조 | 2차 자료: https://www.nepla.ai/wiki/ (제30조 제1항·시행령 제31조 작성 항목), https://wikidocs.net/230549 | 처리방침 기재 항목(목적, 처리·보유 기간, 제3자 제공, 파기, 위탁, 권리, 보호책임자 연락처, 자동 수집 장치, 처리 항목, 안전성 확보 조치) |
+| 국외 이전(제28조의8) | 2차 자료: https://www.nepla.ai/wiki/ , https://itwiki.kr/w/개인정보_국외_이전 | 처리방침 공개 항목: 이전 항목, 국가·시기·방법, 이전받는 자(법인은 명칭·연락처), 이용 목적·보유 기간, 거부 방법·절차·효과 |
+| 아동(제22조의2) | 2차 자료: https://www.nepla.ai/wiki/ | 동의를 받아야 할 때 만 14세 미만은 법정대리인 동의 |
+| 처리방침 작성지침(2025.4.) | https://www.privacy.go.kr/front/bbs/bbsView.do?bbsNo=BBSMSTR_000000000049&bbscttNo=20806 (본문 미열람), 보도 https://www.daeryunlaw.com/newsletter/news/151 | 2025-04-21 개정: 동의 없이 처리하는 항목과 동의 항목 구분, 항목 유형별 기재 허용. 만 14세 미만 관련 사항이 필수 기재사항이 됐다는 2차 자료(블로그 요약) |
+| 맞춤형 광고 행태정보 | 개인정보위 「맞춤형 광고에 활용되는 온라인 행태정보 보호를 위한 정책 방안」(2024-01-31, 보도 https://www.khan.co.kr/article/202401311457001 , https://www.lawtimes.co.kr/news/articleView.html?idxno=195814), 2017 「온라인 맞춤형 광고 개인정보보호 가이드라인」 | 광고 매체 사업자의 처리 과정 공개, 제3자가 수집하는 행태정보를 처리방침에 포함하도록 권고, 만 14세 미만 행태정보를 식별정보와 결합할 때 법정대리인 동의 |
+| 권익침해 구제 기관 | 검색 결과의 공공·기업 처리방침, https://www.onebit.co.kr/경찰청-사이버범죄-신고시스템 | 개인정보분쟁조정위원회 1833-6972 www.kopico.go.kr, 개인정보침해 신고센터 118 privacy.kisa.or.kr, 대검찰청 1301 www.spo.go.kr, 경찰청 182 ecrm.police.go.kr |
+| Vercel | https://vercel.com/docs/logs/runtime , https://vercel.com/docs/limits/fair-use-guidelines , https://vercel.com/docs/functions/configuring-functions/region , https://vercel.com/docs/drains , https://vercel.com/docs/cdn-security/encryption , https://vercel.com/legal/privacy-notice | 실행 기록 보관 Hobby 1시간·Pro 1일(Observability Plus 30일), Hobby는 비상업용만(애드센스 광고 포함 상업적 이용 금지), 함수 기본 지역 iad1(미국 워싱턴 D.C.), Log Drains는 Pro 이상, HTTP → HTTPS 308 자동, 개인정보 문의 privacy@vercel.com |
+| Cloudflare | https://www.cloudflare.com/products/email-routing/ , https://blog.cloudflare.com/introducing-email-routing/ , https://developers.cloudflare.com/email-routing/get-started/email-routing-analytics/ , https://www.cloudflare.com/privacypolicy/ | Email Routing은 메일을 저장하지 않고 전달만 함, 활동 기록(보낸 사람·받는 주소·제목·상태)을 최대 30일 범위로 조회, 개인정보 문의 privacyquestions@cloudflare.com |
+
+**확인하지 못한 것**
+
+- 법령 원문(국가법령정보센터): 제30조·시행령 제31조·제28조의8·제22조의2를 2차 자료로만 확인했다. 특히 보호책임자 연락처를 메일만 적어도 되는지(조문의 "전화번호 등 연락처" 표현)는 원문을 직접 보지 못했다.
+- 작성지침(2025.4.) 본문: 필수·권장 항목 전체와 기재 예시, 만 14세 미만 항목을 어떻게 쓰라고 하는지.
+- 행태정보 가이드라인: 2017 가이드라인 이후 개정이 확정됐는지(개정 추진 보도만 있음).
+- 애드센스 프로그램 정책·EU 동의 정책의 원문 전문. 'Privacy and cookie settings' 링크의 한국어 표시 문구.
+- 구제 기관 연락처를 각 기관 사이트에서 직접 확인하지 못했다(여러 처리방침과 검색 결과가 같은 값).
+- 실제 사이트 응답 헤더와 DNS·MX 레코드: 네트워크 정책으로 직접 확인하지 못했다(사용자 답변으로 대신함).
+- Vercel·Cloudflare·Gmail 대시보드 설정(함수 지역, 로그 내보내기, 메일 전달 규칙): 볼 수 없어 사용자 답변과 Vercel 기본값으로 적었다.
+
+**판단과 이유**
+
+- 문체는 이용약관과 같은 합니다체. 문의·소개 페이지는 원래 해요체라 그대로 두고 내용만 처리방침과 맞췄다.
+- 처리 근거: 세 가지 정보 모두 이용자가 요청한 일(사이트 이용, 해몽, 문의 답변)에 필요한 범위라 동의를 받는 항목이 없다고 적었다. 그래서 만 14세 미만 법정대리인 동의 절차도 두지 않았다고 적고, 아동이 보낸 문의 메일은 답변에 필요한 만큼만 다루고 법정대리인이 요청하면 지운다고 적었다. 사이트의 '만 19세 이상' 안내는 복권 구매 나이라서 서비스 이용 나이와 별개라고 밝혀 모순이 없게 했다.
+- 문의 메일 보유 기간은 정해진 값이 없어 "답변을 마친 날부터 1년"으로 정했다(분쟁 중이면 해결될 때까지). 처리방침에 적은 순간 지켜야 하는 약속이라, 사용자가 다른 기간을 원하면 `INQUIRY_RETENTION` 한 곳만 바꾸면 된다.
+- 시행일: 첫 방침도 2026-10-01이었고 "시행 7일 전 공지"를 약속했지만, 같은 날 빠진 내용을 보완하고 실제와 맞춘 개정이라 공개한 날부터 적용하고 그 이유를 변경 이력에 적었다. 앞으로의 변경은 7일 전 공지를 지킨다.
+- 광고: 아직 코드가 없어서 "2026년 10월 1일 현재 광고를 게재하지 않으며 광고 코드도 넣지 않았다"는 상태 문장 + "게재하면 적용되는 내용"으로 썼다. 게재 시작 전에 이 페이지에 시작일을 알리겠다고 적었다.
+- 국외 이전: 이전받는 자의 연락처는 각 회사가 공개한 개인정보 문의처를 적었다. Google의 이전 국가는 "미국(여러 나라의 데이터 센터에서 처리될 수 있음)"으로 적었다.
+- 결과 주소가 접속 기록에 남는다는 점(상징·행동 영문 이름 포함)도 적었다. 원문은 아니지만 꿈 내용 일부를 짐작할 수 있는 정보라서.
+- 안전성 확보 조치는 확인된 것만 적었다(최소 처리·DB 없음, HTTPS, 메일 계정 보관 후 삭제). 관리 계정의 2단계 인증처럼 확인하지 못한 것은 적지 않았다.
+- 전화번호: 공공기관 대표번호(118, 182, 1301, 1833-6972)만 있다. 운영자 전화번호 검사는 0으로 시작하는 번호와 +82를 잡는다.
+
+**애드센스 승인 뒤 고칠 곳**
+
+1. 신청 전
+   - Vercel Hobby 요금제는 애드센스를 포함한 광고 게재를 상업적 이용으로 보고 허용하지 않는다(Vercel 공정 사용 지침, 검색 결과 기준). 광고를 넣기 전에 Pro로 바꾸고, 바꾸면 처리방침 1·5번의 "1시간"을 Pro 보관 기간(1일)으로 고친다.
+   - 사이트 확인은 메타 태그(`google-adsense-account`)나 `public/ads.txt`를 쓰면 스크립트가 로드되지 않아 처리방침을 바꿀 필요가 없다. 애드센스 코드(`adsbygoogle.js`)를 심사용으로 넣으면 그때부터 Google 스크립트가 로드되므로 아래 2번을 그때 해야 한다.
+2. 광고 코드를 넣을 때(게재 시작 7일 전에 공개)
+   - `app/privacy/page.tsx`: 8번 '현재 상태'를 "OOOO년 O월 O일부터 Google 애드센스 광고를 게재합니다"로, 9번의 "현재는 … 표시하지 않습니다" 삭제, 8번 '제3자의 행태정보 수집 허용'에 애드센스 설정에서 확인한 다른 광고 사업자 허용 범위를 적기, `EFFECTIVE_DATE`·`REVISED_DATE`·`HISTORY` 갱신.
+   - 결과·공유 페이지(`/result/…`, `/r/…`)에 광고를 두면 그 페이지 주소(상징·행동 이름이 담긴 값)가 Google에 전송된다. 처리방침 2번에 적거나, 결과 페이지에는 광고를 두지 않을지 정한다.
+   - 코드: `components/AdSlot.tsx`(광고 단위), `app/layout.tsx`(스크립트), `public/ads.txt`.
+   - 테스트: `tests/privacy.test.ts`의 "광고 코드 없음" 검사를 "광고 게재 중" 문구 검사로, `e2e/privacy.spec.ts`의 '외부 요청 없음'과 쿠키 검사를 Google 광고 도메인·광고 쿠키를 허용하도록 바꾼다.
+3. 애드센스 관리 화면(코드 작업 아님, 사람이 할 일)
+   - 개인정보 보호 및 메시지(Privacy & messaging)에서 유럽 규정 메시지를 만들어 게시: EEA·영국·스위스 대상, Google 인증 CMP. '동의하지 않음' 버튼을 켜서 처리방침 9번 "동의하지 않아도 이용 가능"과 맞춘다. 동의 철회 링크('Privacy and cookie settings')가 페이지 아래쪽에 자동으로 붙는지 화면으로 확인한다.
+   - 맞춤 광고 파트너(광고 기술 제공업체) 설정을 확인해 처리방침 8번에 반영한다.
+
+**확인**
+
+- `npm test` 29개 파일 469개 통과(2개는 원래 조건부 건너뜀), `npm run build` 성공(`/privacy` 정적, canonical·OG 정상), `npm run test:e2e` 52개 통과(처리방침 검사 6개 추가), `npm run check:launch` 통과.
+- 번호 생성 로직(`lib/lotto.ts`, `lib/symbolNumbers.ts`)은 바꾸지 않았고 golden test 통과. 페이지 주소(slug)는 바꾸지 않았다.
+
+**사람이 할 일**
+
+- 문의 메일 보유 기간 지키기: Gmail에서 답변을 마친 지 1년이 지난 문의 메일을 지우고 휴지통도 비우기(예: 라벨을 붙여 두고 1년에 한 번 정리).
+- 법령 원문과 작성지침(2025.4.) 본문을 직접 열어 위 "확인하지 못한 것"을 확인하기. 특히 보호책임자 연락처를 메일만 적는 것.
+- Cloudflare 프록시(주황 구름)를 켜거나, Vercel 요금제·함수 지역을 바꾸거나, 문의 메일을 받는 메일함을 바꾸면 처리방침 4·5번을 먼저 고치기(`app/privacy/page.tsx` 위쪽 주석 참고).
+- 관리 계정(Vercel·Cloudflare·Google)에 2단계 인증을 쓰고 있다면 처리방침 12번에 더할 수 있다.
+- 배포 후 `/privacy`(목차 이동), `/terms`, `/contact`, `/about` 확인.

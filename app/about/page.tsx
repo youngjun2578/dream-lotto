@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { StaticPage } from "@/components/StaticPage";
 import { pageMetadata } from "@/lib/seo";
-import { DISCLAIMER, SITE_NAME } from "@/lib/site";
+import { CONTACT_EMAIL, DISCLAIMER, OPERATOR_NAME, SITE_NAME } from "@/lib/site";
 
 export const metadata: Metadata = pageMetadata({
   title: "소개",
@@ -39,6 +39,18 @@ export default function AboutPage() {
       <p>
         {DISCLAIMER} 꿈해몽은 전통적인 상징 풀이를 참고한 오락용 콘텐츠이며, 과학적 근거나 미래를 예측하는 능력이
         있지 않아요. 복권은 만 19세 이상만 구매할 수 있고, 여유 있는 범위에서 즐겨 주세요.
+      </p>
+
+      <h2>운영자와 문의</h2>
+      <ul>
+        <li>운영자: {OPERATOR_NAME}</li>
+        <li>
+          문의: <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>
+        </li>
+      </ul>
+      <p>
+        입력한 꿈 내용은 해몽과 번호를 만드는 데에만 쓰고 저장하지 않아요. 자세한 내용은{" "}
+        <Link href="/privacy">개인정보처리방침</Link>에서 볼 수 있어요.
       </p>
     </StaticPage>
   );

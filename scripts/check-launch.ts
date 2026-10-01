@@ -1,7 +1,8 @@
 // 출시 전 점검: npm run check:launch
 // 아래 항목을 검사해서 하나라도 걸리면 목록을 보여 주고 실패(종료 코드 1)한다.
 //   1) 문의 메일이 자리표시자(contact@example.com 등)인지
-//   2) 정책 페이지(소개·개인정보처리방침·이용약관·문의)가 비었거나 자리표시자가 남았는지, 꼭 필요한 내용이 있는지
+//   2) 정책 페이지(소개·개인정보처리방침·이용약관·문의)가 비었거나 자리표시자가 남았는지, 꼭 필요한 내용이 있는지,
+//      운영자 이름·문의 메일이 lib/site.ts 값과 같은지, 전화번호가 들어가 있지 않은지
 //   3) 사이트 주소(SITE_URL)가 대표 도메인과 다른지 (vercel.app·localhost·http 포함)
 //   4) robots.txt·sitemap.xml 이 이상한지 (주소, 빠진 페이지, 중복, /api·공유 링크 포함 등)
 //   5) 빌드 결과(.next)가 있으면, 그 안의 robots·sitemap·canonical 주소가 지금 설정과 같은지,
@@ -39,23 +40,56 @@ export function checkContactEmail(email: string): string[] {
 /** 2) 정책 페이지 문구: [페이지 이름, 최소 글자 수, 꼭 들어갈 말(정규식)] */
 export const POLICY_RULES: Record<string, { minLength: number; required: [string, RegExp][] }> = {
   privacy: {
-    minLength: 1200,
+    minLength: 4000,
     required: [
-      ["애드센스 고지", /애드센스/],
-      ["쿠키 고지", /쿠키/],
-      ["맞춤 광고 고지", /맞춤 광고/],
-      ["맞춤 광고 끄는 방법", /Google 광고 설정/],
+      ["시행일", /시행일/],
+      ["처리 항목·목적·보유 기간", /보유 기간/],
       ["꿈 내용 미저장", /저장하지 않/],
       ["호스팅 접속 기록", /접속 기록/],
-      ["문의처", /문의/],
+      ["파기 절차", /파기/],
+      ["처리 위탁", /처리 위탁/],
+      ["국외 이전", /국외 이전/],
+      ["애드센스 고지", /애드센스/],
+      ["쿠키 고지", /쿠키/],
+      ["웹 비콘 고지", /웹 비콘/],
+      ["맞춤 광고 고지", /맞춤 광고/],
+      ["맞춤 광고 끄는 방법", /Google 광고 설정/],
+      ["Google 의 정보 사용 방식 안내", /Google이 Google 서비스를 사용하는 웹사이트 또는 앱의 정보를 사용하는 방법/],
+      ["행태정보 고지", /행태정보/],
+      ["EEA·영국·스위스 동의 안내", /EEA/],
+      ["만 14세 미만 아동", /만 14세 미만/],
+      ["정보주체 권리", /열람/],
+      ["개인정보 보호책임자", /개인정보 보호책임자/],
+      ["권익침해 구제 기관", /개인정보분쟁조정위원회/],
     ],
   },
-  terms: { minLength: 400, required: [["당첨 보장 없음", /보장하지 않/], ["구매 연령", /만 19세/]] },
+  terms: {
+    minLength: 400,
+    required: [["당첨 보장 없음", /보장하지 않/], ["구매 연령", /만 19세/], ["개인정보처리방침 안내", /개인정보처리방침/]],
+  },
   about: { minLength: 300, required: [["재미용 고지", /재미/]] },
   contact: { minLength: 80, required: [["문의 메일", /@/]] },
 };
 
-export function checkPolicyPages(pages: PolicyPage[], contactEmail: string): string[] {
+/**
+ * 운영자 전화번호 같은 개인 전화번호(0으로 시작하는 지역·휴대폰 번호, +82). 정책 페이지 어디에도 없어야 한다.
+ * 개인정보처리방침의 공공기관 대표번호(118, 182, 1301, 1833-6972)는 0으로 시작하지 않아 걸리지 않는다.
+ */
+export const PHONE_PATTERN = /(?<![\d-])0\d{1,2}[-.\s)]?\d{3,4}[-.\s]?\d{4}(?!\d)|\+82/;
+
+/** 개인정보처리방침에 적는 다른 업체의 개인정보 문의처 (이 밖의 메일 주소는 운영자 문의 메일이어야 한다) */
+export const THIRD_PARTY_PRIVACY_EMAILS = ["privacy@vercel.com", "privacyquestions@cloudflare.com", "googlekrsupport@google.com"];
+
+export interface OperatorContact {
+  /** 문의 메일 (= 개인정보 보호책임자 연락처) */
+  email: string;
+  /** 운영자 이름 */
+  operator: string;
+  /** 개인정보 보호책임자 이름 */
+  officer: string;
+}
+
+export function checkPolicyPages(pages: PolicyPage[], contact: OperatorContact): string[] {
   const problems: string[] = [];
   for (const [name, rule] of Object.entries(POLICY_RULES)) {
     const page = pages.find((p) => p.name === name);
@@ -71,10 +105,26 @@ export function checkPolicyPages(pages: PolicyPage[], contactEmail: string): str
     for (const [label, re] of rule.required) {
       if (!re.test(page.text)) problems.push(`${page.path} 에 꼭 필요한 내용이 없어요: ${label}`);
     }
+    const phone = page.text.match(PHONE_PATTERN);
+    if (phone) problems.push(`${page.path} 에 전화번호가 있어요: "${phone[0]}" (연락처는 메일만 공개해요)`);
+    for (const email of page.text.match(/[\w.+-]+@[\w-]+(\.[\w-]+)+/g) ?? []) {
+      const allowed = email === contact.email || (name === "privacy" && THIRD_PARTY_PRIVACY_EMAILS.includes(email));
+      if (!allowed) problems.push(`${page.path} 의 메일 주소가 문의 메일과 달라요: ${email} (lib/site.ts 의 CONTACT_EMAIL 을 쓰세요)`);
+    }
   }
-  const privacy = pages.find((p) => p.name === "privacy");
-  if (privacy && contactEmail && !privacy.text.includes(contactEmail)) {
+  const find = (name: string) => pages.find((p) => p.name === name);
+  const privacy = find("privacy");
+  if (privacy && contact.email && !privacy.text.includes(contact.email)) {
     problems.push("/privacy 에 문의 메일이 보이지 않아요.");
+  }
+  if (privacy && contact.officer && !privacy.text.includes(`개인정보 보호책임자: ${contact.officer}`)) {
+    problems.push("/privacy 에 개인정보 보호책임자 이름이 보이지 않아요.");
+  }
+  for (const name of ["privacy", "terms", "contact", "about"]) {
+    const page = find(name);
+    if (page && contact.operator && !page.text.includes(contact.operator)) {
+      problems.push(`${page.path} 에 운영자 이름이 보이지 않아요.`);
+    }
   }
   return problems;
 }
@@ -197,7 +247,8 @@ export async function renderPolicyPages(): Promise<PolicyPage[]> {
 
 /** 전체 점검: [분야, 문제] 목록 */
 export async function runLaunchChecks(): Promise<[string, string][]> {
-  const { CONTACT_EMAIL, DEFAULT_SITE_URL, NAVER_SITE_VERIFICATION, SITE_URL } = await import("../lib/site");
+  const { CONTACT_EMAIL, DEFAULT_SITE_URL, NAVER_SITE_VERIFICATION, OPERATOR_NAME, PRIVACY_OFFICER_NAME, SITE_URL } =
+    await import("../lib/site");
   const { default: robots } = await import("../app/robots");
   const { default: sitemap } = await import("../app/sitemap");
   const { getAllSymbols } = await import("../lib/symbols");
@@ -219,7 +270,14 @@ export async function runLaunchChecks(): Promise<[string, string][]> {
   const tag = (area: string, list: string[]) => list.map((p): [string, string] => [area, p]);
   return [
     ...tag("문의 메일", checkContactEmail(CONTACT_EMAIL)),
-    ...tag("정책 문구", checkPolicyPages(await renderPolicyPages(), CONTACT_EMAIL)),
+    ...tag(
+      "정책 문구",
+      checkPolicyPages(await renderPolicyPages(), {
+        email: CONTACT_EMAIL,
+        operator: OPERATOR_NAME,
+        officer: PRIVACY_OFFICER_NAME,
+      }),
+    ),
     ...tag("사이트 주소", checkSiteUrl(SITE_URL, DEFAULT_SITE_URL, process.env.NEXT_PUBLIC_SITE_URL)),
     ...tag("robots.txt", checkRobots(robots(), SITE_URL)),
     ...tag("sitemap.xml", checkSitemap(sitemap(), SITE_URL, requiredPaths)),

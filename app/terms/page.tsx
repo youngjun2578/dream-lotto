@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { StaticPage } from "@/components/StaticPage";
 import { pageMetadata } from "@/lib/seo";
-import { DISCLAIMER, SITE_NAME } from "@/lib/site";
+import { CONTACT_EMAIL, DISCLAIMER, OPERATOR_NAME, SITE_NAME } from "@/lib/site";
 
 export const metadata: Metadata = pageMetadata({
   title: "이용약관",
@@ -12,7 +13,7 @@ export const metadata: Metadata = pageMetadata({
 // 초안: 실제 운영 전 검토가 필요합니다.
 export default function TermsPage() {
   return (
-    <StaticPage title="이용약관" updated="2026-09-30">
+    <StaticPage title="이용약관" updated="2026-10-01">
       <h2>1. 목적</h2>
       <p>이 약관은 {SITE_NAME}(이하 &lsquo;서비스&rsquo;)를 이용하는 조건과 절차를 정합니다.</p>
 
@@ -39,7 +40,21 @@ export default function TermsPage() {
       <h2>5. 저작권</h2>
       <p>서비스에 게시된 꿈해몽 사전 등 콘텐츠의 저작권은 서비스에 있으며, 허락 없이 복제·배포할 수 없습니다.</p>
 
-      <h2>6. 약관의 변경</h2>
+      <h2>6. 개인정보 보호</h2>
+      <p>
+        서비스는 회원가입 없이 이용할 수 있으며, 입력한 꿈 내용은 저장하지 않습니다. 서비스가 처리하는 개인정보와
+        이용자의 권리는 <Link href="/privacy">개인정보처리방침</Link>에서 정합니다.
+      </p>
+
+      <h2>7. 운영자와 문의</h2>
+      <ul>
+        <li>운영자: {OPERATOR_NAME}</li>
+        <li>
+          문의 메일: <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>
+        </li>
+      </ul>
+
+      <h2>8. 약관의 변경</h2>
       <p>약관이 바뀌는 경우 이 페이지를 통해 알려 드립니다.</p>
     </StaticPage>
   );

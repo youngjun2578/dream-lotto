@@ -38,7 +38,7 @@ npm run dev        # 개발 서버 실행 → http://localhost:3000
 | http://localhost:3000/dream | 카테고리별 꿈해몽 사전 목록 |
 | http://localhost:3000/dream/pig | 사전 상세 페이지 예시 (돼지 꿈) + 상황별 풀이 |
 | http://localhost:3000/guide | 꿈 가이드 칼럼 5편 |
-| http://localhost:3000/about · /privacy · /terms · /contact | 애드센스 심사용 기본 페이지 (문구는 초안) |
+| http://localhost:3000/about · /privacy · /terms · /contact | 소개·개인정보처리방침·이용약관·문의. 처리방침은 2026-10-01에 실제 동작 기준으로 전면 개정 (운영자·보호책임자·문의 메일은 `lib/site.ts`) |
 | http://localhost:3000/sitemap.xml · /robots.txt | 검색엔진용 파일 |
 
 개발 모드(`npm run dev`)에서는 광고가 들어갈 자리가 **점선 상자**로 보입니다. 빌드 결과에서는 빈 칸입니다.
@@ -219,7 +219,7 @@ review/                     검토 자료: screenshots/(화면 캡처 24장), li
 - **인식된 꿈 상징 미리보기**: 입력하는 동안 사전에서 찾은 상징을 바로 보여 줍니다. (서버와 같은 `matchSymbols`)
 - **추천 칩**: 지금 치고 있는 단어로 시작하는 사전 단어를 최대 6개 보여 주고, 누르면 그 단어로 바꿔 줍니다. 한글을 치는 도중의 초성(ㄷ → 돼지, 돈)도 찾아요. 동사 조각("떨어지", "불타")처럼 어색한 단어는 추천하지 않습니다. (`lib/suggest.ts`)
 - **해몽하기**: 누르면 버튼을 잠그고 "해몽 중이에요…"를 보여 준 뒤, 성공하면 결과 페이지(`/result/…`)로 이동합니다. 두 번 눌러도 요청은 한 번만 갑니다. 실패하면 입력창 아래에 안내를 띄우고 입력 내용은 그대로 둡니다.
-- **입력 내용 복원**: 결과 페이지에서 뒤로 가면 입력하던 꿈이 다시 채워져 있어요. 이 브라우저 탭의 임시 저장소(sessionStorage)에만 두고 서버로 보내지 않습니다. (`components/dreamDraft.ts`, 개인정보처리방침 1번)
+- **입력 내용 복원**: 결과 페이지에서 뒤로 가면 입력하던 꿈이 다시 채워져 있어요. 이 브라우저 탭의 임시 저장소(sessionStorage)에만 두고 서버로 보내지 않습니다. (`components/dreamDraft.ts`, 개인정보처리방침 7번)
 - **상징 0개 안내**: 결과 페이지에 "이런 단어를 넣어 보세요" 상자와 인기 키워드 칩, 입력창으로 돌아가는 링크를 보여 줍니다. 칩을 누르면 입력창으로 돌아가 꿈 끝에 단어를 더해 줍니다.
 
 ## 7. 결과 페이지와 공유 링크 (`/result/[payload]`, `/r/[payload]`, DB 없음)
@@ -336,6 +336,7 @@ npm run review:screenshots        # 검토용 화면 캡처 → review/screensho
 ```
 
 - `e2e/flow.spec.ts`: 입력 → 결과 페이지로 이동 → 새로고침해도 같은 번호 → 뒤로 가기(입력 복원) → 다시 뽑기(기록 안 쌓임) → 링크 복사 → 공유 페이지에서 같은 결과 → "나도 해몽 받기", 로딩·이중 제출 방지, 실패 안내, 잘못된 결과·공유 주소, 빈 입력, 입력 도우미, 움직임 줄이기, 사전·가이드·404, 사전 목록·카테고리 페이지·sitemap에 모든 상징이 나오는지를 검사합니다.
+- `e2e/privacy.spec.ts`: 개인정보처리방침에 적은 동작을 확인합니다. 해몽 흐름 내내 사이트 밖으로 나가는 요청이 없고(분석 도구·외부 글꼴·광고 스크립트 없음), 쿠키가 없고, 브라우저 저장소는 `theme`·`dream-draft`뿐이며, 꿈 원문은 `/api/interpret` 요청에만 실리고 결과 주소에는 없는지, 모든 종류의 페이지 푸터에 처리방침 링크가 있는지, 처리방침의 시행일·목차·보호책임자를 검사합니다. 분석 도구나 광고 코드를 넣으면 실패하니, 그때는 처리방침을 먼저 고치고 이 테스트를 손봅니다.
 - `e2e/theme.spec.ts`: 기기를 라이트로 둔 브라우저에서 처음 방문하면 다크, 라이트를 고르면 새로고침·다른 페이지에서도 라이트, 다시 다크도 유지, 잘못된 저장값은 다크, 저장된 라이트는 첫 화면을 그리기 전에 적용(깜빡임 없음, 콘솔 오류 없음), 서버 HTML과 자바스크립트를 끈 화면도 다크, `theme-color`·`color-scheme` 메타가 테마와 맞는지 검사합니다.
 - 테스트가 알아서 `npm run build` 후 3100번 포트로 서버를 켭니다. 이미 켜 둔 서버가 있으면 그대로 씁니다. 포트를 바꾸려면 `E2E_PORT=3200 npm run test:e2e`.
 - 화면 캡처는 6개 화면 × 휴대폰/PC × 라이트/다크 = 24장(JPEG)입니다. 공 애니메이션이 끝난 모습을 찍으려고 '움직임 줄이기' 설정으로, Pretendard가 적용된 뒤에 찍습니다. 테마는 기기 설정이 아니라 저장값(localStorage `theme`)으로 정해서 찍습니다.
@@ -346,7 +347,10 @@ npm run review:screenshots        # 검토용 화면 캡처 → review/screensho
 배포 직전에 실행하세요. 빌드 없이 몇 초면 끝나고, 하나라도 걸리면 고칠 목록을 보여 주며 실패합니다.
 
 - **문의 메일**: `lib/site.ts`의 `CONTACT_EMAIL`이 `contact@example.com` 같은 자리표시자인지
-- **정책 문구**: 소개·개인정보처리방침·이용약관·문의 페이지를 실제로 그려 보고, 너무 짧거나 자리표시자(TODO, example.com 등)가 남았는지, 꼭 필요한 내용(애드센스·쿠키·맞춤 광고·꿈 내용 미저장·접속 기록·문의처, 당첨 보장 없음, 만 19세)이 있는지
+- **정책 문구**: 소개·개인정보처리방침·이용약관·문의 페이지를 실제로 그려 보고, 너무 짧거나 자리표시자(TODO, example.com 등)가 남았는지, 꼭 필요한 내용이 있는지
+  - 개인정보처리방침: 시행일, 보유 기간, 꿈 내용 미저장, 접속 기록, 파기, 처리 위탁, 국외 이전, 애드센스·쿠키·웹 비콘·맞춤 광고·Google 광고 설정, Google의 정보 사용 방식 안내, 행태정보, EEA, 만 14세 미만, 열람 등 권리, 개인정보 보호책임자, 권익침해 구제 기관
+  - 이용약관: 당첨 보장 없음, 만 19세, 개인정보처리방침 안내
+  - 운영자 이름(`OPERATOR_NAME`)·보호책임자(`PRIVACY_OFFICER_NAME`)·문의 메일(`CONTACT_EMAIL`)이 `lib/site.ts` 값과 같은지, 다른 메일 주소나 **전화번호**(0으로 시작하는 번호, +82)가 들어가 있지 않은지. 연락처는 메일만 공개합니다.
 - **사이트 주소**: `SITE_URL`이 대표 도메인(`https://www.haemongru.com`)과 같은지, vercel.app·localhost·http 주소가 아닌지
 - **robots.txt·sitemap.xml**: sitemap 주소, 전체 차단 여부, 다른 도메인·공유 링크·중복·빠진 페이지·이상한 날짜
 - **빌드 결과**: `.next`가 있으면 그 안의 robots·sitemap·canonical이 지금 설정과 같은지 (다르면 다시 빌드)
@@ -384,4 +388,4 @@ npx lighthouse http://localhost:3000/dream/pig --preset=desktop --view # PC 기�
 | **AI 해몽** | `lib/interpret/llm.ts` 새로 만들기 (`InterpretationProvider` 구현), `lib/interpret/index.ts`에서 `LLM_API_KEY`가 있으면 LlmProvider를 돌려주도록 변경. 실패하면 RuleBasedProvider로 대체. **번호는 계속 `lib/lotto.ts`가 생성**. 꿈 원문이 외부 AI 업체로 전송되므로 **켜기 전에 개인정보처리방침에 처리 위탁·국외 이전 고지를 추가하고 입력창 근처에 안내**를 넣어야 합니다(`app/privacy/page.tsx` 위쪽 주석) |
 | **Supabase** | `lib/symbols.ts`의 함수 내용만 DB 조회로 교체 (함수 이름 유지). 저장이 생기면 `app/privacy/page.tsx` 수정 |
 | **공유 링크** | 1단계에서 DB 없이 구현 완료(`/r/[payload]`). AI 해몽 문장까지 그대로 공유하려면 Supabase에 결과를 저장하고 `app/r/[payload]/page.tsx`가 저장된 결과를 읽도록 바꾸기 |
-| **애드센스** | `components/AdSlot.tsx`에만 광고 코드 넣기, `app/layout.tsx`에 AdSense 스크립트, `public/ads.txt` 추가 (문의 메일 `CONTACT_EMAIL`은 설정 완료) |
+| **애드센스** | `components/AdSlot.tsx`에만 광고 코드 넣기, `app/layout.tsx`에 AdSense 스크립트, `public/ads.txt` 추가 (문의 메일 `CONTACT_EMAIL`은 설정 완료). 코드를 넣기 전에 `notes.md`의 "애드센스 승인 뒤 고칠 곳"을 따라 개인정보처리방침 8·9번과 `tests/privacy.test.ts`·`e2e/privacy.spec.ts`를 함께 고칩니다. Vercel Hobby 요금제는 광고 게재(상업적 이용)를 허용하지 않으니 광고 전에 요금제를 확인하세요 |
