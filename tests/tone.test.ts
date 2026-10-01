@@ -54,6 +54,14 @@ describe("풀이 문장 톤", () => {
     expect(problems(texts)).toEqual([]);
   });
 
+  it("상징 일반 풀이(요약·본문 30개)도 같은 기준을 지킨다", () => {
+    const texts = getAllSymbols().flatMap((s) => [
+      { where: `${s.slug}.meaning`, text: s.meaning },
+      ...s.body.split("\n\n").map((text) => ({ where: `${s.slug}.body`, text })),
+    ]);
+    expect(problems(texts)).toEqual([]);
+  });
+
   it("검사 규칙 자체가 동작한다", () => {
     expect(problems([{ where: "t", text: "전통 해몽에서는 길몽으로 봐요." }])).toHaveLength(2);
     expect(problems([{ where: "t", text: "곧 돈이 들어올 거예요." }])).toHaveLength(1);
