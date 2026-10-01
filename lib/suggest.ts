@@ -14,6 +14,7 @@ export interface VocabEntry {
  * - 상징 이름(keyword)과 명사형 동의어만 넣는다. "떨어지", "불타"처럼 행동 사전에 있는 동사 조각은 빼고,
  *   "해가 뜨"처럼 띄어쓰기가 든 매칭용 표현도 뺀다.
  * - 행동 카테고리 상징(쫓기는, 이빨 빠지는 …)은 이름만 넣는다.
+ * - strict 상징의 한 글자 이름(말, 새 …)은 넣지 않는다. ("조랑말", "참새" 같은 동의어는 넣는다)
  */
 export function buildVocabulary(symbols: DreamSymbol[], actions: DreamAction[]): VocabEntry[] {
   const verbFragments = new Set(actions.flatMap((a) => a.synonyms));
@@ -21,7 +22,9 @@ export function buildVocabulary(symbols: DreamSymbol[], actions: DreamAction[]):
   const vocab: VocabEntry[] = [];
   for (const s of symbols) {
     const nouns = s.category === "행동" ? [] : s.synonyms.filter((w) => !w.includes(" ") && !verbFragments.has(w));
-    for (const term of [s.keyword, ...nouns]) {
+    // strict 상징의 한 글자 이름(말, 새 …)은 그 글자만으로는 상징으로 잡히지 않으므로 추천하지 않는다.
+    const names = s.strict && s.keyword.length === 1 ? [] : [s.keyword];
+    for (const term of [...names, ...nouns]) {
       if (seen.has(term)) continue;
       seen.add(term);
       vocab.push({ term, slug: s.slug, weight: s.weight });

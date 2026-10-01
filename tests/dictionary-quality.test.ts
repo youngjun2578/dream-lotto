@@ -10,19 +10,11 @@ import { MAX_MATCHED_SYMBOLS, matchDream, matchSymbols } from "@/lib/matcher";
 import { normalizeDream } from "@/lib/normalize";
 import { getAllSymbols } from "@/lib/symbols";
 import type { DreamSymbol } from "@/lib/types";
+import { isV1 } from "./v1-symbols";
 
 const ALL = getAllSymbols();
 const ACTIONS = getAllActions();
 
-/** 사전 v1 의 상징 30개. 공유 링크(/r/)가 slug 를 쓰므로 바꾸거나 지우지 않는다. */
-const V1_SLUGS = [
-  "pig", "cow", "snake", "dragon", "tiger", "fish",
-  "ancestor", "baby", "celebrity", "president", "ex-lover", "thief",
-  "water", "fire", "sun", "moon", "mountain", "sea",
-  "teeth", "flying", "falling", "chased", "death", "wedding",
-  "poop", "money", "gold", "ring", "lottery", "house",
-];
-const isV1 = (slug: string) => V1_SLUGS.includes(slug);
 const V1 = ALL.filter((s) => isV1(s.slug));
 const ADDED = ALL.filter((s) => !isV1(s.slug));
 
@@ -37,9 +29,19 @@ const inputFor = (s: DreamSymbol, term: string) => (s.strict && term.length === 
  * 형식: "안에 든 상징 < 긴 표현의 상징:표현 → 결과"
  */
 const DECIDED_CONFLICTS = [
+  // 사전 v1
   "baby < pig:아기돼지 → pig",
   "ring < gold:금반지 → gold",
   "wedding < ring:결혼반지 → ring",
+  // 동물: 새끼 동물은 아기(사람)가 아니라 그 동물로, 반달곰은 달이 아니라 곰으로, 도둑고양이는 도둑이 아니라 고양이로
+  "baby < dog:아기 강아지 → dog",
+  "baby < cat:아기 고양이 → cat",
+  "baby < bird:아기 새 → bird",
+  "baby < turtle:아기 거북 → turtle",
+  "baby < bear:아기 곰 → bear",
+  "thief < cat:도둑고양이 → cat",
+  "sea < turtle:바다거북 → turtle",
+  "moon < bear:반달곰 → bear",
 ];
 
 function findConflicts(): string[] {

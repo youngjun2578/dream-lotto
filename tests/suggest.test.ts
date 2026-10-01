@@ -13,6 +13,12 @@ describe("추천 단어 목록", () => {
     for (const fragment of ["불타", "불탔", "떨어지", "쫓기", "죽었", "해가 뜨", "이가 빠"]) expect(all).not.toContain(fragment);
     expect(new Set(all).size).toBe(all.length);
   });
+
+  it("strict 상징의 한 글자 이름은 추천하지 않는다 (그 글자만으로는 상징이 잡히지 않아서)", () => {
+    const all = VOCAB.map((v) => v.term);
+    for (const name of ["말", "새", "쥐"]) expect(all).not.toContain(name);
+    for (const word of ["조랑말", "참새", "생쥐", "강아지"]) expect(all).toContain(word);
+  });
 });
 
 describe("suggestTerms", () => {

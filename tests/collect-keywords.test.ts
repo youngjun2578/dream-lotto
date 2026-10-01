@@ -180,7 +180,7 @@ describe("가공: 필터 → 병합 → 사전 표시 → 정렬 → CSV", () =>
     expect(findDictionarySymbols("용꿈", SYMBOLS)).toEqual(["dragon"]);
     expect(findDictionarySymbols("이빨빠지는꿈", SYMBOLS)).toEqual(["teeth"]);
     expect(findDictionarySymbols("소원꿈", SYMBOLS)).toEqual([]); // '소'가 들어 있지만 소꿈이 아님
-    expect(findDictionarySymbols("고양이꿈", SYMBOLS)).toEqual([]);
+    expect(findDictionarySymbols("기린꿈", SYMBOLS)).toEqual([]);
   });
 
   it("CSV: 검색량 순 정렬, 사전 표시, <10 표기, 쉼표·따옴표 이스케이프", async () => {
@@ -188,7 +188,7 @@ describe("가공: 필터 → 병합 → 사전 표시 → 정렬 → CSV", () =>
       "꿈해몽,돼지꿈": [
         { relKeyword: "꿈해몽", monthlyPcQcCnt: 20000, monthlyMobileQcCnt: 180000 },
         { relKeyword: "돼지꿈", monthlyPcQcCnt: 3000, monthlyMobileQcCnt: 27000 },
-        { relKeyword: "고양이꿈", monthlyPcQcCnt: "< 10", monthlyMobileQcCnt: 40 },
+        { relKeyword: "기린꿈", monthlyPcQcCnt: "< 10", monthlyMobileQcCnt: 40 },
         { relKeyword: "로또 번호", monthlyPcQcCnt: 90000, monthlyMobileQcCnt: 90000 },
       ],
       "뱀꿈": [{ relKeyword: '뱀꿈,"진짜"', monthlyPcQcCnt: 100, monthlyMobileQcCnt: 900 }],
@@ -197,13 +197,13 @@ describe("가공: 필터 → 병합 → 사전 표시 → 정렬 → CSV", () =>
     const rows = await collectKeywords({ seeds: ["꿈해몽", "돼지꿈"], client, symbols: SYMBOLS });
     const more = await collectKeywords({ seeds: ["뱀꿈"], client, symbols: SYMBOLS });
 
-    expect(rows.map((r) => r.keyword)).toEqual(["꿈해몽", "돼지꿈", "고양이꿈"]);
+    expect(rows.map((r) => r.keyword)).toEqual(["꿈해몽", "돼지꿈", "기린꿈"]);
     const csv = toCsv([...rows, ...more]);
     expect(csv.split("\n")).toEqual([
       "keyword,pc,mobile,total,in_dictionary,symbols,seeds",
       "꿈해몽,20000,180000,200000,,,꿈해몽 돼지꿈",
       "돼지꿈,3000,27000,30000,Y,pig,꿈해몽 돼지꿈",
-      "고양이꿈,<10,40,40,,,꿈해몽 돼지꿈",
+      "기린꿈,<10,40,40,,,꿈해몽 돼지꿈",
       '"뱀꿈,""진짜""",100,900,1000,Y,snake,뱀꿈',
       "",
     ]);
