@@ -3,8 +3,12 @@
 import type { DreamSymbol, FortuneType } from "../types";
 import type { Interpretation, InterpretationInput, InterpretationProvider } from "./provider";
 
+/**
+ * 사전에 있는 상징을 하나도 찾지 못했을 때의 요약.
+ * 무서운 꿈일 수도 있으니 '길몽' 같은 풀이를 붙이지 않고, 더 적어 달라고 안내만 한다. (번호는 그대로 뽑는다)
+ */
 export const NO_SYMBOL_SUMMARY =
-  "꿈속에서 사전에 등록된 뚜렷한 상징을 찾지 못했어요. 특별한 상징이 없는 꿈은 마음이 비교적 평온하다는 뜻으로 보아 무난한 길몽으로 풀이해요.";
+  "이번 꿈에서는 사전에 있는 상징을 찾지 못해 상징 풀이 없이 행운 번호만 골라 드렸어요. 꿈에 나온 사람·동물·물건이나 그때 한 일을 조금 더 자세히 적어 주시면 상황에 맞는 풀이를 찾아 드릴게요.";
 
 // 상황 풀이는 좋은 뜻일 때도, 조심하라는 뜻일 때도 있어서 중립적인 표현을 쓴다.
 const FORTUNE_PHRASE: Record<FortuneType, string> = {

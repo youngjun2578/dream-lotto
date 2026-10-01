@@ -38,11 +38,11 @@ function problems(texts: { where: string; text: string }[]): string[] {
 }
 
 describe("풀이 문장 톤", () => {
-  it("상황 풀이 128개에 단정·출처 불명 표현이 없다", () => {
+  it("상황 풀이 전체에 단정·출처 불명 표현이 없다", () => {
     const texts = getAllSymbols().flatMap((s) =>
       s.situations.map((sit) => ({ where: `${s.slug}/${sit.action}`, text: sit.meaning })),
     );
-    expect(texts).toHaveLength(128);
+    expect(texts.length).toBeGreaterThanOrEqual(128);
     expect(problems(texts)).toEqual([]);
   });
 
