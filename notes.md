@@ -81,3 +81,35 @@
 - Vercel Domains: 대표 www 유지, 루트 → www 308 유지, www → 루트 리디렉션은 걸지 않기
 - 개인정보처리방침 검토(보호책임자 표기, Cloudflare 프록시를 쓰면 위탁 업체에 추가), 애드센스 승인 후 EU 동의 메시지 설정
 - Google Search Console·네이버 서치어드바이저에 www 주소 등록, sitemap 제출
+
+### 2026-10-01 · 병합과 push — `main`
+
+**한 일**
+
+| 커밋·참조 | 내용 |
+| --- | --- |
+| `67d71fa` | (chore/pre-launch) 없는 사전·가이드 주소의 미리보기 이미지 404 + 테스트 |
+| `99a7ac1` | (chore/pre-launch) notes.md 시작 |
+| `0370dc2` | (chore/pre-launch) 문의 메일 `young@haemongru.com` 반영 → `npm run check:launch` 통과 |
+| `feat/dictionary-v2` | `chore/pre-launch`를 병합 (fast-forward, `0370dc2`) |
+| `7d64ac2` | main에 `feat/dictionary-v2`를 `--no-ff`로 병합: "Merge dictionary v2 + pre-launch into main" (충돌 없음) |
+| push | `feat/dictionary-v2`, `chore/pre-launch`(둘 다 `0370dc2`), `main`(`e8ad2f8` → `7d64ac2`)을 origin에 push. main push 뒤 Vercel 자동 배포 |
+| 태그 `mvp-before-v2` | `e8ad2f8`을 가리키는 롤백 기준 태그를 로컬에 만들었으나 **push는 거부됨(HTTP 403)** |
+
+검증(main에서, push 전): `git diff e8ad2f8 -- lib/symbolNumbers.ts` 비어 있음, `lib/lotto.ts`는 함수 분리만, `npm ci` 성공(취약점 0), `npm test` 172개 통과(골든 5개 포함), `npm run build` 성공(.next를 지운 깨끗한 빌드 포함), `npm run test:e2e` 24개 통과, `npm run check:launch` 통과, 추적되는 env 파일은 `.env.example`(값 없음)뿐.
+
+**판단과 이유**
+
+- 처음에는 이 작업 환경에 dream-lotto push 권한이 없어(push 시험 403) 2단계에서 멈췄다. 권한이 고쳐진 뒤 push 시험이 통과해서 이어 갔다.
+- 태그 push만 403으로 거부됐다. 연결·협상 단계는 통과하고 실제 쓰기 요청에서만 막혀, 이 환경의 연결이 태그 push를 허용하지 않는 것으로 보인다. 같은 요청을 한 번 더 시도해도 같았다.
+- 태그는 롤백 기준점이라 없어도 배포에는 영향이 없다. 그래서 브랜치 push는 지정된 순서(feat → chore → main)대로 진행했고, 태그는 남은 일로 넘겼다.
+- 병합 메시지는 `git merge -F -`(표준 입력)가 지원되지 않아 파일로 넘겼다. 첫 시도는 아무것도 바꾸지 않고 실패했다.
+- 이 기록 커밋도 main에 push하므로 Vercel 배포가 한 번 더 일어난다(앱 코드 변화 없음).
+
+**남은 일**: 태그 `mvp-before-v2`를 원격에 올리기(이 환경에서는 거부됨)
+
+**사람이 할 일**
+
+- Vercel에서 `7d64ac2`(와 이 기록 커밋) 배포가 성공했는지, https://www.haemongru.com 이 새 화면으로 열리는지 확인
+- 태그 올리기: 내 컴퓨터에서 `git fetch origin && git tag -a mvp-before-v2 e8ad2f8 -m "MVP before dictionary v2" && git push origin mvp-before-v2`, 또는 GitHub Releases에서 `e8ad2f8`에 태그 만들기
+- 배포 후 휴대폰(LTE·와이파이)과 PC에서 접속 확인, 접속이 안 되면 위 기록의 DNS·Cloudflare 항목 점검
