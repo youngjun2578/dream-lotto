@@ -10,9 +10,13 @@ export const metadata: Metadata = pageMetadata({
 });
 
 /** 이 방침이 적용되는 날과 마지막으로 고친 날. 내용을 바꾸면 둘 다 고치고 HISTORY 에 한 줄 더한다. */
-const EFFECTIVE_DATE = "2026-10-01";
-const REVISED_DATE = "2026-10-01";
+const EFFECTIVE_DATE = "2026-10-02";
+const REVISED_DATE = "2026-10-02";
 const HISTORY = [
+  {
+    date: "2026-10-02",
+    text: "호스팅 요금제 변경에 따라 접속 기록 보관 기간을 1일로 고쳤습니다(1·5번). 결과 페이지와 공유 페이지에도 광고가 게재될 수 있고, 그때 페이지 주소가 Google에 전달될 수 있다는 안내를 더했습니다(8번). 문의 메일이 Cloudflare의 이메일 전달을 거쳐 운영자의 Gmail로 들어오는 흐름을 바로잡아 적었습니다(1·4·12번). 사실관계를 바로잡고 보완한 개정이라 공개한 날부터 바로 적용합니다.",
+  },
   {
     date: "2026-10-01",
     text: "실제 처리 내용에 맞게 전면 개정했습니다. 개인정보 보호책임자 성명, 문의 메일의 전달·보관 업체와 국외 이전 항목, 광고·행태정보 안내, EEA·영국·스위스 방문자 안내, 만 14세 미만 아동 안내를 더했습니다. 같은 날 처음 공개한 방침의 빠진 내용을 보완한 것이라 공개한 날부터 적용합니다.",
@@ -22,7 +26,8 @@ const HISTORY = [
 // 처리방침은 코드로 확인한 실제 동작만 적는다. 동작이 바뀌면 이 페이지를 먼저 고친다. (확인 근거와 출처: notes.md)
 // - 애드센스 코드를 넣을 때: 8번 '현재 상태'와 제3자 광고 사업자 범위, 9번 동의 메시지 → notes.md '애드센스 승인 뒤 고칠 곳'
 // - Cloudflare 프록시(주황 구름)를 켜면: 접속이 Cloudflare 를 거치므로 1·4·5번에 Cloudflare 의 접속 기록 처리를 더한다.
-// - Vercel 요금제(Pro)나 함수 지역(기본 미국 iad1)을 바꾸면: 1·5번의 접속 기록 보관 기간과 이전 국가를 고친다.
+// - Vercel 요금제나 함수 지역(기본 미국 iad1)을 바꾸거나 로그 보관을 늘리면(Observability Plus, Log Drains):
+//   1·5번의 접속 기록 보관 기간(지금 1일)과 이전 국가를 고친다. 요금제와 보관 기간 근거는 notes.md 에만 적는다.
 // - 문의 메일을 받는 메일함(지금 Gmail)을 바꾸면: 4·5번의 Google LLC 를 고친다.
 // - 분석 도구·외부 글꼴·외부 스크립트를 넣으면: 4·5·7번을 고치고 e2e/privacy.spec.ts 의 '외부 요청 없음' 검사도 손본다.
 // - ⚠ AI 해몽(lib/interpret/index.ts 의 LLM 연결)을 붙이면 꿈 원문이 외부 AI 업체로 전송된다. 그 전에
@@ -135,7 +140,7 @@ export default function PrivacyPage() {
         </li>
         <li>
           <strong>보유 기간</strong>: Vercel이 정한 기간 동안 보관됩니다. 운영자가 관리 화면에서 볼 수 있는 기록은
-          지금 쓰는 요금제 기준으로 1시간이 지나면 자동으로 지워지며, 운영자는 이 기록을 따로 내려받거나 보관하지
+          지금 쓰는 요금제 기준으로 1일이 지나면 자동으로 지워지며, 운영자는 이 기록을 따로 내려받거나 보관하지
           않습니다.
         </li>
       </ul>
@@ -159,11 +164,16 @@ export default function PrivacyPage() {
           밖에 이용자가 메일에 직접 적은 정보(회사명, 연락처 등)
         </li>
         <li>
+          <strong>수집 방법</strong>: 이용자가 {CONTACT_EMAIL} 주소로 메일을 보내면 Cloudflare의 이메일 전달을 거쳐
+          운영자의 메일함(Gmail)으로 들어옵니다.
+        </li>
+        <li>
           <strong>목적</strong>: 문의 확인과 답변, 오류 수정, 분쟁이 생겼을 때의 사실 확인
         </li>
         <li>
           <strong>보유 기간</strong>: {INQUIRY_RETENTION}. 그 전에 지워 달라고 요청하면 바로 지웁니다. 다만 분쟁이 진행
-          중이면 해결될 때까지 보관합니다.
+          중이면 해결될 때까지 보관합니다. 메일을 전달하는 Cloudflare에 남는 전달 기록은 <See id="transfer" />에
+          적었습니다.
         </li>
       </ul>
       <p>
@@ -218,7 +228,9 @@ export default function PrivacyPage() {
           <strong>Vercel Inc.</strong>: 웹사이트 호스팅(페이지 제공, 해몽 요청 처리, 접속 기록 보관)
         </li>
         <li>
-          <strong>Cloudflare, Inc.</strong>: 문의 메일 전달({CONTACT_EMAIL}로 온 메일을 운영자의 메일함으로 전달)
+          <strong>Cloudflare, Inc.</strong>: 문의 메일 전달({CONTACT_EMAIL} 주소로 온 메일을 운영자의 메일함으로 전달).
+          Cloudflare는 이 사이트의 도메인 주소 관리(DNS)도 맡고 있지만, 사이트 접속(페이지 요청)은 Cloudflare를
+          거치지 않습니다.
         </li>
         <li>
           <strong>Google LLC</strong>: 문의 메일 수신·보관과 답장(운영자의 메일함, Gmail)
@@ -250,7 +262,7 @@ export default function PrivacyPage() {
         </li>
         <li>
           <strong>보유·이용 기간</strong>: 꿈 내용은 저장하지 않고 처리 직후 버립니다. 접속 기록은 Vercel이 정한 기간
-          동안 보관된 뒤 삭제됩니다(운영자가 관리 화면에서 볼 수 있는 기록은 1시간). 자세한 내용은{" "}
+          동안 보관된 뒤 삭제됩니다(운영자가 관리 화면에서 볼 수 있는 기록은 1일). 자세한 내용은{" "}
           <Out href="https://vercel.com/legal/privacy-notice">Vercel 개인정보 안내</Out>에 있습니다.
         </li>
       </ul>
@@ -369,6 +381,12 @@ export default function PrivacyPage() {
           Google은 광고 쿠키를 사용해, 이용자가 이 사이트나 인터넷의 다른 사이트를 방문한 기록을 바탕으로 Google과
           파트너가 맞춤 광고를 제공할 수 있게 합니다.
         </li>
+        <li>
+          결과 페이지(/result/…)와 공유 페이지(/r/…)에도 광고가 게재될 수 있으며, 이 경우 그 페이지의 주소가 Google에
+          전달될 수 있습니다. 이 주소에는 꿈 원문이 들어 있지 않고, 꿈에서 찾은 상징·행동의 영문 이름(예: 돼지는
+          pig)이 부호화되어 들어 있습니다(<See id="dream" />
+          ).
+        </li>
       </ul>
       <h3>광고 목적의 행태정보 처리</h3>
       <ul>
@@ -473,7 +491,7 @@ export default function PrivacyPage() {
       <ul>
         <li>꼭 필요한 정보만 처리합니다. 회원가입이 없고, 꿈 내용을 저장하지 않으며, 데이터베이스를 쓰지 않습니다.</li>
         <li>사이트와 주고받는 모든 통신은 암호화된 연결(HTTPS)로 이루어집니다.</li>
-        <li>문의 메일은 운영자의 메일 계정에만 보관하고, 보유 기간이 지나면 지웁니다.</li>
+        <li>문의 메일은 운영자의 메일 계정(Gmail)에 보관하고, 보유 기간이 지나면 지웁니다.</li>
       </ul>
 
       <Heading id="officer" />

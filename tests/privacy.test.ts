@@ -1,4 +1,4 @@
-// 개인정보처리방침과 실제 코드가 서로 맞는지 (2026-10-01 처리방침 개정)
+// 개인정보처리방침과 실제 코드가 서로 맞는지 (2026-10-01 처리방침 개정, 2026-10-02 후속 수정)
 // - 운영자 이름·문의 메일은 lib/site.ts 한 곳에서만 정하고, 정책 페이지가 가져다 쓴다.
 // - 전화번호는 사이트 어디에도 넣지 않는다.
 // - 처리방침에 적은 저장소 이름·보유 기간·광고 상태가 코드와 같다.
@@ -105,5 +105,38 @@ describe("처리방침이 코드와 맞는지", () => {
     const glyphs = new Set(read("assets/fonts/pretendard-subset-glyphs.txt"));
     const missing = [...new Set(pages.map((p) => p.text).join("").replace(/\s/g, ""))].filter((c) => !glyphs.has(c));
     expect(missing).toEqual([]);
+  });
+});
+
+describe("처리방침 후속 수정 (2026-10-02)", () => {
+  const text = page("privacy");
+  const section = (from: string, to: string) => text.slice(text.indexOf(from), text.indexOf(to));
+
+  it("접속 기록 보관 기간은 1·5번 모두 1일이고, 본문에는 요금제 이름을 쓰지 않는다 (요금제 사실은 notes.md)", () => {
+    expect(section("1. 처리하는 개인정보", "2. 꿈 내용은")).toContain("요금제 기준으로 1일이 지나면 자동으로 지워지며");
+    expect(section("5. 개인정보의 국외 이전", "6. 개인정보의 제3자 제공")).toContain("관리 화면에서 볼 수 있는 기록은 1일");
+    expect(text).not.toMatch(/Hobby|\bPro\b|1시간/);
+  });
+
+  it("8번: 결과·공유 페이지에도 광고가 게재될 수 있고, 그 주소가 Google에 전달될 수 있다 (꿈 원문 없음, 영문 이름 부호화)", () => {
+    const ads = section("8. 광고와 행태정보", "9. EEA");
+    expect(ads).toContain("결과 페이지(/result/…)와 공유 페이지(/r/…)에도 광고가 게재될 수 있으며");
+    expect(ads).toContain("그 페이지의 주소가 Google에 전달될 수 있습니다");
+    expect(ads).toContain("꿈 원문이 들어 있지 않고");
+    expect(ads).toMatch(/상징·행동의 영문 이름.*부호화되어 들어 있습니다/);
+  });
+
+  it("문의 메일은 Cloudflare 이메일 전달을 거쳐 Gmail로 들어오고, 사이트 접속은 Cloudflare를 거치지 않는다", () => {
+    expect(section("문의 메일 (보낸 경우)", "2. 꿈 내용은")).toContain("Cloudflare의 이메일 전달을 거쳐 운영자의 메일함(Gmail)으로");
+    expect(section("4. 개인정보 처리 위탁", "5. 개인정보의 국외 이전")).toContain("사이트 접속(페이지 요청)은 Cloudflare를 거치지 않습니다");
+    // 전달 기록이 Cloudflare 에도 남으므로 '메일 계정에만 보관'이라고 쓰지 않는다
+    expect(text).not.toContain("메일 계정에만");
+  });
+
+  it("최종 개정일은 변경 이력의 가장 최근 날짜와 같다", () => {
+    const revised = text.match(/최종 개정일 (\d{4}년 \d{1,2}월 \d{1,2}일)/)?.[1];
+    const latest = text.slice(text.indexOf("변경 이력")).match(/(\d{4}년 \d{1,2}월 \d{1,2}일):/)?.[1];
+    expect(revised).toBeDefined();
+    expect(latest).toBe(revised);
   });
 });
