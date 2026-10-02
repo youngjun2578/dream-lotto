@@ -1,4 +1,4 @@
-// 사전 품질 검사 (사전 확장 1차·2차)
+// 사전 품질 검사 (사전 확장 1차·2차·3차)
 // - slug·키워드·표현이 상징끼리 겹치지 않는다
 // - 한 상징의 표현이 다른 상징의 표현 안에 들어 있는 경우는 어느 쪽으로 잡을지 정해 둔 것뿐이다 (긴 표현이 이긴다)
 // - 새로 넣는 상징에는 한 글자 동의어를 쓰지 않는다
@@ -161,6 +161,61 @@ const DECIDED_CONFLICTS = [
   "sea < water:물바다 → water",
   "snake < sea:백사장 → sea",
   "wedding < travel:신혼여행 → travel",
+  // 사전 확장 3차(신규 상징): 돌아가신 분을 부르는 말은 그 사람(어머니·할머니…)이 아니라 돌아가신 가족으로,
+  // 돌아가신 조상은 조상으로, 내 장례식은 장례식이 아니라 죽음으로
+  "deceased-family < ancestor:돌아가신 조상 → ancestor",
+  "deceased-family < ancestor:돌아가신 조상님 → ancestor",
+  "father < deceased-family:돌아가신 아버지 → deceased-family",
+  "father < deceased-family:돌아가신 아빠 → deceased-family",
+  "grandparents < deceased-family:돌아가신 외할머니 → deceased-family",
+  "grandparents < deceased-family:돌아가신 외할아버지 → deceased-family",
+  "grandparents < deceased-family:돌아가신 할머니 → deceased-family",
+  "grandparents < deceased-family:돌아가신 할아버지 → deceased-family",
+  "mother < deceased-family:돌아가신 어머니 → deceased-family",
+  "mother < deceased-family:돌아가신 엄마 → deceased-family",
+  "parents < deceased-family:돌아가신 부모님 → deceased-family",
+  "spouse < deceased-family:돌아가신 남편 → deceased-family",
+  "spouse < deceased-family:돌아가신 아내 → deceased-family",
+  "funeral < death:나의 장례식 → death",
+  "funeral < death:내 장례식 → death",
+  "funeral < death:자신의 장례식 → death",
+  // 사전 확장 3차(신규 상징): 놓친 비행기·기차, 학교·회사에 늦는 건 지각으로, 학교 친구·선생님과 직장 상사·동료는 그 사람으로,
+  // 의사 선생님은 병원으로
+  "airplane < late:비행기를 놓쳤 → late",
+  "airplane < late:비행기를 놓치 → late",
+  "train < late:기차를 놓쳤 → late",
+  "train < late:기차를 놓치 → late",
+  "school < late:수업에 늦 → late",
+  "school < late:학교에 늦 → late",
+  "workplace < late:출근에 늦 → late",
+  "workplace < late:회사에 늦 → late",
+  "school < friend:학교 친구 → friend",
+  "school < teacher:학교 선생님 → teacher",
+  "teacher < hospital:의사 선생님 → hospital",
+  "workplace < boss:직장 상사 → boss",
+  "workplace < boss:회사 상사 → boss",
+  "workplace < coworker:입사 동기 → coworker",
+  "workplace < coworker:직장 동료 → coworker",
+  "workplace < coworker:회사 동기 → coworker",
+  "workplace < coworker:회사 동료 → coworker",
+  "workplace < coworker:회사 사람들 → coworker",
+  // 사전 확장 3차(신규 상징): 금·다이아 장신구는 금·반지로, 반지갑은 반지가 아니라 지갑으로, 과일칼은 칼로, 꽃나무는 꽃으로,
+  // 배낭여행·여행 가방은 여행으로, 황소개구리는 소가 아니라 개구리로, 돈벼락은 번개가 아니라 돈으로,
+  // 눈물바다는 바다·물이 아니라 눈물로
+  "jewel < gold:금귀걸이 → gold",
+  "jewel < gold:금목걸이 → gold",
+  "jewel < gold:금팔찌 → gold",
+  "jewel < ring:다이아 반지 → ring",
+  "jewel < ring:다이아몬드 반지 → ring",
+  "ring < wallet:반지갑 → wallet",
+  "fruit < knife:과일칼 → knife",
+  "tree < flower:꽃나무 → flower",
+  "bag < travel:배낭여행 → travel",
+  "bag < travel:여행 가방 → travel",
+  "cow < frog:황소개구리 → frog",
+  "lightning < money:돈벼락 → money",
+  "sea < tears:눈물바다 → tears",
+  "water < tears:눈물바다 → tears",
 ];
 
 function findConflicts(): string[] {
@@ -279,11 +334,15 @@ describe("기존 30개 상징 회귀 검사", () => {
   ];
 
   /**
-   * 사전 확장 2차에서 일부러 바꾼 결과: 입력 → 지금 결과
-   * 겹치는 표현은 긴 표현이 이긴다. 결혼식·웨딩드레스는 '결혼하는'이 아니라 '결혼식' 상징으로 잡는다.
+   * 일부러 바꾼 결과: 입력 → 지금 결과
+   * - 사전 확장 2차: 겹치는 표현은 긴 표현이 이긴다. 결혼식·웨딩드레스는 '결혼하는'이 아니라 '결혼식' 상징으로 잡는다.
+   * - 사전 확장 3차: 조상의 '돌아가신'은 돌아가신 가족으로, 죽음의 '장례식'은 장례식으로 옮겼다.
+   *   (조상에는 '돌아가신 조상(님)', 죽음에는 '내·나의·자신의 장례식'이 남는다)
    */
   const INTENDED_CHANGES: Record<string, string> = {
     "웨딩드레스를 입고 결혼식을 올렸어요": "wedding-ceremony+wear",
+    "돌아가신 할머니가 환하게 웃으면서 돈을 주셨어요.": "deceased-family+receive money+receive",
+    "할머니 장례식에 갔어요": "grandparents funeral",
   };
 
   it("일부러 바꾼 입력은 정해 둔 결과대로 나온다", () => {

@@ -46,6 +46,11 @@ describe("풀이 문장 톤", () => {
     expect(problems(texts)).toEqual([]);
   });
 
+  it("상황 제목에도 단정·출처 불명 표현이 없다 (사전 확장 3차)", () => {
+    const titles = getAllSymbols().flatMap((s) => s.situations.map((sit) => ({ where: `${s.slug}/${sit.action} 제목`, text: sit.title })));
+    expect(problems(titles)).toEqual([]);
+  });
+
   it("가이드 5편에 단정·출처 불명 표현이 없다", () => {
     const texts = getAllGuides().flatMap((g) => [
       { where: `${g.slug} 소개`, text: g.description },

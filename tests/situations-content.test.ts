@@ -62,6 +62,19 @@ describe("상황별 풀이 원고", () => {
     expect(dups).toEqual([]);
   });
 
+  it("요약·본문 문장도 다른 상징과 같은 문장이 없다 (사전 확장 3차)", () => {
+    const owner = new Map<string, string>();
+    const dups: string[] = [];
+    for (const s of SYMBOLS) {
+      for (const text of [s.meaning, ...s.body.split(/\n{2,}/)].flatMap(sentencesOf)) {
+        const prev = owner.get(text);
+        if (prev && prev !== s.slug) dups.push(`${prev} / ${s.slug}: ${text}`);
+        owner.set(text, s.slug);
+      }
+    }
+    expect(dups).toEqual([]);
+  });
+
   it("문장 첫머리(두 어절)가 세 상징 이상에서 반복되지 않는다", () => {
     const repeated = [...groupBy((t) => t.split(" ").slice(0, 2).join(" "))].filter(([, slugs]) => slugs.size > 2);
     expect(repeated.map(([key, slugs]) => `${key} (${[...slugs].join(",")})`)).toEqual([]);

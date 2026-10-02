@@ -42,7 +42,7 @@ describe("matchSymbols", () => {
     expect(slugs("너무 불안했어요")).toEqual([]);
     expect(slugs("친구를 용서했다")).toEqual(["friend"]); // '용서'의 용은 잡지 않는다 (친구는 사전 확장 1차에서 추가)
     expect(slugs("지금 돈가스를 먹었다")).toEqual([]);
-    expect(slugs("선물을 받았다")).toEqual([]);
+    expect(slugs("선물을 받았다")).toEqual(["gift"]); // '선물'의 물은 잡지 않는다 (선물은 사전 확장 3차에서 추가)
   });
 
   it("아무 상징도 없으면 빈 배열", () => {

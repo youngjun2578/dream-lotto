@@ -40,7 +40,7 @@ describe("matchDream (상징 + 행동 → 상황 풀이)", () => {
   });
 
   it("행동이 여럿 이어지면 마지막(결말) 행동을 고른다", () => {
-    expect(pairs("도둑이 들어와서 지갑을 훔쳐 갔어요")).toEqual(["thief+steal"]);
+    expect(pairs("도둑이 들어와서 지갑을 훔쳐 갔어요")).toEqual(["thief+steal", "wallet+steal"]); // 지갑은 사전 확장 3차에서 추가
     expect(pairs("물고기를 잡았다가 놓쳤어요")).toEqual(["fish+lose"]);
     expect(pairs("불이 났는데 제가 껐어요")).toEqual(["fire+extinguish"]);
   });
@@ -52,7 +52,8 @@ describe("matchDream (상징 + 행동 → 상황 풀이)", () => {
 
   it("상징 글자 안에 든 행동도 풀이가 있으면 쓴다 (불타는, 장례식)", () => {
     expect(pairs("집이 불타는 꿈")).toEqual(["fire+burn", "house+burn"]);
-    expect(pairs("할머니 장례식에 갔어요")).toEqual(["death+funeral"]);
+    // '장례식'은 사전 확장 3차에서 장례식 상징으로 옮겼고, 죽음에는 '내 장례식'이 남았다
+    expect(pairs("내 장례식을 지켜봤어요")).toEqual(["death+funeral"]);
   });
 
   it("부정된 행동(안 다쳤다, 잡지 못했다)은 없는 것으로 본다", () => {
@@ -66,7 +67,7 @@ describe("matchDream (상징 + 행동 → 상황 풀이)", () => {
   });
 
   it("존댓말 '주셨다'는 받는 쪽으로 본다", () => {
-    expect(pairs("돌아가신 할머니가 돈을 주셨어요")).toEqual(["ancestor+receive", "money+receive"]);
+    expect(pairs("돌아가신 할머니가 돈을 주셨어요")).toEqual(["deceased-family+receive", "money+receive"]);
     expect(pairs("남에게 돈을 줬어요")).toEqual(["money+give"]);
   });
 

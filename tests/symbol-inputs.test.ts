@@ -1,4 +1,4 @@
-// 상징별 대표 입력과 오매칭 방지 (사전 확장 1차·2차)
+// 상징별 대표 입력과 오매칭 방지 (사전 확장 1차·2차·3차)
 // - 새로 넣은 상징마다 실제로 쓸 법한 문장 2개 이상으로 찾는 상징과 상황 풀이를 확인한다.
 // - 다른 뜻으로 흔히 쓰이는 말("말했어요", "한 개", "눈물" …)은 상징으로 잡지 않는다.
 
@@ -38,7 +38,7 @@ const CASES: [string, string[]][] = [
   ["새가 날아 들어왔어요", ["bird+enter"]],
   ["까치가 울었어요", ["bird+cry"]],
   ["바다거북이 헤엄치고 있었어요", ["turtle+swim", "swimming"]],
-  ["거북이를 선물받았어요", ["turtle+receive"]],
+  ["거북이를 선물받았어요", ["turtle+receive", "gift+receive"]],
   ["곰에게 쫓겨서 도망쳤어요", ["bear+chased", "chased+escape"]],
   ["북극곰을 끌어안았어요", ["bear+hug"]],
   // 사람
@@ -48,9 +48,10 @@ const CASES: [string, string[]][] = [
   // 사전 확장 3차: 태몽은 임신과 다른 상징
   ["태몽을 꿨어요", ["taemong-dream"]],
   ["태몽에서 커다란 용이 품에 안겼어요", ["dragon", "taemong-dream+hug"]],
-  ["태몽으로 탐스러운 복숭아를 받았어요", ["taemong-dream+receive"]],
+  ["태몽으로 탐스러운 복숭아를 받았어요", ["taemong-dream+receive", "fruit+receive"]],
   ["엄마가 울고 있었어요", ["mother+cry"]],
-  ["돌아가신 어머니가 밥을 차려 주셔서 먹었어요", ["ancestor+eat", "mother+eat"]],
+  ["돌아가신 어머니가 밥을 차려 주셔서 먹었어요", ["deceased-family+eat"]], // 사전 확장 3차: 돌아가신 분은 돌아가신 가족으로
+  ["엄마가 차려 준 밥을 먹었어요", ["mother+eat"]],
   ["아빠가 나를 꼭 안아 줬어요", ["father+hug"]],
   ["아버지와 악수했어요", ["father+handshake"]],
   ["친구랑 싸웠어요", ["friend+fight", "fight"]],
@@ -70,7 +71,7 @@ const CASES: [string, string[]][] = [
   ["부모님께 혼났어요", ["parents+angry"]],
   ["언니랑 크게 다퉜어요", ["siblings+fight", "fight"]],
   ["남동생이 웃고 있었어요", ["siblings+laugh"]],
-  ["오빠에게 선물을 받았어요", ["siblings+receive"]],
+  ["오빠에게 선물을 받았어요", ["gift+receive", "siblings+receive"]],
   ["딸이 서럽게 울었어요", ["children+cry"]],
   ["아들을 꼭 안아 줬어요", ["children+hug"]],
   ["남편이랑 싸웠어요", ["spouse+fight", "fight"]],
@@ -78,15 +79,15 @@ const CASES: [string, string[]][] = [
   ["우리 신랑이랑 여행 갔어요", ["spouse", "travel"]],
   ["시어머니가 화를 냈어요", ["in-laws+angry"]],
   ["시어머니에게 혼났어요", ["in-laws+angry"]],
-  ["장모님께 선물을 받았어요", ["in-laws+receive"]],
+  ["장모님께 선물을 받았어요", ["gift+receive", "in-laws+receive"]],
   ["시댁에서 밥을 먹었어요", ["in-laws+eat"]],
   ["부장님한테 혼났어요", ["boss+angry"]],
   ["팀장님께 칭찬을 받았어요", ["boss+receive"]],
   ["회사 동료랑 점심을 먹었어요", ["coworker+eat"]],
   ["동료와 다퉜어요", ["coworker+fight", "fight"]],
   ["옆집 사람이 찾아왔어요", ["neighbor+enter"]],
-  ["이웃에게 떡을 받았어요", ["neighbor+receive"]],
-  ["명절에 친척들과 음식을 먹었어요", ["relatives+eat"]],
+  ["이웃에게 떡을 받았어요", ["food+receive", "neighbor+receive"]],
+  ["명절에 친척들과 음식을 먹었어요", ["food+eat", "relatives+eat"]],
   ["외삼촌에게 용돈을 받았어요", ["money+receive", "relatives+receive"]],
   ["사촌 동생이 울었어요", ["relatives"]],
   ["조카딸이 놀러 왔어요", ["relatives"]],
@@ -169,8 +170,8 @@ const CASES: [string, string[]][] = [
   ["사람들 앞에서 벌거벗고 있었어요", ["naked"]],
   ["알몸으로 도망쳤어요", ["naked+escape"]],
   ["가족과 해외여행을 갔어요", ["travel"]],
-  ["여행지에서 맛있는 음식을 먹었어요", ["travel+eat"]],
-  ["공항에서 비행기를 탔어요", ["travel+ride"]],
+  ["여행지에서 맛있는 음식을 먹었어요", ["travel+eat", "food+eat"]],
+  ["공항에서 비행기를 탔어요", ["travel+ride", "airplane+ride"]],
   // 물건
   ["새 차를 샀어요", ["car+buy"]],
   ["주차해 둔 차를 잃어버렸어요", ["car+lose"]],
@@ -205,6 +206,81 @@ const CASES: [string, string[]][] = [
   ["도둑을 잡진 못했어요", ["thief"]],
   ["돈을 못받았어요", ["money"]],
   ["돈을 받지를 못했어요", ["money"]],
+  // 사전 확장 3차(신규 상징): 동물
+  ["거미가 천장에서 내려왔어요", ["spider"]],
+  ["커다란 거미한테 물렸어요", ["spider+bite"]],
+  ["바퀴벌레가 떼로 몰려왔어요", ["bugs+swarm"]],
+  ["모기에게 물렸어요", ["bugs+bite"]],
+  ["개구리가 폴짝 뛰어 들어왔어요", ["frog+enter"]],
+  ["두꺼비를 안았어요", ["frog+hug"]],
+  ["노랑나비가 날아갔어요", ["butterfly+fly"]],
+  ["나비를 잡았어요", ["butterfly+catch"]],
+  // 자연
+  ["소나무가 쓰러졌어요", ["tree+collapse"]],
+  ["나무에 올라갔어요", ["tree+rise"]],
+  ["복숭아를 먹었어요", ["fruit+eat"]],
+  ["사과를 따는 꿈", ["fruit+pick-up"]],
+  ["번개가 번쩍 쳤어요", ["lightning+shine"]],
+  ["벼락이 떨어졌어요", ["lightning+fall", "falling"]],
+  ["지진이 나서 집이 흔들렸어요", ["house", "earthquake+shake"]],
+  ["땅이 갈라졌어요", ["earthquake"]],
+  // 사람
+  ["돌아가신 엄마가 꿈에 나와서 웃었어요", ["deceased-family+laugh"]],
+  ["돌아가신 아빠랑 이야기를 나눴어요", ["deceased-family+talk"]],
+  ["하늘나라에 간 남편이 나왔어요", ["deceased-family", "spouse"]],
+  ["할머니가 용돈을 주셨어요", ["money+receive", "grandparents+receive"]],
+  ["외할아버지 품에 안겼어요", ["grandparents+hug"]],
+  ["스님이 염주를 주셨어요", ["monk+receive"]],
+  ["스님과 이야기를 나눴어요", ["monk+talk"]],
+  // 행동
+  ["미용실에서 머리를 잘랐어요", ["hair+cut"]],
+  ["머리 자르는 꿈", ["hair+cut"]],
+  ["머리 감는 꿈", ["hair+wash"]],
+  ["손톱을 깎았어요", ["nails+cut"]],
+  ["발톱이 부러졌어요", ["nails+break"]],
+  ["눈물이 펑펑 났어요", ["tears+cry"]],
+  ["눈물을 흘리며 웃었어요", ["tears+laugh"]],
+  ["장례식장에서 펑펑 울었어요", ["funeral+cry"]],
+  ["상복을 입고 있었어요", ["funeral+wear"]],
+  ["재입대하는 꿈", ["military"]],
+  ["군대에서 선임한테 혼났어요", ["military+angry"]],
+  // 물건·장소
+  ["학교에서 친구들이랑 웃었어요", ["school+laugh", "friend+laugh"]],
+  ["교실에서 선생님께 혼났어요", ["school+angry", "teacher+angry"]],
+  ["회사에서 칭찬을 받았어요", ["workplace+receive"]],
+  ["출근했는데 사무실이 텅 비었어요", ["workplace"]],
+  ["병원에 입원했어요", ["hospital"]],
+  ["응급실에서 깨어났어요", ["hospital+wake"]],
+  ["비행기를 타고 날아갔어요", ["airplane+ride"]],
+  ["비행기가 추락했어요", ["airplane+fall", "falling"]],
+  ["지하철을 놓쳤어요", ["train+lose"]],
+  ["기차를 타고 떠났어요", ["train+ride"]],
+  ["엘리베이터에 갇혔어요", ["elevator+trapped"]],
+  ["엘리베이터가 뚝 떨어졌어요", ["elevator+fall", "falling"]],
+  ["계단을 올라갔어요", ["stairs+rise"]],
+  ["계단에서 굴러떨어졌어요", ["stairs+fall", "falling"]],
+  ["지갑을 잃어버렸어요", ["wallet+lose"]],
+  ["길에서 지갑을 주웠어요", ["wallet+pick-up"]],
+  ["다이아몬드를 주웠어요", ["jewel+pick-up"]],
+  ["목걸이를 선물받았어요", ["jewel+receive", "gift+receive"]],
+  ["맛있는 음식을 먹었어요", ["food+eat"]],
+  ["잔칫상을 받았어요", ["food+receive"]],
+  ["술을 마셨어요", ["alcohol+drink"]],
+  ["친구랑 소주를 마셨어요", ["friend", "alcohol+drink"]],
+  ["선물을 받았어요", ["gift+receive"]],
+  ["택배가 왔어요", ["gift"]],
+  ["편지를 받았어요", ["letter+receive"]],
+  ["연애편지를 썼어요", ["letter"]],
+  ["화장실에 갇혔어요", ["toilet+trapped"]],
+  ["화장실 변기가 넘쳤어요", ["poop+overflow", "toilet+overflow"]],
+  ["쌀가마니를 받았어요", ["rice+receive"]],
+  ["쌀독에 쌀이 가득했어요", ["rice"]],
+  ["가방을 잃어버렸어요", ["bag+lose"]],
+  ["명품 가방을 샀어요", ["bag+buy"]],
+  ["시계가 깨졌어요", ["clock+break"]],
+  ["손목시계를 선물받았어요", ["gift+receive", "clock+receive"]],
+  ["우산을 잃어버렸어요", ["umbrella+lose"]],
+  ["우산이 부러졌어요", ["umbrella+break"]],
 ];
 
 /** [입력, 잡히면 안 되는 상징] */
@@ -299,6 +375,36 @@ const FALSE_POSITIVES: [string, string[]][] = [
   ["물소리가 들렸어요", ["cow"]],
   ["피아노를 배우는 꿈", ["celebrity"]],
   ["배우자가 나왔어요", ["celebrity"]],
+  // 사전 확장 3차(신규 상징): 동음이의어와 다른 뜻으로 흔히 쓰는 말
+  ["수술을 받았어요", ["alcohol"]],
+  ["기술이 늘었어요", ["alcohol"]],
+  ["일이 술술 풀렸어요", ["alcohol"]],
+  ["입술이 텄어요", ["alcohol"]],
+  ["날씨가 쌀쌀했어요", ["rice"]],
+  ["엄마가 나를 나무랐어요", ["tree"]],
+  ["나무랄 데가 없었어요", ["tree"]],
+  ["벼락치기로 공부했어요", ["lightning"]],
+  ["벼락부자가 됐어요", ["lightning"]],
+  ["번개팅을 했어요", ["lightning"]],
+  ["돈벼락을 맞았어요", ["lightning"]],
+  ["대학교수님을 만났어요", ["school"]],
+  ["제대로 못 했어요", ["military"]],
+  ["부대찌개를 먹었어요", ["military"]],
+  ["진주에 놀러 갔어요", ["jewel"]],
+  ["용기내서 고백했어요", ["airplane"]],
+  ["친구에게 사과를 받았어요", ["fruit"]],
+  ["감기에 걸렸어요", ["fruit"]],
+  ["배가 아팠어요", ["fruit"]],
+  ["머리가 아팠어요", ["hair"]],
+  ["반지갑을 샀어요", ["ring"]],
+  ["황소개구리가 울었어요", ["cow"]],
+  ["눈물바다가 됐어요", ["sea", "water"]],
+  ["의사 선생님이 웃었어요", ["teacher"]],
+  ["돌아가신 엄마가 웃었어요", ["mother"]],
+  ["할머니 장례식에 갔어요", ["death"]],
+  ["기차를 놓쳤어요", ["train"]],
+  ["수업에 늦었어요", ["school"]],
+  ["칼국수를 먹었어요", ["knife"]],
 ];
 
 describe("새 상징 대표 입력", () => {
@@ -377,5 +483,30 @@ describe("알려진 오탐 정리 (사전 확장 3차)", () => {
     for (const dream of ["한 달이 지났어요", "다음 달에 이사해요", "지난 달은 바빴어요", "두세 달 걸렸어요", "달라요", "달라졌어요", "달력을 봤어요", "달걀을 먹었어요"]) {
       expect(slugs(dream), dream).not.toContain("moon");
     }
+  });
+});
+
+describe("겹치는 표현은 긴 표현이 이긴다 (사전 확장 3차)", () => {
+  const slugs = (dream: string) => pairs(dream).map((p) => p.split("+")[0]);
+
+  it("돌아가신 분을 부르는 말은 그 사람이 아니라 돌아가신 가족, 돌아가신 조상은 조상이다", () => {
+    expect(pairs("돌아가신 엄마가 웃었어요")).toEqual(["deceased-family+laugh"]);
+    expect(pairs("돌아가신 할머니가 돈을 주셨어요")).toEqual(["deceased-family+receive", "money+receive"]);
+    expect(pairs("돌아가신 조상님이 웃었어요")).toEqual(["ancestor+laugh"]);
+    expect(slugs("할머니가 웃었어요")).toEqual(["grandparents"]);
+  });
+
+  it("'장례식'은 장례식, '내 장례식'은 죽음이다", () => {
+    expect(slugs("할머니 장례식에 갔어요")).toEqual(["grandparents", "funeral"]);
+    expect(pairs("내 장례식을 지켜봤어요")).toEqual(["death+funeral"]);
+  });
+
+  it("놓친 기차·학교에 늦는 것은 지각이고, 반지갑·돈벼락·눈물바다는 긴 표현의 상징이다", () => {
+    expect(pairs("기차를 놓쳤어요")).toEqual(["late+lose"]);
+    expect(slugs("수업에 늦었어요")).toEqual(["late"]);
+    expect(slugs("반지갑을 샀어요")).toEqual(["wallet"]);
+    expect(slugs("돈벼락을 맞았어요")).toEqual(["money"]);
+    expect(slugs("눈물바다가 됐어요")).toEqual(["tears"]);
+    expect(slugs("황소개구리가 울었어요")).toEqual(["frog"]);
   });
 });
