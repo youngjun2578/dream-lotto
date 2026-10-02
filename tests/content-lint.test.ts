@@ -89,6 +89,19 @@ const EXCEPTIONS: { rule: Rule; source: string; text?: string; reason: string }[
   },
 ];
 
+/**
+ * 면책 문장의 틀 (사전 3차 후속 D). 같은 틀은 사전 전체에서 FRAME_LIMIT 번까지만 쓴다.
+ * 뜻(재물·당첨을 약속하지 않음, 실제로 그런 일을 알리는 꿈이 아님)은 그대로 두고 말을 바꿔 쓴다.
+ */
+const FRAME_LIMIT = 10;
+const DISCLAIMER_FRAMES: [string, RegExp][] = [
+  ["꿈이 ~을 약속하지 않는다", /약속하는 것은 아니|약속하지는 않|약속하지 않/],
+  ["~을 보장하지 않는다", /보장(해 주지는|하지는|하지|해 주지) 않|보장하는 것은 아니/],
+  ["예로부터 ~ 이야기해 왔다·반겨 왔다", /예로부터[^.]*(이야기해 왔|이야기되곤|이야기되기도|이야기되지만|반겨 왔|반겨 온)/],
+  ["실제 ~을 알리는(알려 주는) 꿈은 아니다", /(알리는|알려 주는) (꿈|것)(은|이)? ?(아니|이라기보다)|알려 주지는 않/],
+  ["실제로 ~한다는 뜻은 아니다", /(다는|라는) 뜻(은|이) 아니/],
+];
+
 /** ㄹ 받침 + "거예요"(…할 거예요) = 앞날을 단정하는 말 */
 function predicts(sentence: string): boolean {
   return [...sentence.matchAll(/([가-힣]) 거예요/g)].some((m) => (m[1].codePointAt(0)! - 0xac00) % 28 === 8);
@@ -197,5 +210,19 @@ describe("사전 content lint", () => {
     expect(check("꿈이 당첨을 약속하지는 않아요.", "guide:taemong")).toHaveLength(1);
     expect(WIN_PROMISE.test("복권에 당첨될 거예요.")).toBe(true);
     expect(WIN_PROMISE.test("꿈이 실제 당첨을 알려 주지는 않아요.")).toBe(false);
+  });
+});
+
+describe("면책 문장 틀 반복 (사전 3차 후속 D)", () => {
+  const countOf = (re: RegExp) => UNITS.filter((u) => re.test(u.text)).length;
+
+  it(`같은 면책 틀은 사전 전체에서 ${FRAME_LIMIT}번까지만 쓴다`, () => {
+    const over = DISCLAIMER_FRAMES.map(([name, re]) => [name, countOf(re)] as const).filter(([, n]) => n > FRAME_LIMIT);
+    expect(over).toEqual([]);
+  });
+
+  it("면책의 뜻은 남아 있다 (재물·당첨을 약속하지 않는다는 문장)", () => {
+    expect(countOf(DISCLAIMER_FRAMES[0][1]) + countOf(DISCLAIMER_FRAMES[1][1])).toBeGreaterThanOrEqual(5);
+    for (const [name, re] of DISCLAIMER_FRAMES) expect(countOf(re), name).toBeGreaterThan(0);
   });
 });

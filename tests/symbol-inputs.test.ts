@@ -281,6 +281,12 @@ const CASES: [string, string[]][] = [
   ["손목시계를 선물받았어요", ["gift+receive", "clock+receive"]],
   ["우산을 잃어버렸어요", ["umbrella+lose"]],
   ["우산이 부러졌어요", ["umbrella+break"]],
+  // 사전 3차 후속 D: 손주 (자녀의 exclude 로 빠지던 '손녀딸이'는 이제 손주로 잡는다)
+  ["손주를 품에 안았어요", ["grandchildren+hug"]],
+  ["손녀딸이 웃었어요", ["grandchildren+laugh"]],
+  ["외손자가 방긋 웃었어요", ["grandchildren+laugh"]],
+  ["손자들과 밥을 먹었어요", ["grandchildren+eat"]],
+  ["손주에게 용돈을 줬어요", ["money+give", "grandchildren+give"]],
 ];
 
 /** [입력, 잡히면 안 되는 상징] */
@@ -405,6 +411,11 @@ const FALSE_POSITIVES: [string, string[]][] = [
   ["기차를 놓쳤어요", ["train"]],
   ["수업에 늦었어요", ["school"]],
   ["칼국수를 먹었어요", ["knife"]],
+  // 사전 3차 후속 D: 손주 (손 + 주름·자국·자루, 손자병법)
+  ["손주름이 생겼어요", ["grandchildren"]],
+  ["벽에 손자국이 남았어요", ["grandchildren"]],
+  ["칼의 손자루를 잡았어요", ["grandchildren"]],
+  ["손자병법 책을 읽었어요", ["grandchildren"]],
 ];
 
 describe("새 상징 대표 입력", () => {
@@ -470,8 +481,9 @@ describe("알려진 오탐 정리 (사전 확장 3차)", () => {
     expect(slugs("이별하고 울었어요")).toEqual(["breakup"]);
   });
 
-  it("'손녀딸이'는 자녀로 잡지 않는다 (딸은 그대로 자녀)", () => {
-    expect(slugs("손녀딸이 웃었어요")).not.toContain("children");
+  it("'손녀딸이'는 자녀로 잡지 않는다 (딸은 그대로 자녀, 손녀딸은 3차 후속에서 손주로)", () => {
+    expect(slugs("손녀딸이 웃었어요")).toEqual(["grandchildren"]);
+    expect(slugs("외손녀딸이 놀러 왔어요")).toEqual(["grandchildren"]);
     expect(slugs("딸이 울었어요")).toEqual(["children"]);
     expect(slugs("큰딸이 웃었어요")).toEqual(["children"]);
   });
