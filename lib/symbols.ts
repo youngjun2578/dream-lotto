@@ -54,10 +54,13 @@ export function getRelatedSymbols(symbol: DreamSymbol): { sameCategory: DreamSym
   };
 }
 
-/** 홈 화면 "인기 꿈 키워드"에 보여줄 상징 (가중치 3인 대표 길몽 + 자주 찾는 꿈) */
+/**
+ * 홈 화면 "인기 꿈 키워드"에 보여줄 상징 (가중치 3인 대표 길몽 + 자주 찾는 꿈).
+ * 민감 소재(sensitive)는 먼저 권하지 않는다. 결과 화면의 '이런 단어를 넣어 보세요'도 이 목록을 쓴다.
+ */
 export function getPopularSymbols(): DreamSymbol[] {
   const extra = ["teeth", "snake", "ex-lover", "chased"];
-  return SYMBOLS.filter((s) => s.weight === 3 || extra.includes(s.slug));
+  return SYMBOLS.filter((s) => !s.sensitive && (s.weight === 3 || extra.includes(s.slug)));
 }
 
 function sentenceCount(text: string): number {
@@ -110,6 +113,9 @@ export function validateSymbols(data: unknown, options: ValidateOptions = {}): s
     }
     if (s.strict !== undefined && typeof s.strict !== "boolean") {
       errors.push(`${where}: strict 는 true/false 여야 합니다.`);
+    }
+    if (s.sensitive !== undefined && typeof s.sensitive !== "boolean") {
+      errors.push(`${where}: sensitive 는 true/false 여야 합니다.`);
     }
     const isWordList = (v: unknown) => Array.isArray(v) && v.length > 0 && v.every((w) => typeof w === "string" && w.trim());
     for (const field of ["contextTerms", "contextWords", "exclude"] as const) {

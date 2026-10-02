@@ -8,10 +8,14 @@
 // - 죽음·장례식·병원·사고성 소재는 겁주지 않고, 실제 죽음·질병·사고를 예고하지 않는다는 문장을 함께 둔다
 // - 복권·로또·도박 소재는 넣지 않는다
 // - 조상의 '돌아가신'은 돌아가신 가족으로, 죽음의 '장례식'은 장례식으로 옮겼다 (slug·숫자 후보는 그대로)
+// 3차 후속 C
+// - 민감 소재(죽음·돌아가신 가족·장례식·병원·귀신)는 sensitive 표시를 하고, 인기 꿈 키워드와 홈 예시 꿈에 내보내지 않는다
 
 import { describe, expect, it } from "vitest";
+import { EXAMPLE_DREAMS } from "@/components/DreamForm";
 import { getActionBySlug } from "@/lib/actions";
-import { getAllSymbols, getSymbolBySlug } from "@/lib/symbols";
+import { matchSymbols } from "@/lib/matcher";
+import { getAllSymbols, getPopularSymbols, getSymbolBySlug, validateSymbols } from "@/lib/symbols";
 import { normalizeDream } from "@/lib/normalize";
 import { isV1 } from "./v1-symbols";
 
@@ -143,5 +147,30 @@ describe("옮긴 표현 (3-B)", () => {
     expect(death.synonyms).not.toContain("장례식");
     expect(death.synonyms).toEqual(expect.arrayContaining(["내 장례식", "나의 장례식", "자신의 장례식"]));
     expect(getSymbolBySlug("funeral")!.synonyms).toContain("장례식");
+  });
+});
+
+describe("민감 소재 (3차 후속 C)", () => {
+  const SENSITIVE = ["death", "deceased-family", "funeral", "hospital", "ghost"];
+
+  it("죽음·돌아가신 가족·장례식·병원·귀신에 sensitive 표시가 있다", () => {
+    expect(getAllSymbols().filter((s) => s.sensitive).map((s) => s.slug).sort()).toEqual([...SENSITIVE].sort());
+  });
+
+  it("인기 꿈 키워드에는 민감 소재가 나오지 않는다 (가중치 3인 돌아가신 가족도 빠진다)", () => {
+    const popular = getPopularSymbols().map((s) => s.slug);
+    expect(popular.filter((slug) => SENSITIVE.includes(slug))).toEqual([]);
+    expect(popular).toEqual(expect.arrayContaining(["pig", "ancestor", "teeth"]));
+  });
+
+  it("홈 예시 꿈은 민감 소재로 잡히지 않는다", () => {
+    for (const { text } of EXAMPLE_DREAMS) {
+      expect(matchSymbols(text, getAllSymbols()).filter((s) => s.sensitive).map((s) => s.slug), text).toEqual([]);
+    }
+  });
+
+  it("sensitive 는 true/false 로만 쓴다", () => {
+    const ghost = getSymbolBySlug("ghost")!;
+    expect(validateSymbols([{ ...ghost, sensitive: "yes" as unknown as boolean }]).join()).toMatch(/sensitive/);
   });
 });

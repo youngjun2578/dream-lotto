@@ -185,9 +185,9 @@ test("입력 도우미: 예시 꿈, 추천 칩, 상징 0개 안내", async ({ pa
   const textarea = page.getByLabel("어젯밤 어떤 꿈을 꾸셨나요?");
   await expect(page.getByText("0/500")).toBeVisible();
 
-  await page.getByRole("button", { name: "할머니가 돈을 주신 꿈" }).click();
-  await expect(textarea).toHaveValue(/돌아가신 할머니/);
-  await expect(page.locator("#dream-recognized")).toContainText("돌아가신 가족 · 돈");
+  await page.getByRole("button", { name: "할머니가 용돈을 주신 꿈" }).click();
+  await expect(textarea).toHaveValue(/할머니가 용돈을/);
+  await expect(page.locator("#dream-recognized")).toContainText("돈 · 할머니·할아버지");
 
   await textarea.fill("");
   await textarea.pressSequentially("어젯밤에 멧");

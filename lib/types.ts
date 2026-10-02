@@ -58,6 +58,11 @@ export interface DreamSymbol {
    * 예) 자녀: "손녀딸이"의 "딸이", 달: "한 달이 지났다"의 "달이"
    */
   exclude?: string[];
+  /**
+   * 죽음·돌아가신 가족·장례식·병원·귀신처럼 슬픔이나 불안을 건드릴 수 있는 소재면 true.
+   * 홈 '인기 꿈 키워드'처럼 먼저 권하는 자리에는 내보내지 않는다. 사전 페이지·검색·매칭·번호는 그대로다. (lib/symbols.ts)
+   */
+  sensitive?: boolean;
   body: string;
   situations: Situation[];
 }

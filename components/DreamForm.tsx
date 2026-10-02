@@ -14,10 +14,10 @@ import { applySuggestion, suggestTerms, type VocabEntry } from "@/lib/suggest";
 import type { InterpretResponse } from "@/lib/types";
 import { loadDraft, saveDraft } from "./dreamDraft";
 
-/** 예시 꿈 (버튼 이름 → 입력창에 채울 문장) */
+/** 예시 꿈 (버튼 이름 → 입력창에 채울 문장). 민감 소재(죽음·돌아가신 가족·장례식·병원·귀신)는 넣지 않는다. */
 export const EXAMPLE_DREAMS = [
   { label: "돼지가 들어온 꿈", text: "커다란 돼지가 집 안으로 들어와서 제 품에 안겼어요." },
-  { label: "할머니가 돈을 주신 꿈", text: "돌아가신 할머니가 환하게 웃으면서 돈을 주셨어요." },
+  { label: "할머니가 용돈을 주신 꿈", text: "할머니가 용돈을 주시면서 환하게 웃으셨어요." },
   { label: "하늘을 날다 떨어진 꿈", text: "하늘을 날다가 갑자기 떨어져서 깜짝 놀라 깼어요." },
   { label: "뱀에게 물린 꿈", text: "구렁이가 몸을 칭칭 감더니 팔을 물었어요." },
   { label: "이가 빠진 꿈", text: "이가 흔들리다가 우수수 빠져서 너무 놀랐어요." },
