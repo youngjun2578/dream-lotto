@@ -2,11 +2,12 @@
 // 1) contextTerms: 같은 문장에 contextWords 가운데 하나가 있을 때만 인정하는 표현
 // 2) exclude: 단어 첫머리에서 시작하는 이 표현과 겹치는 자리는 그 상징으로 잡지 않는다
 // 3) 부정된 행동: 띄어 쓰지 않은 "못받았다", 줄여 쓴 "잡진 못했다", "받지를 못했다"도 부정
+// 4) 보조 동사 '주다·드리다': "진찰해 줬어요"의 '줬어요'는 주는 행동이 아니다 (사전 3차 후속 B)
 // 실제 사전에서 쓰는 곳(이별, 자녀, 달, 금)은 tests/symbol-inputs.test.ts 에서 확인한다.
 
 import { describe, expect, it } from "vitest";
 import { getAllActions } from "@/lib/actions";
-import { matchDream, matchSymbols, type MatchableSymbol } from "@/lib/matcher";
+import { findActions, GIVING_HOSTS, HELPING_HOSTS, matchDream, matchSymbols, type MatchableSymbol } from "@/lib/matcher";
 import { validateSymbols } from "@/lib/symbols";
 import { getSymbolBySlug } from "@/lib/symbols";
 
@@ -78,6 +79,47 @@ describe("부정된 행동", () => {
 
   it("'편안', '방안'처럼 '안'으로 끝나는 말 뒤의 행동은 부정이 아니다", () => {
     expect(pairs("편안하게 돈을 받았어요")).toEqual(["money+receive"]);
+  });
+});
+
+describe("보조 동사 '주다·드리다'", () => {
+  const actions = (dream: string) => findActions(dream, getAllActions());
+  const GIVING = ["give", "receive"];
+  const gives = (dream: string) => actions(dream).filter((a) => GIVING.includes(a));
+
+  it("도움을 뜻하는 보조 동사로 쓴 '주다'는 주는 행동이 아니다", () => {
+    for (const dream of ["의사 선생님이 진찰해 줬어요", "친구가 도와 줬어요", "엄마가 알려 줬어요", "선생님이 가르쳐 주셨어요", "할머니를 도와 드렸어요", "누가 설명해 주는 꿈"]) {
+      expect(gives(dream), dream).toEqual([]);
+    }
+  });
+
+  it("진짜 주는 행동은 그대로 잡는다 (존댓말 '주셨어요'는 나에게 준 것이라 받는 행동)", () => {
+    expect(gives("친구에게 선물을 줬어요")).toEqual(["give"]);
+    expect(gives("할머니가 돈을 주셨어요")).toEqual(["receive"]);
+    expect(gives("할머니가 용돈을 쥐여 주셨어요")).toEqual(["give", "receive"]);
+    expect(gives("이웃에게 음식을 나눠 줬어요")).toEqual(["give"]);
+    expect(gives("친구가 줬어요")).toEqual(["give"]);
+  });
+
+  it("GIVING_HOSTS 뒤는 주는 행동, HELPING_HOSTS 와 '-해'로 끝나는 말 뒤는 보조 동사", () => {
+    for (const host of GIVING_HOSTS) expect(gives(`${host} 줬어요`), host).toContain("give");
+    // 보조 동사 '주다'는 아무 행동도 더하지 않는다 ('받아 줬어요'의 receive 는 '받아'에서 나온다)
+    for (const host of [...HELPING_HOSTS, "진찰해", "치료해", "응원해", "해"]) {
+      expect(gives(`${host} 줬어요`), host).toEqual(gives(host));
+      expect(gives(`${host} 주셨어요`), host).toEqual(gives(host));
+    }
+    expect(GIVING_HOSTS.filter((h) => HELPING_HOSTS.includes(h))).toEqual([]);
+  });
+
+  it("'올해', '새해'처럼 '-해'로 끝나는 명사 뒤는 보조 동사가 아니다", () => {
+    expect(gives("엄마가 용돈을 올해 줬어요")).toEqual(["give"]);
+  });
+
+  it("보조 동사가 뒤에 나온 진짜 행동을 가리지 않는다", () => {
+    const pair = (dream: string, slug: string) =>
+      matchDream(dream, [getSymbolBySlug(slug)!], getAllActions()).map((m) => m.situation?.action ?? "-");
+    expect(pair("병원에서 진찰해 줬어요", "hospital")).toEqual(["-"]); // 꽃을 건네주는 꿈이 붙지 않는다
+    expect(pair("조상님이 도와 주셨는데 환하게 웃으셨어요", "ancestor")).toEqual(["laugh"]);
   });
 });
 

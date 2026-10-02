@@ -113,6 +113,40 @@ function isNegated(text: string, start: number, end: number): boolean {
   return /^[^ ]*(지|진)(는|도|를)? ?(않|못|마)/.test(text.slice(end, end + 8));
 }
 
+/** 보조 동사로도 쓰이는 '주다·드리다' 활용형 (주는 행동·받는 행동의 표현 가운데) */
+const GIVE_VERB = /^(주(는|었|고|던|셨|시)|줬|드리|드렸|드린)/;
+
+/** 이 앞말 뒤의 '주다'는 물건이 실제로 건너가는 주는 행동이다. (건네 줬어요, 쥐여 주셨어요, 나눠 줬어요 …) */
+export const GIVING_HOSTS = [
+  "건네", "쥐여", "쥐어", "나눠", "나누어", "빌려", "보내", "부쳐", "넘겨", "물려", "돌려", "되돌려",
+  "갖다", "가져다", "안겨", "꺼내", "내어", "덜어", "떼어", "집어", "떠", "따라", "부어", "씌워", "끼워", "사",
+  "선물해", "전해", "전달해", "대접해", "송금해", "이체해", "입금해", "기부해", "기증해", "배달해",
+];
+
+/** 이 앞말 뒤의 '주다'는 앞 동사를 돕는 보조 동사다. ('-해'로 끝나는 말은 목록 없이 보조 동사로 본다) */
+export const HELPING_HOSTS = [
+  "도와", "알려", "가르쳐", "들어", "기다려", "지켜", "안아", "업어", "태워", "놀아", "웃어", "불러", "읽어",
+  "보여", "찾아", "잡아", "열어", "닫아", "닦아", "씻겨", "빗어", "잘라", "깨워", "재워", "덮어", "받아", "맞춰",
+  "감싸", "쓰다듬어", "만져", "풀어", "밀어", "끌어", "데려다", "바래다", "봐", "믿어", "고쳐", "치워", "옮겨",
+  "일으켜", "세워", "달래", "꾸며", "발라", "묶어", "말려", "비춰", "밝혀", "만들어", "차려", "구워", "끓여", "써",
+];
+
+/** '-해'로 끝나지만 동사가 아닌 말 ("올해 줬어요"의 '올해') */
+const NOT_VERB_HAE = new Set(["올해", "새해", "지난해", "그해", "첫해", "이듬해", "동해", "서해", "남해", "피해", "손해"]);
+
+/**
+ * '주다·드리다'가 앞 동사를 돕는 보조 동사로 쓰였는지. ("진찰해 줬어요", "도와 드렸어요", "가르쳐 주셨어요")
+ * 바로 앞 단어가 GIVING_HOSTS 면 주는 행동, '-해'로 끝나거나 HELPING_HOSTS 에 있으면 보조 동사다.
+ * 그 밖의 앞말("돈을 줬어요", "친구가 주셨어요")은 단독으로 쓴 주다로 본다.
+ * 띄어 쓰지 않은 "도와줬어요"는 두 글자 활용형이 단어 첫머리가 아니라서 원래 잡히지 않는다.
+ */
+function isHelpingVerb(text: string, start: number, term: string): boolean {
+  if (!GIVE_VERB.test(term)) return false;
+  const prev = text.slice(0, start).trimEnd().split(" ").pop() ?? "";
+  if (!prev || GIVING_HOSTS.includes(prev)) return false;
+  return HELPING_HOSTS.includes(prev) || (prev.endsWith("해") && !NOT_VERB_HAE.has(prev));
+}
+
 /** 이 문장에서 찾을 표현: 이름·동의어 + (같은 문장에 문맥 단어가 있으면) 문맥 표현 */
 function termsIn(text: string, symbol: MatchableSymbol): Set<string> {
   const words = [symbol.keyword, ...symbol.synonyms];
@@ -181,6 +215,7 @@ function rankSymbols<T extends MatchableSymbol>(hits: SymbolHit<T>[]): T[] {
 /**
  * 모든 문장에서 행동(활용형) 위치를 찾는다.
  * 2글자 이하 활용형("먹는", "타는")은 단어 첫머리에서만 인정한다. ("도와주는", "불타는" 오인식 방지)
+ * 보조 동사로 쓴 '주다·드리다'("진찰해 줬어요")는 주고받는 행동으로 보지 않는다. (isHelpingVerb)
  */
 function findActionHits(sentences: string[], actions: DreamAction[]): ActionHit[] {
   const hits: ActionHit[] = [];
@@ -190,6 +225,7 @@ function findActionHits(sentences: string[], actions: DreamAction[]): ActionHit[
       for (const term of new Set(action.synonyms.map(normalizeDream).filter(Boolean))) {
         for (const start of findAll(text, term)) {
           if (term.length <= 2 && !isWordStart(text, start)) continue;
+          if (isHelpingVerb(text, start, term)) continue;
           const end = start + term.length;
           hits.push({
             action,
