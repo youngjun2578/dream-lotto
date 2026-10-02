@@ -31,7 +31,7 @@ export function normalizeSiteUrl(value?: string): string {
 export const SITE_URL = normalizeSiteUrl(process.env.NEXT_PUBLIC_SITE_URL);
 
 /** 사전·가이드 콘텐츠를 마지막으로 크게 고친 날 (sitemap, 구조화 데이터의 dateModified) */
-export const CONTENT_UPDATED_AT = "2026-10-01";
+export const CONTENT_UPDATED_AT = "2026-10-02";
 
 /**
  * 네이버 서치어드바이저 소유 확인 값 → <meta name="naver-site-verification" content="…">.

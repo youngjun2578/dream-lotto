@@ -15,10 +15,16 @@ export const metadata: Metadata = { alternates: { canonical: absoluteUrl("/") } 
 export default function HomePage() {
   const popular = getPopularSymbols();
   const symbols = getAllSymbols();
-  // 입력 도우미에 필요한 만큼만 화면으로 넘긴다. (본문 같은 긴 글은 빼고)
-  const dictionary = symbols.map(({ slug, keyword, synonyms, weight, strict }) =>
-    strict ? { slug, keyword, synonyms, weight, strict } : { slug, keyword, synonyms, weight },
-  );
+  // 입력 도우미에 필요한 만큼만 화면으로 넘긴다. (본문 같은 긴 글은 빼고, 매칭 규칙은 서버와 똑같이)
+  const dictionary = symbols.map(({ slug, keyword, synonyms, weight, strict, contextTerms, contextWords, exclude }) => ({
+    slug,
+    keyword,
+    synonyms,
+    weight,
+    ...(strict ? { strict } : {}),
+    ...(contextTerms ? { contextTerms, contextWords } : {}),
+    ...(exclude ? { exclude } : {}),
+  }));
   const vocabulary = buildVocabulary(symbols, getAllActions());
 
   return (

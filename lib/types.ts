@@ -47,6 +47,17 @@ export interface DreamSymbol {
    * 표현이 단어 첫머리에서 시작할 때만 찾고, 한 글자 이름은 '말 꿈'처럼 '꿈'이 붙을 때만 찾는다. (lib/matcher.ts)
    */
   strict?: boolean;
+  /**
+   * 같은 문장에 contextWords 가운데 하나가 있을 때만 찾는 표현. 둘은 함께 쓴다. (lib/matcher.ts)
+   * 예) 이별: "헤어졌"은 연인·남자친구·남편 … 이 같은 문장에 있을 때만 이별로 잡는다.
+   */
+  contextTerms?: string[];
+  contextWords?: string[];
+  /**
+   * 이 상징으로 잡지 않을 자리. 단어 첫머리에서 시작하는 이 표현과 겹치는 표현은 버린다. (lib/matcher.ts)
+   * 예) 자녀: "손녀딸이"의 "딸이", 달: "한 달이 지났다"의 "달이"
+   */
+  exclude?: string[];
   body: string;
   situations: Situation[];
 }

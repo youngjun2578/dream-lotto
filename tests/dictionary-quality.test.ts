@@ -121,6 +121,46 @@ const DECIDED_CONFLICTS = [
   "clothes < naked:옷을 입지 않 → naked",
   "clothes < naked:옷을 하나도 → naked",
   "swimming < clothes:수영복 → clothes",
+  // 사전 확장 3차(정비): 새끼·황금 동물은 그 동물로, 헤어진·예전·옛날·구(舊) 연인과 전 배우자는 전 애인으로,
+  // 빈집털이는 집이 아니라 도둑으로, 불바다·물바다·백사장·신혼여행은 긴 표현의 상징으로
+  "baby < pig:아기 돼지 → pig",
+  "baby < snake:아기 뱀 → snake",
+  "baby < tiger:아기 호랑이 → tiger",
+  "gold < dragon:황금 용 → dragon",
+  "gold < fish:황금 물고기 → fish",
+  "gold < pig:황금 돼지 → pig",
+  "gold < pig:황금돼지 → pig",
+  "gold < tiger:황금 호랑이 → tiger",
+  "boyfriend < ex-lover:구남친 → ex-lover",
+  "boyfriend < ex-lover:예전 남자친구 → ex-lover",
+  "boyfriend < ex-lover:옛날 남자친구 → ex-lover",
+  "boyfriend < ex-lover:헤어진 남친 → ex-lover",
+  "girlfriend < ex-lover:구여친 → ex-lover",
+  "girlfriend < ex-lover:예전 여자친구 → ex-lover",
+  "girlfriend < ex-lover:옛날 여자친구 → ex-lover",
+  "girlfriend < ex-lover:헤어진 여친 → ex-lover",
+  "friend < ex-lover:예전 남자친구 → ex-lover",
+  "friend < ex-lover:예전 여자친구 → ex-lover",
+  "friend < ex-lover:옛날 남자친구 → ex-lover",
+  "friend < ex-lover:옛날 여자친구 → ex-lover",
+  "lover < ex-lover:예전 애인 → ex-lover",
+  "lover < ex-lover:전 연인 → ex-lover",
+  "lover < ex-lover:헤어진 애인 → ex-lover",
+  "spouse < ex-lover:전 남편 → ex-lover",
+  "spouse < ex-lover:전 아내 → ex-lover",
+  "spouse < ex-lover:전남편 → ex-lover",
+  // 이별의 "헤어진"(연인과 함께 나올 때만 찾는 표현)도 '헤어진 연인' 같은 전 애인 표현 안에서는 전 애인이 이긴다
+  "breakup < ex-lover:헤어진 남자친구 → ex-lover",
+  "breakup < ex-lover:헤어진 남친 → ex-lover",
+  "breakup < ex-lover:헤어진 애인 → ex-lover",
+  "breakup < ex-lover:헤어진 여자친구 → ex-lover",
+  "breakup < ex-lover:헤어진 여친 → ex-lover",
+  "breakup < ex-lover:헤어진 연인 → ex-lover",
+  "house < thief:빈집털이 → thief",
+  "sea < fire:불바다 → fire",
+  "sea < water:물바다 → water",
+  "snake < sea:백사장 → sea",
+  "wedding < travel:신혼여행 → travel",
 ];
 
 function findConflicts(): string[] {
@@ -147,11 +187,11 @@ describe("slug·키워드·표현 중복", () => {
     expect(keywords.filter((x, i) => keywords.indexOf(x) !== i)).toEqual([]);
   });
 
-  it("같은 표현(키워드·동의어)이 두 상징에 들어 있지 않다", () => {
+  it("같은 표현(키워드·동의어·문맥 표현)이 두 상징에 들어 있지 않다", () => {
     const owner = new Map<string, string>();
     const dups: string[] = [];
     for (const s of ALL) {
-      for (const term of termsOf(s)) {
+      for (const term of new Set([...termsOf(s), ...(s.contextTerms ?? []).map(normalizeDream)])) {
         const prev = owner.get(term);
         if (prev && prev !== s.slug) dups.push(`${term}: ${prev}, ${s.slug}`);
         owner.set(term, s.slug);
@@ -181,6 +221,15 @@ describe("상징끼리 표현이 겹치는 경우", () => {
         .map((term) => `${s.slug}:${term}`),
     );
     expect(dead).toEqual([]);
+  });
+
+  it("문맥 표현은 문맥 단어와 함께 쓰면 자기 상징으로 잡히고, 혼자 쓰면 잡히지 않는다", () => {
+    for (const s of ALL.filter((x) => x.contextTerms)) {
+      for (const term of s.contextTerms!) {
+        expect(matchSymbols(`${s.contextWords![0]}과 ${term}`, [s]).map((m) => m.slug), `${s.slug}:${term}`).toEqual([s.slug]);
+        expect(matchSymbols(term, [s]), `${s.slug}:${term}`).toEqual([]);
+      }
+    }
   });
 
   it("다른 상징의 표현 안에 든 경우는 정해 둔 것뿐이다", () => {

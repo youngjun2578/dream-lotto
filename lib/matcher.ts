@@ -27,6 +27,17 @@ export interface MatchableSymbol {
   weight: number;
   /** 다른 뜻으로 흔히 쓰이는 이름이라 엄격하게 찾는다. (isStrictHit 참고) */
   strict?: boolean;
+  /**
+   * 같은 문장에 contextWords 가운데 하나가 있을 때만 인정하는 표현.
+   * 예) 이별의 "헤어졌"은 연인·남자친구… 와 함께 나올 때만 ("친구와 놀다 헤어졌어요"는 이별이 아니다)
+   */
+  contextTerms?: string[];
+  contextWords?: string[];
+  /**
+   * 이 상징으로 잡지 않을 자리. 단어 첫머리에서 시작하는 이 표현과 겹치는 표현은 버린다.
+   * 예) 자녀의 "딸이" ← "손녀딸이", 달의 "달이" ← "한 달이 지났다"
+   */
+  exclude?: string[];
   situations?: Situation[];
 }
 
@@ -93,10 +104,31 @@ function isStrictHit(text: string, start: number, end: number): boolean {
   return end - start > 1 || /^ ?꿈/.test(text.slice(end));
 }
 
-/** "안 다쳤다", "못 잡았다", "다치지 않았다", "잡지 못했다" 처럼 부정된 행동인지 */
+/**
+ * "안 다쳤다", "못 잡았다", "다치지 않았다", "잡지 못했다" 처럼 부정된 행동인지.
+ * 띄어 쓰지 않은 "못받았다", 줄여 쓴 "잡진 못했다", "받지를 못했다"도 부정으로 본다.
+ */
 function isNegated(text: string, start: number, end: number): boolean {
-  if (/(^| )(안|못) $/.test(text.slice(Math.max(0, start - 3), start))) return true;
-  return /^[^ ]*지(는|도)? ?(않|못|마)/.test(text.slice(end, end + 8));
+  if (/(^| )(안|못) ?$/.test(text.slice(Math.max(0, start - 3), start))) return true;
+  return /^[^ ]*(지|진)(는|도|를)? ?(않|못|마)/.test(text.slice(end, end + 8));
+}
+
+/** 이 문장에서 찾을 표현: 이름·동의어 + (같은 문장에 문맥 단어가 있으면) 문맥 표현 */
+function termsIn(text: string, symbol: MatchableSymbol): Set<string> {
+  const words = [symbol.keyword, ...symbol.synonyms];
+  if (symbol.contextTerms && symbol.contextWords?.some((w) => text.includes(normalizeDream(w)))) {
+    words.push(...symbol.contextTerms);
+  }
+  return new Set(words.map(normalizeDream).filter(Boolean));
+}
+
+/** exclude 표현이 단어 첫머리에서 시작하는 자리 [start, end) 목록 */
+function excludedSpans(text: string, exclude: string[] | undefined): [number, number][] {
+  if (!exclude) return [];
+  return exclude.flatMap((phrase) => {
+    const term = normalizeDream(phrase);
+    return term ? findAll(text, term).filter((s) => isWordStart(text, s)).map((s): [number, number] => [s, s + term.length]) : [];
+  });
 }
 
 /**
@@ -109,14 +141,16 @@ function findSymbolHits<T extends MatchableSymbol>(sentences: string[], symbols:
   let offset = 0;
   sentences.forEach((text, sentence) => {
     for (const symbol of symbols) {
-      const terms = new Set([symbol.keyword, ...symbol.synonyms].map(normalizeDream).filter(Boolean));
-      for (const term of terms) {
+      const blocked = excludedSpans(text, symbol.exclude);
+      for (const term of termsIn(text, symbol)) {
         for (const start of findAll(text, term)) {
           const end = start + term.length;
           const accepted = symbol.strict
             ? isStrictHit(text, start, end)
             : term.length > 1 || isStandalone(text, start, end);
-          if (accepted) hits.push({ symbol, start: offset + start, end: offset + end, sentence });
+          if (accepted && !blocked.some(([s, e]) => start < e && s < end)) {
+            hits.push({ symbol, start: offset + start, end: offset + end, sentence });
+          }
         }
       }
     }

@@ -111,6 +111,13 @@ export function validateSymbols(data: unknown, options: ValidateOptions = {}): s
     if (s.strict !== undefined && typeof s.strict !== "boolean") {
       errors.push(`${where}: strict 는 true/false 여야 합니다.`);
     }
+    const isWordList = (v: unknown) => Array.isArray(v) && v.length > 0 && v.every((w) => typeof w === "string" && w.trim());
+    for (const field of ["contextTerms", "contextWords", "exclude"] as const) {
+      if (s[field] !== undefined && !isWordList(s[field])) errors.push(`${where}: ${field} 는 비어 있지 않은 문자열 배열이어야 합니다.`);
+    }
+    if ((s.contextTerms === undefined) !== (s.contextWords === undefined)) {
+      errors.push(`${where}: contextTerms 와 contextWords 는 함께 써야 합니다.`);
+    }
     const nums = s.numbers;
     if (!Array.isArray(nums) || nums.length < 3 || nums.length > 5) {
       errors.push(`${where}: numbers 는 3~5개여야 합니다.`);

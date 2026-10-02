@@ -45,6 +45,10 @@ const CASES: [string, string[]][] = [
   ["임신해서 배가 불러 왔어요", ["pregnancy"]],
   ["아기를 가졌는데 너무 기뻐서 웃었어요", ["pregnancy+laugh"]],
   ["임신부가 지나갔어요", ["pregnancy"]],
+  // 사전 확장 3차: 태몽은 임신과 다른 상징
+  ["태몽을 꿨어요", ["taemong-dream"]],
+  ["태몽에서 커다란 용이 품에 안겼어요", ["dragon", "taemong-dream+hug"]],
+  ["태몽으로 탐스러운 복숭아를 받았어요", ["taemong-dream+receive"]],
   ["엄마가 울고 있었어요", ["mother+cry"]],
   ["돌아가신 어머니가 밥을 차려 주셔서 먹었어요", ["ancestor+eat", "mother+eat"]],
   ["아빠가 나를 꼭 안아 줬어요", ["father+hug"]],
@@ -114,7 +118,9 @@ const CASES: [string, string[]][] = [
   ["결혼하는 꿈", ["wedding"]],
   ["이혼하고 펑펑 울었어요", ["divorce+cry"]],
   ["이혼 서류에 도장을 찍었어요", ["divorce"]],
-  ["헤어지는 꿈을 꿨어요", ["breakup"]],
+  ["애인과 헤어지는 꿈을 꿨어요", ["lover", "breakup"]],
+  ["남편과 갈라섰어요", ["spouse", "breakup"]],
+  ["여자친구한테 차였어요", ["girlfriend", "breakup"]],
   ["남자친구와 헤어지고 울었어요", ["boyfriend+cry", "breakup+cry"]],
   ["이별 통보를 받았어요", ["breakup"]],
   ["남편이 바람피우는 꿈을 꿨어요", ["spouse", "affair"]],
@@ -183,6 +189,22 @@ const CASES: [string, string[]][] = [
   ["열쇠를 주웠어요", ["key+pick-up"]],
   ["코피가 났어요", ["blood+hurt"]],
   ["옷에 피가 묻었어요", ["blood+stain", "clothes+stain"]],
+  // 사전 확장 3차(정비): 달 strict, 기존 상징의 새 표현, 행동 활용형과 부정형
+  ["달이 떴어요", ["moon+rise"]],
+  ["보름달을 봤어요", ["moon"]],
+  ["달님이 웃었어요", ["moon"]],
+  ["돼지 들어옴", ["pig+enter"]],
+  ["황금돼지가 들어왔어요", ["pig+enter"]],
+  ["아기 돼지를 안았어요", ["pig+hug"]],
+  ["빈집털이가 들어왔어요", ["thief+enter"]],
+  ["영화배우가 나왔어요", ["celebrity"]],
+  ["전남편이 찾아왔어요", ["ex-lover"]],
+  ["백사장을 걸었어요", ["sea"]],
+  ["산신령이 나타났어요", ["mountain"]],
+  ["돌아가신 조상님이 웃었어요", ["ancestor+laugh"]],
+  ["도둑을 잡진 못했어요", ["thief"]],
+  ["돈을 못받았어요", ["money"]],
+  ["돈을 받지를 못했어요", ["money"]],
 ];
 
 /** [입력, 잡히면 안 되는 상징] */
@@ -257,6 +279,26 @@ const FALSE_POSITIVES: [string, string[]][] = [
   ["피로가 쌓였어요", ["blood"]],
   ["피에로가 나왔어요", ["blood"]],
   ["옷을 벗었어요", ["clothes"]],
+  // 사전 확장 3차(정비): 연애가 아닌 헤어짐, 손주, '한 달'·'다음 달'의 달, 금이 간 것, 임신과 태몽
+  ["친구와 놀다 헤어졌어요", ["breakup"]],
+  ["가족과 헤어지는 꿈을 꿨어요", ["breakup"]],
+  ["기차였어요", ["breakup"]],
+  ["손녀딸이 웃었어요", ["children"]],
+  ["외손녀딸이 놀러 왔어요", ["children"]],
+  ["한 달이 지났어요", ["moon"]],
+  ["다음 달에 이사해요", ["moon"]],
+  ["몇 달 동안 아팠어요", ["moon"]],
+  ["한 달 전에 꾼 꿈이에요", ["moon"]],
+  ["달라졌어요", ["moon"]],
+  ["달라고 했어요", ["moon"]],
+  ["약을 달이는 꿈", ["moon"]],
+  ["거울에 금이 갔어요", ["gold"]],
+  ["태몽을 꿨어요", ["pregnancy"]],
+  ["부동산에 갔어요", ["mountain"]],
+  ["장소를 몰라서 헤맸어요", ["cow"]],
+  ["물소리가 들렸어요", ["cow"]],
+  ["피아노를 배우는 꿈", ["celebrity"]],
+  ["배우자가 나왔어요", ["celebrity"]],
 ];
 
 describe("새 상징 대표 입력", () => {
@@ -307,5 +349,33 @@ describe("겹치는 호칭은 긴 표현이 이긴다 (사전 확장 2차)", () 
   it("'딸기를 먹었어요'는 자녀가 아니고, '형광등이 켜졌어요'는 형제자매가 아니다", () => {
     expect(slugs("딸기를 먹었어요")).not.toContain("children");
     expect(slugs("형광등이 켜졌어요")).not.toContain("siblings");
+  });
+});
+
+describe("알려진 오탐 정리 (사전 확장 3차)", () => {
+  const slugs = (dream: string) => pairs(dream).map((p) => p.split("+")[0]);
+
+  it("'친구와 놀다 헤어졌어요'는 이별이 아니고, 연인과 함께 나온 헤어짐만 이별이다", () => {
+    expect(slugs("친구와 놀다 헤어졌어요")).toEqual(["friend"]);
+    expect(slugs("남자친구와 헤어졌어요")).toEqual(["boyfriend", "breakup"]);
+    // 연인은 다른 문장에 있으면 문맥으로 치지 않는다
+    expect(slugs("남자친구가 나왔어요. 친구와 놀다 헤어졌어요")).toEqual(["boyfriend", "friend"]);
+    // '이별'이라는 말은 문맥 없이도 이별
+    expect(slugs("이별하고 울었어요")).toEqual(["breakup"]);
+  });
+
+  it("'손녀딸이'는 자녀로 잡지 않는다 (딸은 그대로 자녀)", () => {
+    expect(slugs("손녀딸이 웃었어요")).not.toContain("children");
+    expect(slugs("딸이 울었어요")).toEqual(["children"]);
+    expect(slugs("큰딸이 웃었어요")).toEqual(["children"]);
+  });
+
+  it("달은 '달이·달을·달빛·보름달·달 꿈'만, '한 달·다음 달·달라'는 아니다", () => {
+    for (const dream of ["달이 떴어요", "둥근 달을 봤어요", "환한 달빛이 비쳤어요", "보름달이 떠올랐어요", "달 꿈을 꿨어요"]) {
+      expect(slugs(dream), dream).toContain("moon");
+    }
+    for (const dream of ["한 달이 지났어요", "다음 달에 이사해요", "지난 달은 바빴어요", "두세 달 걸렸어요", "달라요", "달라졌어요", "달력을 봤어요", "달걀을 먹었어요"]) {
+      expect(slugs(dream), dream).not.toContain("moon");
+    }
   });
 });
