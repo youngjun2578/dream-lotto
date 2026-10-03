@@ -38,7 +38,7 @@ npm run dev        # 개발 서버 실행 → http://localhost:3000
 | http://localhost:3000/dream | 카테고리별 꿈해몽 사전 목록 |
 | http://localhost:3000/dream/pig | 사전 상세 페이지 예시 (돼지 꿈) + 상황별 풀이 |
 | http://localhost:3000/guide | 꿈 가이드 칼럼 5편 |
-| http://localhost:3000/about · /privacy · /terms · /contact | 소개·개인정보처리방침·이용약관·문의. 처리방침은 2026-10-01에 실제 동작 기준으로 전면 개정 (운영자·보호책임자·문의 메일은 `lib/site.ts`) |
+| http://localhost:3000/about · /privacy · /terms · /contact | 소개·개인정보처리방침·이용약관·문의. 처리방침은 2026-10-01에 실제 동작 기준으로 전면 개정, 최종 개정·시행일 2026-10-03 (날짜와 변경 이력은 `app/privacy/page.tsx`의 `EFFECTIVE_DATE`·`REVISED_DATE`·`HISTORY`, 운영자·보호책임자·문의 메일은 `lib/site.ts`). 변경 공지: 중요한 변경은 시행 7일 전부터, 그 밖의 수정은 시행일과 함께 알리고 변경 이력에 남김(15번) |
 | http://localhost:3000/sitemap.xml · /robots.txt | 검색엔진용 파일 |
 
 개발 모드(`npm run dev`)에서는 광고가 들어갈 자리가 **점선 상자**로 보입니다. 빌드 결과에서는 빈 칸입니다.
@@ -353,7 +353,7 @@ npm run review:screenshots        # 검토용 화면 캡처 → review/screensho
 
 - **문의 메일**: `lib/site.ts`의 `CONTACT_EMAIL`이 `contact@example.com` 같은 자리표시자인지
 - **정책 문구**: 소개·개인정보처리방침·이용약관·문의 페이지를 실제로 그려 보고, 너무 짧거나 자리표시자(TODO, example.com 등)가 남았는지, 꼭 필요한 내용이 있는지
-  - 개인정보처리방침: 시행일, 보유 기간, 꿈 내용 미저장, 접속 기록, 파기, 처리 위탁, 국외 이전, 애드센스·쿠키·웹 비콘·맞춤 광고·Google 광고 설정, Google의 정보 사용 방식 안내, 행태정보, EEA, 만 14세 미만, 열람 등 권리, 개인정보 보호책임자, 권익침해 구제 기관
+  - 개인정보처리방침: 시행일, 보유 기간, 꿈 내용 미저장, 꿈 내용 서버 전송 안내, 접속 기록, 파기, 처리 위탁, 국외 이전, 애드센스·쿠키·웹 비콘·맞춤 광고·Google 광고 설정, Google의 정보 사용 방식 안내, 행태정보, EEA, 만 14세 미만, 열람 등 권리, 개인정보 보호책임자, 권익침해 구제 기관, 변경 공지(중요한 변경은 시행 7일 전, 그 밖의 수정은 시행일과 함께)
   - 이용약관: 당첨 보장 없음, 만 19세, 개인정보처리방침 안내
   - 운영자 이름(`OPERATOR_NAME`)·보호책임자(`PRIVACY_OFFICER_NAME`)·문의 메일(`CONTACT_EMAIL`)이 `lib/site.ts` 값과 같은지, 다른 메일 주소나 **전화번호**(0으로 시작하는 번호, +82)가 들어가 있지 않은지. 연락처는 메일만 공개합니다.
 - **사이트 주소**: `SITE_URL`이 대표 도메인(`https://www.haemongru.com`)과 같은지, vercel.app·localhost·http 주소가 아닌지

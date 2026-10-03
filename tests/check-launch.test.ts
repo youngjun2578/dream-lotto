@@ -63,6 +63,10 @@ describe("정책 문구", () => {
     expect(problems.join("\n")).toMatch(/\/about 에 꼭 필요한 내용이 없어요: 재미용 고지/);
     expect(problems.join("\n")).toMatch(/정책 페이지가 없어요: \/contact/);
     expect(problems.join("\n")).toMatch(/\/privacy 에 꼭 필요한 내용이 없어요: 국외 이전/);
+    // 2026-10-03: 한눈에 보기의 꿈 내용 전송 안내, 15번 변경 공지의 두 갈래(중요한 변경 7일 전 / 그 밖에는 시행일과 함께)
+    expect(problems.join("\n")).toMatch(/\/privacy 에 꼭 필요한 내용이 없어요: 꿈 내용 서버 전송 안내/);
+    expect(problems.join("\n")).toMatch(/\/privacy 에 꼭 필요한 내용이 없어요: 변경 공지: 중요한 변경은 시행 7일 전/);
+    expect(problems.join("\n")).toMatch(/\/privacy 에 꼭 필요한 내용이 없어요: 변경 공지: 그 밖의 수정은 시행일과 함께/);
     expect(problems.join("\n")).toMatch(/\/privacy 에 개인정보 보호책임자 이름이 보이지 않아요/);
     expect(problems.join("\n")).toMatch(/\/terms 에 운영자 이름이 보이지 않아요/);
   });
