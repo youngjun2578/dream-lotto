@@ -10,7 +10,7 @@ import { FORTUNE_PHRASE } from "@/lib/interpret/ruleBased";
 import { getAllSymbols } from "@/lib/symbols";
 import { FORTUNE_LABEL, FORTUNE_TYPES } from "@/lib/types";
 
-type Rule = "당첨 언급" | "사람 건강·사망 암시" | "건강 상태 판단" | "단정 표현";
+type Rule = "당첨 언급" | "사람 건강·사망 암시" | "건강 상태 판단" | "단정 표현" | "재물 단정";
 
 /** 검사할 문장 하나. source 는 예외를 걸 단위(symbol:slug, guide:slug, action:slug) */
 type Unit = { source: string; where: string; text: string };
@@ -54,6 +54,25 @@ const RULES: { rule: Rule; re: RegExp }[] = [
   // 4. 작성 규칙의 단정 표현 ("~할 거예요"는 아래 predicts 가 따로 본다)
   { rule: "단정 표현", re: /(으로|로|고) 봐요|라고 (풀어요|봐요)|(으로|로) 풀어요|해몽에서는|반드시|무조건|틀림없이/ },
 ];
+
+/**
+ * 5. 재물을 단정하는 말 (사전 후속 E-2): 재물·큰돈이 들어온다·쌓인다고 못 박거나, 재물 길몽·신호라고 단정하는 문장.
+ * "재물을 바라는 마음이 비친 꿈", "~로 풀이하기도 해요"처럼 쓰면 걸리지 않는다. 부정문(아니·않)도 걸리지 않는다.
+ * "소는 꾸준히 쌓이는 재물을 뜻해요"처럼 상징의 뜻을 풀이하는 문장은 재물이 '들어온다'고 단정하지 않아 걸리지 않는다.
+ */
+const WEALTH_WORD = /재물|재산|횡재|큰돈|목돈|금전|돈복|재복|부자|돈이 (들어|생기|쌓이|모이)|돈을 (얻|벌|모으)/;
+const WEALTH_GAIN = "(재물|재산|큰돈|목돈|돈|금전|횡재|재물운|금전운)(이|가|도|은|는|과|와)? ?[^.]{0,12}?(들어오|쌓이|늘어나|따라오|불어나|차오르|굴러들어|생기|모이)";
+const WEALTH_ASSERT = new RegExp(
+  [
+    "길몽(이에요|입니다|이고,)", // "재물과 횡재를 상징하는 대표적인 길몽이에요"
+    "(신호|징조|조짐)(예요|이에요|입니다)[.!]?$", // "재물이 쌓이는 풍요의 신호예요"
+    `${WEALTH_GAIN}[^.]{0,20}(뜻이에요|뜻해요|신호예요|징조예요|길몽이에요|게 돼요)[.!]?$`, // "재물이 쌓이는 것을 뜻해요"
+    `${WEALTH_GAIN}는 (꿈|길몽)이고,`, // "재물도 따라오는 꿈이고,"
+  ].join("|"),
+);
+function assertsWealth(sentence: string): boolean {
+  return WEALTH_WORD.test(sentence) && WEALTH_ASSERT.test(sentence) && !/아니|않/.test(sentence);
+}
 
 /** 예외 없이 막는 말: 당첨을 약속·예고하는 표현 (복권 상징 안에서도 금지) */
 const WIN_PROMISE =
@@ -166,6 +185,7 @@ function lint(units: Unit[], used = new Set<object>()): string[] {
   return units.flatMap((u) => {
     const hits: Rule[] = RULES.filter(({ re }) => re.test(u.text)).map(({ rule }) => rule);
     if (predicts(u.text) && !hits.includes("단정 표현")) hits.push("단정 표현");
+    if (assertsWealth(u.text)) hits.push("재물 단정");
     return hits.flatMap((rule) => {
       const exception = exceptionFor(rule, u);
       if (exception) {
@@ -180,7 +200,7 @@ function lint(units: Unit[], used = new Set<object>()): string[] {
 const UNITS = allUnits();
 
 describe("사전 content lint", () => {
-  it("data/ 전체 문장이 네 가지 규칙(당첨·사람 건강·건강 판단·단정)을 지킨다", () => {
+  it("data/ 전체 문장이 다섯 가지 규칙(당첨·사람 건강·건강 판단·단정·재물 단정)을 지킨다", () => {
     expect(UNITS.length).toBeGreaterThan(3000);
     expect(lint(UNITS)).toEqual([]);
   });
@@ -224,6 +244,34 @@ describe("사전 content lint", () => {
     expect(check("꿈이 당첨을 약속하지는 않아요.", "guide:taemong")).toHaveLength(1);
     expect(WIN_PROMISE.test("복권에 당첨될 거예요.")).toBe(true);
     expect(WIN_PROMISE.test("꿈이 실제 당첨을 알려 주지는 않아요.")).toBe(false);
+  });
+});
+
+describe("재물 단정 규칙 (사전 후속 E-2)", () => {
+  const check = (text: string) => lint([{ source: "symbol:test", where: "t", text }]);
+
+  it("고치기 전 문장은 걸린다", () => {
+    for (const old of [
+      "똥은 재물과 횡재를 상징하는 대표적인 길몽이에요.",
+      "변기에 똥이 가득 차 넘쳐흐르는 꿈은 감당하기 벅찰 만큼 재물이 쌓이는 풍요의 신호예요.",
+      "금덩어리나 금괴를 줍거나 받는 꿈은 재산이 늘어나거나 큰 기회를 손에 넣는 길몽이에요.",
+      "돈을 받는 꿈은 재물운과 함께 좋은 기회가 들어오는 것을 뜻해요.",
+      "대통령에게 상이나 선물을 받는 꿈은 명예와 함께 재물도 따라오는 꿈이고, 대통령과 함께 식사하는 꿈은 영향력 있는 사람과 인연이 닿는다는 뜻이에요.",
+    ]) {
+      expect(check(old), old).toEqual([`[재물 단정] t: ${old}`]);
+    }
+  });
+
+  it("바람·풀이 톤, 부정문, 상징의 뜻을 설명하는 문장은 통과한다", () => {
+    for (const ok of [
+      "똥은 재물과 횡재를 상징한다고 풀이하는 경우가 많아, 뜻밖의 행운을 바라는 마음이 비친 꿈으로 읽기도 해요.",
+      "금덩어리나 금괴를 줍거나 받는 꿈은 재산을 넉넉히 모으거나 큰 기회를 손에 넣고 싶은 바람이 비친 꿈으로 풀이하기도 해요.",
+      "돼지가 집으로 들어오거나 품에 안기는 꿈은 뜻밖의 재물이 생길 징조로 풀이하기도 해요.",
+      "꿈이 재물을 약속하는 것은 아니에요.",
+      "소는 성실함과 꾸준히 쌓이는 재물을 뜻해요.",
+    ]) {
+      expect(check(ok), ok).toEqual([]);
+    }
   });
 });
 

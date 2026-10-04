@@ -9,7 +9,7 @@
 // - 복권·로또·도박 소재는 넣지 않는다
 // - 조상의 '돌아가신'은 돌아가신 가족으로, 죽음의 '장례식'은 장례식으로 옮겼다 (slug·숫자 후보는 그대로)
 // 3차 후속 C
-// - 민감 소재(죽음·돌아가신 가족·장례식·병원·귀신)는 sensitive 표시를 하고, 인기 꿈 키워드와 홈 예시 꿈에 내보내지 않는다
+// - 민감 소재(죽음·돌아가신 가족·장례식·병원·귀신, 후속 E-2에서 조상 추가)는 sensitive 표시를 하고, 인기 꿈 키워드·단어 칩과 홈 예시 꿈에 내보내지 않는다
 
 import { describe, expect, it } from "vitest";
 import { EXAMPLE_DREAMS } from "@/components/DreamForm";
@@ -151,16 +151,17 @@ describe("옮긴 표현 (3-B)", () => {
 });
 
 describe("민감 소재 (3차 후속 C)", () => {
-  const SENSITIVE = ["death", "deceased-family", "funeral", "hospital", "ghost"];
+  const SENSITIVE = ["death", "deceased-family", "funeral", "hospital", "ghost", "ancestor"];
 
-  it("죽음·돌아가신 가족·장례식·병원·귀신에 sensitive 표시가 있다", () => {
+  it("죽음·돌아가신 가족·장례식·병원·귀신·조상에 sensitive 표시가 있다", () => {
     expect(getAllSymbols().filter((s) => s.sensitive).map((s) => s.slug).sort()).toEqual([...SENSITIVE].sort());
   });
 
-  it("인기 꿈 키워드에는 민감 소재가 나오지 않는다 (가중치 3인 돌아가신 가족도 빠진다)", () => {
+  it("인기 꿈 키워드(결과 화면의 단어 칩도 같은 목록)에는 민감 소재가 나오지 않는다 (가중치 3인 돌아가신 가족·조상도 빠진다)", () => {
     const popular = getPopularSymbols().map((s) => s.slug);
     expect(popular.filter((slug) => SENSITIVE.includes(slug))).toEqual([]);
-    expect(popular).toEqual(expect.arrayContaining(["pig", "ancestor", "teeth"]));
+    expect(popular).toEqual(expect.arrayContaining(["pig", "dragon", "teeth"]));
+    expect(popular).not.toContain("ancestor");
   });
 
   it("홈 예시 꿈은 민감 소재로 잡히지 않는다", () => {

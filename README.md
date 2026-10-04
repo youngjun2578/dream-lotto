@@ -178,7 +178,7 @@ review/                     검토 자료: screenshots/(화면 캡처 24장), li
 2. `npm test`를 실행하면 실패 메시지에 `○○ 의 numbers 는 [..] 이어야 합니다`라고 정답 숫자가 나옵니다. 그 숫자를 그대로 복사해 넣으세요.
 3. 다시 `npm test` → 통과하면 끝입니다. `npm run build` 때 사전 페이지가 자동으로 생깁니다.
 
-필드 규칙: `slug`(영문 kebab-case, 중복 불가, 한 번 정하면 바꾸거나 지우지 않음 — 공유 링크가 slug를 씀), `keyword`, `synonyms[]`, `category`(동물/사람/자연/행동/물건/연애·결혼, 파일과 일치), `meaning`(2~3문장), `fortune_type`(재물/연애/건강/직장/주의/변화/마음 — 화면 이름은 `lib/types.ts`의 `FORTUNE_LABEL`: 재물운·연애운·건강운·직장운·주의운·변화운·마음 풀이. 죽음·장례식은 변화, 돌아가신 가족·병원·귀신·조상은 마음처럼 민감한 소재에는 건강·재물 유형을 쓰지 않습니다), `numbers[]`(3~5개, 1~45), `weight`(1~3), `body`(300자 이상, 문단은 빈 줄로 구분), `situations[]`(3~5개), `strict`·`contextTerms`/`contextWords`·`exclude`(선택, 위 매칭 규칙 참고).
+필드 규칙: `slug`(영문 kebab-case, 중복 불가, 한 번 정하면 바꾸거나 지우지 않음 — 공유 링크가 slug를 씀), `keyword`, `synonyms[]`, `category`(동물/사람/자연/행동/물건/연애·결혼, 파일과 일치), `meaning`(2~3문장), `fortune_type`(재물/연애/건강/직장/주의/변화/마음 — 화면 이름은 `lib/types.ts`의 `FORTUNE_LABEL`: 재물운·연애운·건강운·직장운·주의운·변화운·마음 풀이. 죽음·장례식은 변화, 돌아가신 가족·병원·귀신·조상은 마음처럼 민감한 소재에는 건강·재물 유형을 쓰지 않습니다), `numbers[]`(3~5개, 1~45), `weight`(1~3), `body`(300자 이상, 문단은 빈 줄로 구분), `situations[]`(3~5개), `strict`·`contextTerms`/`contextWords`·`exclude`(선택, 위 매칭 규칙 참고), `sensitive`(선택. 죽음·돌아가신 가족·장례식·병원·귀신·조상처럼 민감한 소재는 `true`로 두어 홈 '인기 꿈 키워드'와 결과 화면의 단어 칩, 홈 예시 꿈에 내보내지 않습니다. 사전 페이지·검색·매칭은 그대로).
 
 풀이 원고는 `CLAUDE.md`의 **사전 콘텐츠 작성 규칙**(새로 쓰기, 단정하지 않는 해요체, 당첨·질병·실제 인물 단정 금지 등)을 따릅니다. `body`에 `[태몽 가이드](/guide/taemong)`처럼 쓰면 사이트 안 링크가 되고, 없는 페이지로 가는 링크는 `tests/categories.test.ts`가 잡습니다.
 
