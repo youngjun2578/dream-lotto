@@ -4,9 +4,11 @@
 // - 꿈 원문은 /api/interpret 요청 본문에만 실리고, 결과 주소에는 들어가지 않는다
 // - 모든 종류의 페이지 푸터에 개인정보처리방침 링크가 있다
 // 분석 도구나 광고 코드를 넣으면 이 테스트가 실패한다. 그때는 처리방침을 먼저 고치고 이 테스트를 손본다.
+// 애드센스 사이트 확인용 메타 태그(google-adsense-account)와 /ads.txt 는 광고 코드가 아니다. 둘이 있어도
+// 아무것도 불러오지 않아 '외부 요청 없음'이 그대로 통과한다(아래 첫 테스트가 둘이 있는 상태에서 확인한다).
 
 import { expect, test } from "@playwright/test";
-import { CONTACT_EMAIL, PRIVACY_OFFICER_NAME } from "../lib/site";
+import { ADS_TXT_LINE, ADSENSE_ACCOUNT, CONTACT_EMAIL, PRIVACY_OFFICER_NAME } from "../lib/site";
 
 const DREAM = "개인정보확인용 돼지가 집으로 들어왔어요";
 
@@ -19,6 +21,8 @@ test("외부 요청·쿠키 없음, 저장소 두 가지, 꿈 원문은 해몽 �
   });
 
   await page.goto("/");
+  // 사이트 확인용 메타 태그가 <head> 에 있다. 광고 코드가 아니라서 이 상태로도 외부 요청이 없어야 한다(아래 origins 검사).
+  await expect(page.locator('head meta[name="google-adsense-account"]')).toHaveAttribute("content", ADSENSE_ACCOUNT);
   await page.getByLabel("어젯밤 어떤 꿈을 꾸셨나요?").fill(DREAM);
   await page.getByRole("button", { name: "해몽하고 번호 뽑기" }).click();
   await expect(page).toHaveURL(/\/result\/[A-Za-z0-9_-]+$/);
@@ -29,6 +33,10 @@ test("외부 요청·쿠키 없음, 저장소 두 가지, 꿈 원문은 해몽 �
   expect(Buffer.from(payload, "base64url").toString("utf8")).not.toContain("개인정보확인용");
 
   await page.getByRole("button", { name: "밝은 화면으로 바꾸기" }).click();
+  // ads.txt 도 사이트 안의 글 한 줄일 뿐 다른 곳으로 요청을 보내지 않는다
+  const adsTxt = await page.goto("/ads.txt");
+  expect(adsTxt?.status()).toBe(200);
+  expect((await adsTxt!.text()).trim()).toBe(ADS_TXT_LINE);
   await page.goto("/dream/pig");
   await page.goto("/privacy");
 

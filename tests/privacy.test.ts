@@ -1,4 +1,5 @@
-// 개인정보처리방침과 실제 코드가 서로 맞는지 (2026-10-01 처리방침 개정, 2026-10-02 후속 수정, 2026-10-03 3차 후속 수정)
+// 개인정보처리방침과 실제 코드가 서로 맞는지
+// (2026-10-01 처리방침 개정, 2026-10-02 후속 수정, 2026-10-03 3차 후속 수정, 2026-10-04 12번 보완·애드센스 사이트 확인 준비)
 // - 운영자 이름·문의 메일은 lib/site.ts 한 곳에서만 정하고, 정책 페이지가 가져다 쓴다.
 // - 전화번호는 사이트 어디에도 넣지 않는다.
 // - 처리방침에 적은 저장소 이름·보유 기간·광고 상태가 코드와 같다.
@@ -7,8 +8,16 @@
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { CONTACT_EMAIL, INQUIRY_RETENTION, OPERATOR_NAME, PRIVACY_OFFICER_NAME } from "@/lib/site";
-import { PHONE_PATTERN, renderPolicyPages } from "@/scripts/check-launch";
+import { metadata as layoutMetadata } from "@/app/layout";
+import {
+  ADS_TXT_LINE,
+  ADSENSE_ACCOUNT,
+  CONTACT_EMAIL,
+  INQUIRY_RETENTION,
+  OPERATOR_NAME,
+  PRIVACY_OFFICER_NAME,
+} from "@/lib/site";
+import { AD_SCRIPT_PATTERN, PHONE_PATTERN, renderPolicyPages } from "@/scripts/check-launch";
 
 function files(dir: string): string[] {
   return readdirSync(dir).flatMap((name) => {
@@ -78,10 +87,24 @@ describe("처리방침이 코드와 맞는지", () => {
   });
 
   it("광고 코드가 없으면 '광고를 게재하지 않으며', 들어가면 그 문장을 지워야 한다 (처리방침 8번)", () => {
-    // 사이트 확인용 메타 태그(google-adsense-account)나 ads.txt 는 스크립트를 불러오지 않아 여기서 보지 않는다.
-    const hasAdCode = filesContaining(/adsbygoogle|googlesyndication|pagead2/).length > 0;
+    // 광고 스크립트 표시는 광고 스크립트 주소와 광고 단위 코드 세 가지다. (scripts/check-launch.ts 가 빌드 결과에도 쓴다)
+    expect(AD_SCRIPT_PATTERN.source).toBe("adsbygoogle|googlesyndication|pagead2");
+    // 그 정규식을 정의한 파일은 뺀다. (PHONE_PATTERN 과 같은 방식)
+    const definer = join("scripts", "check-launch.ts");
+    const hasAdCode = filesContaining(new RegExp(AD_SCRIPT_PATTERN.source)).filter((f) => f !== definer).length > 0;
     expect(hasAdCode).toBe(false);
     expect(page("privacy")).toContain("현재 서비스는 광고를 게재하지 않으며, 광고 코드도 넣지 않았습니다");
+  });
+
+  it("애드센스 사이트 확인용 메타 태그와 ads.txt 는 광고 코드가 아니다 (있어도 8번 '광고 코드도 넣지 않았습니다'는 사실)", () => {
+    // 둘 다 들어가 있다
+    expect(layoutMetadata.other).toEqual({ "google-adsense-account": ADSENSE_ACCOUNT });
+    expect(read("public/ads.txt")).toBe(`${ADS_TXT_LINE}\n`);
+    // 메타 태그는 값만 적힌 태그, ads.txt 는 판매 권한을 밝히는 글 한 줄이다. 스크립트를 불러오지 않고 광고를 그리지 않는다.
+    const tag = `<meta name="google-adsense-account" content="${ADSENSE_ACCOUNT}"/>`;
+    expect(AD_SCRIPT_PATTERN.test(tag)).toBe(false);
+    expect(AD_SCRIPT_PATTERN.test(read("public/ads.txt"))).toBe(false);
+    expect(page("privacy")).toContain("광고 코드도 넣지 않았습니다");
   });
 
   it("문의 메일 보유 기간은 처리방침과 문의 페이지가 같은 값을 쓴다", () => {
@@ -181,5 +204,35 @@ describe("처리방침 3차 후속 수정 (2026-10-03)", () => {
     const revised = text.match(/최종 개정일 (\d{4}년 \d{1,2}월 \d{1,2}일)/)?.[1];
     expect(revised).toBeDefined();
     expect(text).toContain(`현재 상태 : ${revised} 현재 서비스는 광고를 게재하지 않으며`);
+  });
+});
+
+describe("12번 보완과 애드센스 사이트 확인 준비 (2026-10-04)", () => {
+  const text = page("privacy");
+  const section = (from: string, to: string) => text.slice(text.indexOf(from), text.indexOf(to));
+  const revised = text.match(/최종 개정일 (\d{4}년 \d{1,2}월 \d{1,2}일)/)?.[1];
+
+  it("12번: 문의 메일을 보관하는 운영자의 Google 계정에는 2단계 인증을 사용한다", () => {
+    expect(section("12. 개인정보의 안전성 확보 조치", "13. 개인정보 보호책임자")).toContain(
+      "문의 메일을 보관하는 운영자의 Google 계정에는 2단계 인증을 사용합니다.",
+    );
+  });
+
+  it("8번 본문은 그대로이고, '현재 상태' 날짜만 최종 개정일을 따른다", () => {
+    expect(revised).toBeDefined();
+    expect(section("8. 광고와 행태정보", "9. EEA")).toContain(
+      `현재 상태 : ${revised} 현재 서비스는 광고를 게재하지 않으며, 광고 코드도 넣지 않았습니다. 앞으로 Google 애드센스 광고를 게재할 수 있으며, 게재하면 아래 내용이 적용됩니다. 게재를 시작하기 전에 이 페이지에 시작일을 알립니다.`,
+    );
+  });
+
+  it("변경 이력: 2026년 10월 4일 사실관계 보완(12번, 사이트 확인용 메타 태그와 ads.txt)은 공개한 날부터 바로 적용한다", () => {
+    const history = text.slice(text.indexOf("변경 이력 "));
+    const entry = history.match(/2026년 10월 4일: (.*?)(?= \d{4}년 \d{1,2}월 \d{1,2}일:|$)/)?.[1] ?? "";
+    expect(entry).toContain("사실관계를 보완했습니다");
+    expect(entry).toContain("12번");
+    expect(entry).toContain("2단계 인증");
+    expect(entry).toContain("사이트 확인용 메타 태그와 ads.txt");
+    expect(entry).toContain("광고 코드가 아니어서");
+    expect(entry).toContain("공개한 날부터 바로 적용합니다");
   });
 });

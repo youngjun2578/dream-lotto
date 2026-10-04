@@ -1,9 +1,10 @@
 // 도메인 검사: 실제 빌드 결과에서 모든 절대 주소가 대표 주소(lib/site.ts 의 SITE_URL)를 가리키는지 확인한다.
 // 루트 도메인 → www 리디렉션은 Vercel 대시보드가 맡으므로, 코드는 어떤 주소로 들어와도 리디렉션하지 않는다.
+// 소유 확인 파일·태그(네이버 메타 태그, 애드센스 메타 태그, /ads.txt)도 이 빌드 결과로 확인한다.
 
 import { request as httpRequest } from "node:http";
 import { expect, test, type Page } from "@playwright/test";
-import { DEFAULT_SITE_URL, NAVER_SITE_VERIFICATION } from "../lib/site";
+import { ADS_TXT_LINE, ADSENSE_ACCOUNT, DEFAULT_SITE_URL, NAVER_SITE_VERIFICATION } from "../lib/site";
 
 const SITE = DEFAULT_SITE_URL; // https://www.haemongru.com
 const SITE_HOST = new URL(SITE).hostname; // www.haemongru.com
@@ -16,12 +17,14 @@ const FOREIGN = new RegExp(`://${ROOT_HOST.replace(/\./g, "\\.")}|vercel\\.app|l
 /** Host 헤더를 바꿔서(다른 주소로 들어온 것처럼) 테스트 서버에 요청한다. 리디렉션은 따라가지 않는다. */
 function requestWithHost(baseURL: string, host: string, path: string) {
   const { hostname, port } = new URL(baseURL);
-  return new Promise<{ status: number; location?: string; body: string }>((resolve, reject) => {
+  return new Promise<{ status: number; location?: string; type?: string; body: string }>((resolve, reject) => {
     const req = httpRequest({ hostname, port, path, method: "GET", headers: { host } }, (res) => {
       let body = "";
       res.setEncoding("utf8");
       res.on("data", (chunk) => (body += chunk));
-      res.on("end", () => resolve({ status: res.statusCode ?? 0, location: res.headers.location, body }));
+      res.on("end", () =>
+        resolve({ status: res.statusCode ?? 0, location: res.headers.location, type: res.headers["content-type"], body }),
+      );
     });
     req.on("error", reject);
     req.end();
@@ -113,5 +116,32 @@ test("네이버 소유 확인 태그: 홈 <head>에 정확히 한 번, 다른 �
   for (const path of ["/dream", "/dream/pig", "/guide/wealth-dreams", "/privacy"]) {
     const html = await (await request.get(path)).text();
     expect(count(html), path).toBe(1);
+  }
+});
+
+test("애드센스 사이트 확인 태그: 홈 <head>에 정확히 한 번, 다른 페이지도 중복 없음", async ({ request }) => {
+  const tag = `<meta name="google-adsense-account" content="${ADSENSE_ACCOUNT}"/>`;
+  const count = (html: string) => html.split(tag).length - 1;
+
+  const home = await (await request.get("/")).text();
+  expect(count(home)).toBe(1);
+  expect(home.indexOf(tag)).toBeLessThan(home.indexOf("</head>"));
+
+  for (const path of ["/dream", "/dream/pig", "/guide/wealth-dreams", "/privacy"]) {
+    const html = await (await request.get(path)).text();
+    expect(count(html), path).toBe(1);
+  }
+});
+
+test("/ads.txt: 대표 주소(www)에서 리디렉션 없이 200 과 한 줄. 루트·vercel.app 으로 들어와도 코드는 리디렉션하지 않는다", async ({
+  baseURL,
+}) => {
+  // 실제 배포에서 루트 도메인 요청은 Vercel 이 www 로 308 리디렉션하고, 리디렉션된 www 요청을 이 응답이 받는다.
+  for (const host of [SITE_HOST, ROOT_HOST, VERCEL_HOST]) {
+    const res = await requestWithHost(baseURL!, host, "/ads.txt");
+    expect(res.status, host).toBe(200);
+    expect(res.location, host).toBeUndefined();
+    expect(res.type, host).toMatch(/^text\/plain/);
+    expect(res.body.split(/\r?\n/).filter(Boolean), host).toEqual([ADS_TXT_LINE]);
   }
 });

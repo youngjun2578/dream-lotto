@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
-import { absoluteUrl, NAVER_SITE_VERIFICATION, SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/site";
+import { absoluteUrl, ADSENSE_ACCOUNT, NAVER_SITE_VERIFICATION, SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/site";
 import { THEME_INIT_SCRIPT, THEME_META } from "@/lib/theme";
 import "./globals.css";
 
@@ -43,6 +43,9 @@ export const metadata: Metadata = {
   // 검색엔진 소유 확인 메타 태그. Next.js 는 메타데이터를 얕게 합치므로 하위 페이지가 verification 을
   // 정의하면 이 값이 통째로 사라진다. 그래서 verification 은 여기서만 정의한다. (tests/verification.test.ts)
   verification: { other: { "naver-site-verification": NAVER_SITE_VERIFICATION } },
+  // 애드센스 사이트 확인용 메타 태그 <meta name="google-adsense-account">. 광고 코드가 아니다(스크립트를 불러오지 않음).
+  // verification 과 같은 이유로 other 도 여기서만 정의한다. 광고 스크립트는 넣지 않았다. (tests/adsense.test.ts)
+  other: { "google-adsense-account": ADSENSE_ACCOUNT },
 };
 
 // 기본(다크) 테마의 주소창 색·기본 배경. 라이트를 고른 사용자는 THEME_INIT_SCRIPT 가 라이트 값을 앞에 끼워 넣는다. (lib/theme.ts)

@@ -26,7 +26,7 @@ npm run dev        # 개발 서버 실행 → http://localhost:3000
 | `npm start` | 빌드한 결과 실행 |
 | `npm run typecheck` | 타입 검사만 |
 | `npm run keywords` | 꿈 관련 검색 키워드 수집 (네이버 검색광고 API 키 필요, 12장) |
-| `npm run check:launch` | 출시 전 점검: 문의 메일·정책 문구·사이트 주소·robots/sitemap. 문제가 있으면 목록을 보여 주고 실패 (13장) |
+| `npm run check:launch` | 출시 전 점검: 문의 메일·정책 문구·사이트 주소·robots/sitemap·ads.txt·빌드 결과(소유 확인 태그, 광고 스크립트 없음). 문제가 있으면 목록을 보여 주고 실패 (13장) |
 | `npm run test:e2e` | 자동 화면 테스트 (휴대폰·PC 크기, Playwright, 13장) |
 | `npm run review:screenshots` | 검토용 화면 캡처 → `review/screenshots/` (13장) |
 
@@ -38,7 +38,7 @@ npm run dev        # 개발 서버 실행 → http://localhost:3000
 | http://localhost:3000/dream | 카테고리별 꿈해몽 사전 목록 |
 | http://localhost:3000/dream/pig | 사전 상세 페이지 예시 (돼지 꿈) + 상황별 풀이 |
 | http://localhost:3000/guide | 꿈 가이드 칼럼 5편 |
-| http://localhost:3000/about · /privacy · /terms · /contact | 소개·개인정보처리방침·이용약관·문의. 처리방침은 2026-10-01에 실제 동작 기준으로 전면 개정, 최종 개정·시행일 2026-10-03 (날짜와 변경 이력은 `app/privacy/page.tsx`의 `EFFECTIVE_DATE`·`REVISED_DATE`·`HISTORY`, 운영자·보호책임자·문의 메일은 `lib/site.ts`). 변경 공지: 중요한 변경은 시행 7일 전부터, 그 밖의 수정은 시행일과 함께 알리고 변경 이력에 남김(15번) |
+| http://localhost:3000/about · /privacy · /terms · /contact | 소개·개인정보처리방침·이용약관·문의. 처리방침은 2026-10-01에 실제 동작 기준으로 전면 개정, 최종 개정·시행일 2026-10-04 (날짜와 변경 이력은 `app/privacy/page.tsx`의 `EFFECTIVE_DATE`·`REVISED_DATE`·`HISTORY`, 운영자·보호책임자·문의 메일은 `lib/site.ts`). 변경 공지: 중요한 변경은 시행 7일 전부터, 그 밖의 수정은 시행일과 함께 알리고 변경 이력에 남김(15번) |
 | http://localhost:3000/sitemap.xml · /robots.txt | 검색엔진용 파일 |
 
 개발 모드(`npm run dev`)에서는 광고가 들어갈 자리가 **점선 상자**로 보입니다. 빌드 결과에서는 빈 칸입니다.
@@ -83,6 +83,7 @@ lib/                        핵심 로직 — 화면과 분리되어 있어 테�
   theme.ts                  화면 테마 규칙 (기본 다크, 라이트 선택 기억, 그리기 전 적용 스크립트)
   date.ts, site.ts, types.ts
 public/fonts/pretendard/    사이트 글꼴 (Pretendard 한글 2,350자 서브셋, 굵기 400·600·700)
+public/ads.txt              애드센스 판매자 한 줄 (사이트 확인용, 광고 코드 아님. /ads.txt 로 열림)
 scripts/collect-keywords.ts 네이버 검색광고 키워드 수집 (npm run keywords)
 scripts/check-launch.ts     출시 전 점검 (npm run check:launch)
 tests/                      Vitest 테스트 (로직 단위)
@@ -358,7 +359,11 @@ npm run review:screenshots        # 검토용 화면 캡처 → review/screensho
   - 운영자 이름(`OPERATOR_NAME`)·보호책임자(`PRIVACY_OFFICER_NAME`)·문의 메일(`CONTACT_EMAIL`)이 `lib/site.ts` 값과 같은지, 다른 메일 주소나 **전화번호**(0으로 시작하는 번호, +82)가 들어가 있지 않은지. 연락처는 메일만 공개합니다.
 - **사이트 주소**: `SITE_URL`이 대표 도메인(`https://www.haemongru.com`)과 같은지, vercel.app·localhost·http 주소가 아닌지
 - **robots.txt·sitemap.xml**: sitemap 주소, 전체 차단 여부, 다른 도메인·공유 링크·중복·빠진 페이지·이상한 날짜
-- **빌드 결과**: `.next`가 있으면 그 안의 robots·sitemap·canonical이 지금 설정과 같은지 (다르면 다시 빌드)
+- **ads.txt**: `public/ads.txt`가 애드센스 한 줄(`lib/site.ts`의 `ADS_TXT_LINE`)뿐인지
+- **빌드 결과**: `.next`가 있으면(`npm run build` 뒤)
+  - 그 안의 robots·sitemap·canonical이 지금 설정과 같은지 (다르면 다시 빌드)
+  - 홈 `<head>`에 네이버 소유 확인 태그와 애드센스 사이트 확인 태그(`google-adsense-account`)가 정확히 한 번씩 있는지
+  - 개인정보처리방침 8번이 "광고 코드도 넣지 않았습니다"라고 하는 동안, 빌드된 페이지에 광고 스크립트가 없는지. 사이트 확인용 메타 태그와 ads.txt는 광고 코드가 아니라서 이 검사에 걸리지 않습니다.
 
 > 문의 메일(`young@haemongru.com`)을 넣어 지금은 통과합니다. 배포 전에 한 번씩 돌려 보세요.
 
@@ -393,4 +398,4 @@ npx lighthouse http://localhost:3000/dream/pig --preset=desktop --view # PC 기�
 | **AI 해몽** | `lib/interpret/llm.ts` 새로 만들기 (`InterpretationProvider` 구현), `lib/interpret/index.ts`에서 `LLM_API_KEY`가 있으면 LlmProvider를 돌려주도록 변경. 실패하면 RuleBasedProvider로 대체. **번호는 계속 `lib/lotto.ts`가 생성**. 꿈 원문이 외부 AI 업체로 전송되므로 **켜기 전에 개인정보처리방침에 처리 위탁·국외 이전 고지를 추가하고 입력창 근처에 안내**를 넣어야 합니다(`app/privacy/page.tsx` 위쪽 주석) |
 | **Supabase** | `lib/symbols.ts`의 함수 내용만 DB 조회로 교체 (함수 이름 유지). 저장이 생기면 `app/privacy/page.tsx` 수정 |
 | **공유 링크** | 1단계에서 DB 없이 구현 완료(`/r/[payload]`). AI 해몽 문장까지 그대로 공유하려면 Supabase에 결과를 저장하고 `app/r/[payload]/page.tsx`가 저장된 결과를 읽도록 바꾸기 |
-| **애드센스** | `components/AdSlot.tsx`에만 광고 코드 넣기, `app/layout.tsx`에 AdSense 스크립트, `public/ads.txt` 추가 (문의 메일 `CONTACT_EMAIL`은 설정 완료). 코드를 넣기 전에 `notes.md`의 "애드센스 승인 뒤 고칠 곳"을 따라 개인정보처리방침 8·9번과 `tests/privacy.test.ts`·`e2e/privacy.spec.ts`를 함께 고칩니다. 호스팅은 Vercel Pro라 광고 게재(상업적 이용)를 할 수 있습니다. 요금제를 바꾸거나 로그 보관을 늘리면 개인정보처리방침 1·5번의 접속 기록 보관 기간을 먼저 고칩니다(근거와 확인 상태는 `notes.md`) |
+| **애드센스** | 사이트 확인 준비 완료(2026-10-04): 모든 페이지 `<head>`에 `google-adsense-account` 메타 태그(`app/layout.tsx`의 `metadata.other`), `public/ads.txt` 한 줄. 게시자 ID는 `lib/site.ts`의 `ADSENSE_PUBLISHER_ID` 한 곳에 있습니다. 둘은 광고 코드가 아니라서 개인정보처리방침 8번 "광고 코드도 넣지 않았습니다"는 그대로 사실입니다. 광고 스크립트는 아직 넣지 않았습니다. 승인 뒤에는 `notes.md`의 "승인 후 해야 할 일" 순서를 따릅니다: ① 처리방침 8번을 실제 게재 기준으로 고치고 시작일을 알린 뒤 배포 ② 광고 스크립트(`app/layout.tsx`)와 광고 단위(`components/AdSlot.tsx`) 넣기 ③ `e2e/privacy.spec.ts`·`scripts/check-launch.ts`·`tests/privacy.test.ts`(`tests/adsense.test.ts` 포함)의 광고 코드 검사 고치기 ④ 애드센스 관리 화면에서 EEA·영국·스위스 동의 메시지 설정. 호스팅은 Vercel Pro라 광고 게재(상업적 이용)를 할 수 있습니다. 요금제를 바꾸거나 로그 보관을 늘리면 개인정보처리방침 1·5번의 접속 기록 보관 기간을 먼저 고칩니다(근거와 확인 상태는 `notes.md`) |

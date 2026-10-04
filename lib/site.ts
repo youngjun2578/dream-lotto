@@ -41,6 +41,22 @@ export const CONTENT_UPDATED_AT = "2026-10-04";
 export const NAVER_SITE_VERIFICATION = "f6e2f88fd423c42b3e0c014d6c7d29187349cccb";
 
 /**
+ * 애드센스 게시자 ID. 사이트 확인용 메타 태그 <meta name="google-adsense-account" content="ca-…">와
+ * public/ads.txt 의 한 줄에 같은 값이 들어간다. 누구나 볼 수 있는 공개 값이라 비밀값이 아니어서 환경변수로 빼지 않는다.
+ * 메타 태그와 ads.txt 는 광고 코드가 아니다. 스크립트를 불러오지 않고 광고를 그리지 않는다.
+ * 광고 스크립트는 아직 넣지 않았다. 승인 뒤 순서는 notes.md 의 '승인 후 해야 할 일'을 따른다.
+ * (tests/adsense.test.ts, npm run check:launch 가 확인)
+ */
+export const ADSENSE_PUBLISHER_ID = "pub-8613982831743426";
+/** 사이트 확인용 메타 태그 값 ("ca-" + 게시자 ID). 루트 layout 의 metadata.other 에서만 쓴다. */
+export const ADSENSE_ACCOUNT = `ca-${ADSENSE_PUBLISHER_ID}`;
+/**
+ * public/ads.txt 의 한 줄 (파일은 정적 파일이라 이 값을 직접 쓰지 못한다. npm run check:launch 가 둘이 같은지 본다).
+ * f08c47fec0942fa0 은 Google 의 인증 기관 ID 로, 모든 애드센스 게시자가 같은 값을 쓴다.
+ */
+export const ADS_TXT_LINE = `google.com, ${ADSENSE_PUBLISHER_ID}, DIRECT, f08c47fec0942fa0`;
+
+/**
  * 운영자 정보. 개인정보처리방침·이용약관·문의·소개 페이지가 모두 여기서 가져다 쓴다. 페이지에 직접 적지 않는다.
  * 연락처는 메일만 공개한다. 전화번호는 사이트 어디에도 넣지 않는다. (tests/privacy.test.ts, npm run check:launch 가 확인)
  */

@@ -6,11 +6,14 @@
 //   3) 사이트 주소(SITE_URL)가 대표 도메인과 다른지 (vercel.app·localhost·http 포함)
 //   4) robots.txt·sitemap.xml 이 이상한지 (주소, 빠진 페이지, 중복, /api·공유 링크 포함 등)
 //   5) 빌드 결과(.next)가 있으면, 그 안의 robots·sitemap·canonical 주소가 지금 설정과 같은지,
-//      홈 HTML 의 <head> 에 네이버 소유 확인 태그가 정확히 한 번 있는지
+//      홈 HTML 의 <head> 에 네이버 소유 확인 태그와 애드센스 사이트 확인 태그가 정확히 한 번씩 있는지,
+//      처리방침 8번이 "광고 코드도 넣지 않았습니다"라고 하는 동안 빌드된 페이지에 광고 스크립트가 없는지
+//   6) public/ads.txt 가 애드센스 한 줄(lib/site.ts 의 ADS_TXT_LINE)뿐인지
 // 빌드 없이도 돌아간다. (빌드 결과 검사는 .next 가 있을 때만)
+// 애드센스 사이트 확인용 메타 태그와 ads.txt 는 광고 코드가 아니다. 스크립트를 불러오지 않고 광고를 그리지 않는다.
 
-import { existsSync, readFileSync } from "node:fs";
-import { join } from "node:path";
+import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
+import { join, relative } from "node:path";
 import { pathToFileURL } from "node:url";
 import type { MetadataRoute } from "next";
 import { createElement, type ComponentType } from "react";
@@ -187,22 +190,71 @@ export function checkSitemap(entries: MetadataRoute.Sitemap, siteUrl: string, re
 }
 
 /**
- * 빌드된 HTML 에서 네이버 소유 확인 태그 검사: <head> 안에 정확히 한 번, 값이 맞는지.
+ * 빌드된 HTML 에서 소유 확인 메타 태그 검사: <head> 안에 정확히 한 번, 값이 맞는지.
  * (RSC 데이터 안의 JSON 이 아니라 실제 <meta> 태그만 센다)
  */
-export function checkNaverVerificationTag(html: string, expected: string): string[] {
-  const tags = [...html.matchAll(/<meta\b[^>]*\bname="naver-site-verification"[^>]*>/g)];
-  if (tags.length !== 1) return [`네이버 소유 확인 태그가 ${tags.length}개 있어요. 홈 <head> 에 정확히 1개여야 해요.`];
+export function checkHeadMetaTag(html: string, name: string, expected: string, label: string): string[] {
+  const tags = [...html.matchAll(new RegExp(`<meta\\b[^>]*\\bname="${name}"[^>]*>`, "g"))];
+  if (tags.length !== 1) return [`${label} 태그가 ${tags.length}개 있어요. 홈 <head> 에 정확히 1개여야 해요.`];
   const problems: string[] = [];
   const content = tags[0][0].match(/\bcontent="([^"]*)"/)?.[1];
-  if (content !== expected) problems.push(`네이버 소유 확인 값이 달라요: ${content ?? "(없음)"} (기대: ${expected})`);
+  if (content !== expected) problems.push(`${label} 값이 달라요: ${content ?? "(없음)"} (기대: ${expected})`);
   const headEnd = html.indexOf("</head>");
-  if (headEnd === -1 || (tags[0].index ?? 0) > headEnd) problems.push("네이버 소유 확인 태그가 <head> 밖에 있어요.");
+  if (headEnd === -1 || (tags[0].index ?? 0) > headEnd) problems.push(`${label} 태그가 <head> 밖에 있어요.`);
   return problems;
 }
 
+/** 네이버 서치어드바이저 소유 확인 태그 <meta name="naver-site-verification"> */
+export function checkNaverVerificationTag(html: string, expected: string): string[] {
+  return checkHeadMetaTag(html, "naver-site-verification", expected, "네이버 소유 확인");
+}
+
+/** 애드센스 사이트 확인 태그 <meta name="google-adsense-account" content="ca-pub-…"> (광고 코드 아님) */
+export function checkAdsenseAccountTag(html: string, expected: string): string[] {
+  return checkHeadMetaTag(html, "google-adsense-account", expected, "애드센스 사이트 확인");
+}
+
+/**
+ * 광고 스크립트(애드센스 광고 코드)의 흔적: 광고 스크립트 주소와 광고 단위 코드.
+ * 사이트 확인용 메타 태그(google-adsense-account)와 ads.txt 는 여기에 걸리지 않는다.
+ * 이 정규식을 정의한 이 파일은 tests/privacy.test.ts 의 광고 코드 검사에서 뺀다. (PHONE_PATTERN 과 같은 방식)
+ */
+export const AD_SCRIPT_PATTERN = /adsbygoogle|googlesyndication|pagead2/;
+
+function htmlFiles(dir: string): string[] {
+  return readdirSync(dir).flatMap((name) => {
+    const path = join(dir, name);
+    if (statSync(path).isDirectory()) return htmlFiles(path);
+    return name.endsWith(".html") ? [path] : [];
+  });
+}
+
+/**
+ * 빌드된 페이지(HTML) 가운데 광고 스크립트가 들어간 것. 처리방침 8번이 "광고 코드도 넣지 않았습니다"라고 하는
+ * 동안에는 하나도 없어야 한다. 광고를 넣을 때는 8번부터 고친다. (notes.md '승인 후 해야 할 일')
+ */
+export function checkNoAdScript(nextDir: string): string[] {
+  const app = join(nextDir, "server", "app");
+  if (!existsSync(app)) return [];
+  const found = htmlFiles(app).filter((file) => AD_SCRIPT_PATTERN.test(readFileSync(file, "utf8")));
+  if (found.length === 0) return [];
+  return [
+    `처리방침 8번은 광고 코드를 넣지 않았다고 하는데, 빌드된 페이지 ${found.length}개에 광고 스크립트가 있어요 ` +
+      `(예: ${relative(app, found[0])}). 광고를 넣으려면 8번부터 고치세요.`,
+  ];
+}
+
+export interface BuildOutputOptions {
+  /** 네이버 소유 확인 값 (홈 <head> 에 정확히 한 번) */
+  naverVerification?: string;
+  /** 애드센스 사이트 확인 메타 태그 값 "ca-pub-…" (홈 <head> 에 정확히 한 번) */
+  adsenseAccount?: string;
+  /** true 면 빌드된 페이지에 광고 스크립트가 없어야 한다 (처리방침 8번이 광고 코드를 넣지 않았다고 할 때) */
+  noAdScript?: boolean;
+}
+
 /** 5) 빌드 결과가 지금 설정과 맞는지 (.next 가 있을 때만) */
-export function checkBuildOutput(nextDir: string, siteUrl: string, naverVerification?: string): string[] {
+export function checkBuildOutput(nextDir: string, siteUrl: string, options: BuildOutputOptions = {}): string[] {
   const app = join(nextDir, "server", "app");
   if (!existsSync(join(nextDir, "BUILD_ID")) || !existsSync(app)) return [];
   const problems: string[] = [];
@@ -225,10 +277,27 @@ export function checkBuildOutput(nextDir: string, siteUrl: string, naverVerifica
     }
   }
   const home = read("index.html");
-  if (naverVerification && home !== null) {
-    problems.push(...checkNaverVerificationTag(home, naverVerification).map((p) => `빌드된 index.html: ${p}`));
+  if (options.naverVerification && home !== null) {
+    problems.push(...checkNaverVerificationTag(home, options.naverVerification).map((p) => `빌드된 index.html: ${p}`));
   }
+  if (options.adsenseAccount && home !== null) {
+    problems.push(...checkAdsenseAccountTag(home, options.adsenseAccount).map((p) => `빌드된 index.html: ${p}`));
+  }
+  if (options.noAdScript) problems.push(...checkNoAdScript(nextDir));
   return problems;
+}
+
+/**
+ * 6) public/ads.txt: 애드센스 한 줄만 있는지. 광고 코드가 아니라 이 사이트의 광고 판매 권한을 밝히는 공개 파일이다.
+ * https://www.haemongru.com/ads.txt 로 열린다. (루트 도메인 요청은 Vercel 이 www 로 308 리디렉션한다)
+ */
+export function checkAdsTxt(text: string | null, expectedLine: string): string[] {
+  if (text === null) return ["public/ads.txt 가 없어요. 애드센스 사이트 확인에 필요해요."];
+  const lines = text.split(/\r?\n/).filter((line) => line.trim() !== "");
+  if (lines.length !== 1 || lines[0] !== expectedLine) {
+    return [`public/ads.txt 내용이 달라요. 이 한 줄만 있어야 해요: ${expectedLine}`];
+  }
+  return [];
 }
 
 /** 정책 페이지를 실제로 그려서(서버 렌더링) 화면에 보이는 글만 뽑는다. */
@@ -250,8 +319,16 @@ export async function renderPolicyPages(): Promise<PolicyPage[]> {
 
 /** 전체 점검: [분야, 문제] 목록 */
 export async function runLaunchChecks(): Promise<[string, string][]> {
-  const { CONTACT_EMAIL, DEFAULT_SITE_URL, NAVER_SITE_VERIFICATION, OPERATOR_NAME, PRIVACY_OFFICER_NAME, SITE_URL } =
-    await import("../lib/site");
+  const {
+    ADS_TXT_LINE,
+    ADSENSE_ACCOUNT,
+    CONTACT_EMAIL,
+    DEFAULT_SITE_URL,
+    NAVER_SITE_VERIFICATION,
+    OPERATOR_NAME,
+    PRIVACY_OFFICER_NAME,
+    SITE_URL,
+  } = await import("../lib/site");
   const { default: robots } = await import("../app/robots");
   const { default: sitemap } = await import("../app/sitemap");
   const { getAllSymbols } = await import("../lib/symbols");
@@ -271,11 +348,15 @@ export async function runLaunchChecks(): Promise<[string, string][]> {
     "/contact",
   ];
   const tag = (area: string, list: string[]) => list.map((p): [string, string] => [area, p]);
+  const policyPages = await renderPolicyPages();
+  // 처리방침 8번이 광고 코드를 넣지 않았다고 하는 동안에는 빌드된 페이지에 광고 스크립트가 없어야 한다.
+  const noAdScript = policyPages.some((p) => p.name === "privacy" && p.text.includes("광고 코드도 넣지 않았습니다"));
+  const adsTxt = existsSync("public/ads.txt") ? readFileSync("public/ads.txt", "utf8") : null;
   return [
     ...tag("문의 메일", checkContactEmail(CONTACT_EMAIL)),
     ...tag(
       "정책 문구",
-      checkPolicyPages(await renderPolicyPages(), {
+      checkPolicyPages(policyPages, {
         email: CONTACT_EMAIL,
         operator: OPERATOR_NAME,
         officer: PRIVACY_OFFICER_NAME,
@@ -284,14 +365,25 @@ export async function runLaunchChecks(): Promise<[string, string][]> {
     ...tag("사이트 주소", checkSiteUrl(SITE_URL, DEFAULT_SITE_URL, process.env.NEXT_PUBLIC_SITE_URL)),
     ...tag("robots.txt", checkRobots(robots(), SITE_URL)),
     ...tag("sitemap.xml", checkSitemap(sitemap(), SITE_URL, requiredPaths)),
-    ...tag("빌드 결과", checkBuildOutput(".next", SITE_URL, NAVER_SITE_VERIFICATION)),
+    ...tag("ads.txt", checkAdsTxt(adsTxt, ADS_TXT_LINE)),
+    ...tag(
+      "빌드 결과",
+      checkBuildOutput(".next", SITE_URL, {
+        naverVerification: NAVER_SITE_VERIFICATION,
+        adsenseAccount: ADSENSE_ACCOUNT,
+        noAdScript,
+      }),
+    ),
   ];
 }
 
 async function main() {
   const problems = await runLaunchChecks();
   if (problems.length === 0) {
-    console.log("✅ 출시 점검 통과: 문의 메일, 정책 문구, 사이트 주소, robots.txt, sitemap.xml 모두 이상 없어요.");
+    console.log("✅ 출시 점검 통과: 문의 메일, 정책 문구, 사이트 주소, robots.txt, sitemap.xml, ads.txt 모두 이상 없어요.");
+    if (!existsSync(join(".next", "BUILD_ID"))) {
+      console.log("   빌드 결과(.next)가 없어 빌드 검사(메타 태그, 광고 스크립트 없음 등)는 건너뛰었어요. npm run build 뒤에 다시 돌려 주세요.");
+    }
     return;
   }
   console.error(`❌ 출시 전에 고칠 것 ${problems.length}개:`);
