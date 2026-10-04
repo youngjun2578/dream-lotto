@@ -11,8 +11,23 @@ export type Category = (typeof CATEGORIES)[number];
 export const DICTIONARY_CATEGORIES = [...CATEGORIES, "연애·결혼"] as const;
 export type DictionaryCategory = (typeof DICTIONARY_CATEGORIES)[number];
 
-export const FORTUNE_TYPES = ["재물", "연애", "건강", "직장", "주의"] as const;
+/**
+ * 운세 유형. 배지·번호 이유 태그·요약 둘째 문장·'같은 ○○ 꿈' 목록에 쓰고, 번호 계산에는 쓰지 않는다.
+ * '변화'·'마음'은 죽음·장례식·돌아가신 가족·병원·귀신·조상처럼 민감한 소재에 건강·재물 라벨이 붙지 않게 더한 중립 유형이다.
+ */
+export const FORTUNE_TYPES = ["재물", "연애", "건강", "직장", "주의", "변화", "마음"] as const;
 export type FortuneType = (typeof FORTUNE_TYPES)[number];
+
+/** 화면에 보이는 운세 유형 이름 (배지, 사전 페이지의 '같은 ○○ 꿈', 공유 이미지) */
+export const FORTUNE_LABEL: Record<FortuneType, string> = {
+  재물: "재물운",
+  연애: "연애운",
+  건강: "건강운",
+  직장: "직장운",
+  주의: "주의운",
+  변화: "변화운",
+  마음: "마음 풀이",
+};
 
 /** data/actions.json 한 항목: 꿈속 행동 (예: 들어오다, 쫓기다) */
 export interface DreamAction {

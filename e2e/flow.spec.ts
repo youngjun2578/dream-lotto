@@ -295,3 +295,27 @@ test("사전 목록·카테고리·sitemap·비슷한 꿈·미리보기 이미�
     expect(res.headers()["content-type"], slug).toContain("image/png");
   }
 });
+
+test("민감한 소재의 운세 라벨(변화운·마음 풀이)과, 라벨을 바꾸기 전에 만든 공유 링크 (사전 후속 E-1)", async ({ page }) => {
+  // 라벨을 바꾸기 전(2026-10-03)에 만든 공유 링크: 죽음, 장례식, 돌아가신 가족(받는 꿈), 병원. 주소에는 slug 만 있어 그대로 열린다.
+  const shared = "WzEsMTQxMjc5NjkyMSwiMjAyNi0xMC0wMyIsMCxbImRlYXRoIl0sWyJmdW5lcmFsIl0sWyJkZWNlYXNlZC1mYW1pbHkiLCJyZWNlaXZlIl0sWyJob3NwaXRhbCJdXQ";
+  await page.goto(`/r/${shared}`);
+  await expect(page).toHaveURL(new RegExp(`/r/${shared}$`));
+  await expect(page.getByText("변화운", { exact: true })).toHaveCount(2);
+  await expect(page.getByText("마음 풀이", { exact: true })).toHaveCount(2);
+  await expect(page.getByText(/^(건강운|재물운|주의운)$/)).toHaveCount(0);
+  await expect(page.getByText("죽는 꿈 → 변화").first()).toBeVisible();
+  await expect(page.getByText("돌아가신 가족 → 마음").first()).toBeVisible();
+
+  // 사전 페이지의 배지와 '같은 ○○ 꿈' 목록
+  await page.goto("/dream/death");
+  await expect(page.getByText("변화운", { exact: true }).first()).toBeVisible();
+  await page.goto("/dream/hospital");
+  await expect(page.getByText("마음 풀이", { exact: true }).first()).toBeVisible();
+  await expect(page.getByRole("heading", { name: "같은 마음 풀이 꿈" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "조상 꿈" })).toBeVisible();
+
+  // 카테고리 페이지에도 같은 배지가 보인다
+  await page.goto("/dream/category/person");
+  await expect(page.getByText("마음 풀이", { exact: true }).first()).toBeVisible();
+});

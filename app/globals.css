@@ -36,6 +36,10 @@
   --f-work-fg: #a8c8ff;
   --f-warn-bg: #3f1d25;
   --f-warn-fg: #ffb3bb;
+  --f-change-bg: #2c2347;
+  --f-change-fg: #cfc0ff;
+  --f-mind-bg: #283038;
+  --f-mind-fg: #cdd6e1;
 
   /* 밤하늘 띠(헤더·첫 화면)는 두 테마 모두 남색 */
   --night: #0b1026;
@@ -72,6 +76,10 @@
   --f-work-fg: #1b418a;
   --f-warn-bg: #fcdfe2;
   --f-warn-fg: #951a2a;
+  --f-change-bg: #ece5ff;
+  --f-change-fg: #4b2a99;
+  --f-mind-bg: #e5eaf0;
+  --f-mind-fg: #334155;
   --night: #10173a;
   --night-2: #1c2458;
 }

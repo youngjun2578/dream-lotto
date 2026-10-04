@@ -73,6 +73,8 @@ const PAIRS: [string, string, string][] = [
   ["f-health-fg", "f-health-bg", "건강운 태그"],
   ["f-work-fg", "f-work-bg", "직장운 태그"],
   ["f-warn-fg", "f-warn-bg", "주의 태그"],
+  ["f-change-fg", "f-change-bg", "변화운 태그"],
+  ["f-mind-fg", "f-mind-bg", "마음 풀이 태그"],
   ["night-ink", "night", "밤하늘 띠 제목"],
   ["night-ink", "night-2", "밤하늘 띠 제목(그라데이션 끝)"],
   ["night-soft", "night", "밤하늘 띠 설명, 메뉴"],

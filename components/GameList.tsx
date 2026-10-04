@@ -14,6 +14,8 @@ const TAG_STYLE: Record<FortuneType, string> = {
   건강: "bg-[var(--f-health-bg)] text-[var(--f-health-fg)]",
   직장: "bg-[var(--f-work-bg)] text-[var(--f-work-fg)]",
   주의: "bg-[var(--f-warn-bg)] text-[var(--f-warn-fg)]",
+  변화: "bg-[var(--f-change-bg)] text-[var(--f-change-fg)]",
+  마음: "bg-[var(--f-mind-bg)] text-[var(--f-mind-fg)]",
 };
 
 /** CSS 변수(--g, --i)로 애니메이션 순서를 넘긴다. */

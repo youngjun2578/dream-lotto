@@ -1,11 +1,14 @@
 // 사전 content lint (사전 3차 후속 A): data/ 의 모든 문장이 CLAUDE.md "사전 콘텐츠 작성 규칙"을 지키는지 본다.
 // 검사 범위: 상징 요약·본문·상황 제목·상황 풀이, 가이드 제목·소개·소제목·본문, 행동 사전(actions.json) 표현
+// 결과 화면의 운세 유형 이름(배지)과 요약 둘째 문장 문구(lib/interpret/ruleBased.ts)도 같은 규칙으로 본다. (사전 후속 E-1)
 // 새 데이터가 걸리면 먼저 문장을 고친다. 꼭 남겨야 하는 문장만 EXCEPTIONS 에 이유와 함께 적는다.
 
 import { describe, expect, it } from "vitest";
 import { getAllActions } from "@/lib/actions";
 import { getAllGuides } from "@/lib/guides";
+import { FORTUNE_PHRASE } from "@/lib/interpret/ruleBased";
 import { getAllSymbols } from "@/lib/symbols";
+import { FORTUNE_LABEL, FORTUNE_TYPES } from "@/lib/types";
 
 type Rule = "당첨 언급" | "사람 건강·사망 암시" | "건강 상태 판단" | "단정 표현";
 
@@ -87,6 +90,13 @@ const EXCEPTIONS: { rule: Rule; source: string; text?: string; reason: string }[
     text: "복권은 여유 있는 범위에서 가볍게 즐기고",
     reason: "복권을 여유 있는 범위에서만 즐기라는 책임 있는 이용 안내다.",
   },
+  {
+    rule: "건강 상태 판단",
+    source: "code:fortune-label",
+    text: "건강운",
+    reason:
+      "몸·죽음과 먼 상징(거북이·부모님 등)에 쓰는 기존 운세 유형 이름이라 그대로 둔다(사전 후속 E-1 결정). 죽음·병원 같은 민감한 소재에는 쓰지 않고 '변화'·'마음'을 쓴다.",
+  },
 ];
 
 /**
@@ -139,6 +149,10 @@ function allUnits(): Unit[] {
   }
   for (const a of getAllActions()) {
     for (const w of [a.verb, ...a.synonyms]) units.push({ source: `action:${a.slug}`, where: `action:${a.slug}`, text: w });
+  }
+  for (const type of FORTUNE_TYPES) {
+    units.push({ source: "code:fortune-label", where: `운세 유형 이름(${type})`, text: FORTUNE_LABEL[type] });
+    units.push({ source: "code:fortune-phrase", where: `요약 문구(${type})`, text: FORTUNE_PHRASE[type] });
   }
   return units;
 }

@@ -15,6 +15,7 @@ import {
 } from "@/lib/seo";
 import { absoluteUrl, SITE_NAME, SITE_URL } from "@/lib/site";
 import { getAllSymbols, getRelatedSymbols, getSymbolBySlug } from "@/lib/symbols";
+import { FORTUNE_LABEL } from "@/lib/types";
 
 const SYMBOLS = getAllSymbols();
 const pig = getSymbolBySlug("pig")!;
@@ -125,6 +126,7 @@ describe("공유 이미지(OG) 글꼴", () => {
       SITE_NAME,
       NO_SYMBOL_SUMMARY,
       ...FORTUNE_PHRASE_TEXT,
+      ...Object.values(FORTUNE_LABEL),
       "꿈해몽 사전 · 행운 숫자 후보 재미로 보는 꿈해몽 · 당첨과 무관해요 꿈으로 뽑는 행운 번호",
       "공유된 꿈해몽 · 2026-10-01 나의 꿈해몽 결과 추천 번호 (A게임)",
       ...getAllGuides().flatMap((g) => [g.title, g.description, "꿈 가이드"]),

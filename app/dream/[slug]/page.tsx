@@ -13,7 +13,7 @@ import { categoryPath } from "@/lib/categories";
 import { getGuidesForSymbol } from "@/lib/guides";
 import { breadcrumbJsonLd, dreamArticleJsonLd, dreamPageTitle, pageMetadata } from "@/lib/seo";
 import { getAllSymbols, getRelatedSymbols, getSymbolBySlug } from "@/lib/symbols";
-import type { DreamSymbol } from "@/lib/types";
+import { FORTUNE_LABEL, type DreamSymbol } from "@/lib/types";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -169,7 +169,7 @@ export default async function DreamSymbolPage({ params }: Props) {
           비슷한 꿈
         </h2>
         <RelatedList title={`같은 ${symbol.category} 꿈`} symbols={related.sameCategory} />
-        <RelatedList title={`같은 ${symbol.fortune_type}운 꿈`} symbols={related.sameFortune} />
+        <RelatedList title={`같은 ${FORTUNE_LABEL[symbol.fortune_type]} 꿈`} symbols={related.sameFortune} />
       </section>
 
       {guides.length > 0 && (
